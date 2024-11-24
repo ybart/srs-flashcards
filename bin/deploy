@@ -1,0 +1,3 @@
+#!/bin/sh
+
+scp -r public web.ybart.fr:/var/www/srs-flashcards.ilyba.fr

@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+require "irb"
+require "irb/completion"
+
+$LOAD_PATH.unshift "#{__dir__}/../lib"
+
+require 'srs_flashcards'
+
+IRB.start

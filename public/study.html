@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title></title>
+    <meta charset="UTF-8">
+    <!-- <meta name="viewport" content="initial-scale=1, viewport-fit=cover, width=device-width"></meta> -->
+    <meta name="viewport" content="initial-scale=1, width=device-width"></meta>
+    <meta name="mobile-web-app-capable" content="yes"></meta>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"></meta>
+    <link rel="apple-touch-icon" href="/icons/srs-ai-logo-192.png" />
+    <script src="https://cdn.jsdelivr.net/npm/ios-pwa-splash@1.0.0/cdn.min.js"></script>
+    <script>iosPWASplash('/icons/srs-ai-logo-192.png', '#000000');</script>
+    <link rel="manifest" href="manifest.json" />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.fluid.classless.min.css">
+    <link rel="stylesheet" href="css/main.css">
+    <script type="module" src="js/app.js"></script>
+  </head>
+  <body data-controller='study-session'>
+    <main>
+      <header>
+        <nav>
+          <ul><li><a href="/">« Categories</a></li></ul>
+          <ul><li class="title"><strong>SRS Flashcards</strong></li></ul>
+          <ul></ul>
+        </nav>
+      </header>
+      <section role="content">
+        <div class="spinner">
+          <div class="bar1"></div>
+          <div class="bar2"></div>
+          <div class="bar3"></div>
+          <div class="bar4"></div>
+          <div class="bar5"></div>
+          <div class="bar6"></div>
+          <div class="bar7"></div>
+          <div class="bar8"></div>
+          <div class="bar9"></div>
+          <div class="bar10"></div>
+          <div class="bar11"></div>
+          <div class="bar12"></div>
+        </div>
+      </section>
+      <footer>
+        <nav>
+          <ul data-role='decks'>
+            <li><div data-role="label" aria-label="red"></div><div data-role="line">…</div></li>
+            <li><div data-role="label" aria-label="orange"></div><div data-role="line">…</div></li>
+            <li><div data-role="label" aria-label="yellow"></div><div data-role="line">…</div></li>
+            <li><div data-role="label" aria-label="lightgreen"></div><div data-role="line">…</div></li>
+            <li><div data-role="label" aria-label="green"></div><div data-role="line">…</div></li>
+          </ul>
+          <ul data-role="result-ui" style="display: none">
+            <li role="group">
+              <a role='button' class='danger text-center'
+                 data-action="click->study-session#cross">✘</a>
+              <a role='button' class='success text-center'
+                 data-action="click->study-session#tick">✓</a>
+              <a role='button' class='text-center'
+                 data-action="click->study-session#tick">🏅</a>
+            </li>
+          </ul>
+        </nav>
+      </footer>
+    </main>
+    <div id="templates" style="display: none;">
+      <section data-role='card' data-action="click->study-session#showAnswer">
+        <div data-role="label" aria-label="grey"></div>
+        <div lang="ja-JP" data-role="question">{食べる}</div>
+        <div data-role="answer" style="visibility: hidden;">
+          <div lang="ja-JP" data-role="line-1">{たべる}</div>
+          <div lang="en-US" data-role="line-2">{To eat}</div>
+        </div>
+        <div data-role="related-list" style="display: none;">
+          <div data-role="title">Related</div>
+        </div>
+      </section>
+
+      <div data-role="related-item">
+        <span data-role="title">大学</span>
+        <span data-role="type">[n]</span>
+        <span data-role="phonetics">だいがく</span>
+        <span data-role="description">(1) post-secondary education institution, incl. university, college, etc., (2) the Great Learning - one of the Four Books</span>
+      </div>
+    </div>
+  </body>
+</html>

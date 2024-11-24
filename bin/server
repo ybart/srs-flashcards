@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+
+require 'webrick'
+require 'webrick/https'
+require 'openssl'
+
+SERVER_PATH = "#{__dir__}/../public"
+# SERVER_PATH = "~/Downloads/sqlite-wasm-3470000"
+
+# TODO add --help, --port and --https <domain> options
+
+# `openssl req -new -newkey rsa:4096 -days 365 -nodes -x509 \
+# -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=imac-m1.local" \
+# -keyout tmp/imac-m1.local.key  -out tmp/imac-m1.local.cert`
+#
+cert = OpenSSL::X509::Certificate.new File.read 'tmp/imac-m1.local.cert'
+pkey = OpenSSL::PKey::RSA.new File.read 'tmp/imac-m1.local.key'
+
+puts "Starting HTTPS server for #{SERVER_PATH} with self-signed certificate valid for 'imac-m1.local'"
+server = WEBrick::HTTPServer.new(
+  :SSLEnable => true,
+  :SSLCertificate => cert,
+  :SSLPrivateKey => pkey,
+  :Port => 8000,
+  :DocumentRoot => SERVER_PATH,
+  :RequestCallback => proc do |req, res|
+    res['Cross-Origin-Embedder-Policy'] = 'require-corp'
+    res['Cross-Origin-Opener-Policy'] = 'same-origin'
+    res['Cross-Origin-Resource-Policy'] = 'same-origin'
+  end
+)
+
+server.start
