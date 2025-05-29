@@ -1,21 +1,23 @@
-# Source Viewing License
+Minimal Transparent Source License (MTSL)
+Version 1.0
 
-Copyright (c) 2024 Yvan Barthélemy. All rights reserved.
+Copyright (c) 2025 ILYBA
 
-## GRANT
+Permission is hereby granted, free of charge, to any natural person obtaining a
+copy of this software and associated documentation files (the "Software"), to
+view, copy, build, and run the Software, solely for the purpose of evaluating
+and auditing the quality and security of the Software, subject in all cases
+to the following conditions:
 
-Permission is hereby granted to view the source code of this project.
+1. The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-## RESTRICTIONS
+2. The Software may not be used for commercial purposes, distribution, or
+modification without explicit written permission from ILYBA.
 
-Explicitly prohibited without written permission:
-- Reproduction or distribution
-- Modification or derivative works  
-- Commercial use of any kind
-- Public display of modified versions
-- Reverse engineering
-- Any other form of reuse
-
-## DISCLAIMER
-
-THE CODE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, WHETHER EXPRESS
+OR IMPLIED, INCLUDING, WITHOUT LIMITATION, THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL ILYBA
+OR ITS COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
+OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR ANY USE THEREOF. 
