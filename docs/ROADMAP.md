@@ -2,10 +2,12 @@
 
 ## Features to Implement
 
+- [ ] PWA Update mechanism (cache, automated version check, etc.)
+- [ ] Notifications (after 1 day (morning, midday, evening), after 2 day, after 1 week, after 1 month)
 - [ ] Progress UI
+
 - [ ] Offline Mode and PWA
 - [ ] Settings
-- [ ] Notifications (after 1 day (morning, midday, evening), after 2 day, after 1 week, after 1 month)
 - [ ] Restore progress from local file (upload) or Google Drive
 - [ ] Support cards to be assigned to many categories
 - [ ] Import School Grades sets from Wikipedia
@@ -20,6 +22,7 @@
 - [x] List of categories UI
 - [x] Study UI with SRS Algorithm
 - [x] Save progress to local file (download, cf. sqlite3_js_db_export) or Google Drive
+- [x] Buy me a coffee link in the app
 
 # Existing TODO Items
 
