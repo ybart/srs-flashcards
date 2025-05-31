@@ -23,7 +23,7 @@ export default class extends Controller {
   showBanner() {
     this.bannerTarget.classList.remove('hidden')
     const closedCount = parseInt(localStorage.getItem('supportBannerClosedCount') || '0')
-    
+
     if (closedCount > 0) {
       this.alreadyDonatedTarget.classList.remove('hidden')
     }
@@ -41,4 +41,4 @@ export default class extends Controller {
     localStorage.setItem('supportBannerAlreadyDonated', 'true')
     this.closeBanner()
   }
-} 
+}
