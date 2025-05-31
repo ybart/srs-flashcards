@@ -87,7 +87,7 @@ section[data-role=card] {
   margin-bottom: 0;
   padding: 0;
   background: white;
-  box-shadow: 5px 5px 15px grey
+  box-shadow: 5px 5px 15px grey;
   cursor: pointer;
 }
 
@@ -199,6 +199,10 @@ article a:hover {
 
 .spinner:not(:only-child) {
   display: none;
+}
+
+.hidden {
+  display: none !important;
 }
 
 .progress {
@@ -487,4 +491,62 @@ div.spinner div.bar11 {
 div.spinner div.bar12 {
   -webkit-transform:rotate(330deg) translate(0, -130%);
   -webkit-animation-delay: -0.0833s;
+}
+
+.donate-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #fffbe6;
+  border: 1px solid #ffc107;
+  padding: 10px 15px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1000;
+  max-width: 90%;
+}
+.donate-toast .donate-link {
+  font-weight: bold;
+  color: #d35400;
+  text-decoration: none;
+  cursor: pointer;
+}
+.donate-toast .donate-close {
+  background: none;
+  border: none;
+  font-size: 1.2em;
+  cursor: pointer;
+  color: #ccc;
+}
+
+@media only screen and (max-width: 920px) {
+  .donate-toast {
+    font-size: 0.9em;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    width: 240px;
+    min-width: 240px;
+    box-sizing: border-box;
+  }
+  .donate-toast span {
+    order: 2;
+    padding-right: 20px;
+    width: 100%;
+    white-space: pre-line;
+  }
+  .donate-toast .donate-close {
+    position: absolute;
+    right: 5px;
+    top: -4px;
+    order: 1;
+  }
+  .donate-toast .donate-link {
+    order: 3;
+    margin-top: 5px;
+    width: 100%;
+  }
 }

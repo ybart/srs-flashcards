@@ -3,8 +3,10 @@ import { Application, Controller } from 'https://cdn.jsdelivr.net/npm/@hotwired/
 
 import CategoriesController from './controllers/categories_controller.js'
 import StudySessionController from './controllers/study_session_controller.js'
+import DonateController from './controllers/donate_controller.js'
 
 window.Stimulus = Application.start()
 
 Stimulus.register("categories", CategoriesController);
 Stimulus.register("study-session", StudySessionController);
+Stimulus.register("donate", DonateController);

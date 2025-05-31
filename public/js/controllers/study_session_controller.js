@@ -18,6 +18,10 @@ export default class extends Controller {
       { ...params, ...{ progress: this.constructor.defaultProgress } }
     )
 
+    // Increment study session count for support prompt
+    const prevCount = parseInt(localStorage.getItem('studySessionCount') || '0')
+    localStorage.setItem('studySessionCount', prevCount + 1)
+
     // TODO: Ajouter l'id de la session créée dans l'URL
     // TODO: Lors de la récupération de la session, si un id de session
     //       est présent dans l'URL, le récupérer si il n'existe pas
