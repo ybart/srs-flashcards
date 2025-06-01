@@ -1,75 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <title></title>
-    <meta charset="UTF-8">
-    <!-- <meta name="viewport" content="initial-scale=1, viewport-fit=cover, width=device-width"></meta> -->
-    <meta name="viewport" content="initial-scale=1, width=device-width"></meta>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, width=device-width"></meta>
     <meta name="mobile-web-app-capable" content="yes"></meta>
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"></meta>
-    <link rel="apple-touch-icon" href="/icons/srs-ai-logo-192.png" />
+    <link rel="apple-touch-icon" href="/icons/ios/1024.png" />
     <script src="https://cdn.jsdelivr.net/npm/ios-pwa-splash@1.0.0/cdn.min.js"></script>
-    <script>iosPWASplash('/icons/srs-ai-logo-512.png', '#000000');</script>
+    <script>iosPWASplash('/icons/ios/1024.png', '#000000');</script>
     <link rel="manifest" href="manifest.json" />
 
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.fluid.classless.min.css">
-    <link rel="stylesheet" href="css/main.css" />
-    <script type="module" src="js/app.js"></script>
-  </head>
-  <body>
-    <main data-controller='categories donate'>
-      <header>
-        <nav>
-          <ul></ul>
-          <ul><li class="title"><strong>SRS Flashcards</strong></li></ul>
-          <ul>
-            <li>
-              <details class="dropdown">
-                <summary></summary>
-                <ul>
-                  <li><a href='#' data-action="click->categories#download">Download Database</a></li>
-                  <li><a href='#' class='danger' data-action="click->categories#reset">Reset Database</a></li>
-                  <li><a href='#' data-action="click->categories#updateApp">Update App</a></li>
-                  <li><a href="https://buymeacoffee.com/ybart" target="_blank">☕ Support Us</a></li>
-                </ul>
-              </details>
-            </li>
-          </ul>
-        </nav>
-      </header>
-      <section role="content">
-        <div class="spinner">
-          <div class="bar1"></div>
-          <div class="bar2"></div>
-          <div class="bar3"></div>
-          <div class="bar4"></div>
-          <div class="bar5"></div>
-          <div class="bar6"></div>
-          <div class="bar7"></div>
-          <div class="bar8"></div>
-          <div class="bar9"></div>
-          <div class="bar10"></div>
-          <div class="bar11"></div>
-          <div class="bar12"></div>
-        </div>
-      </section>
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/icons/ios/32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/icons/ios/192.png" type="image/png" sizes="192x192">
 
-      <div class="donate-toast hidden" data-donate-target="banner">
-        <span>Enjoying SRS Flashcards?
-        ☕ Support development</span>
-        <a href="https://buymeacoffee.com/ybart" target="_blank" class="donate-link">Buy me a coffee</a>
-        <a data-action="donate#alreadyDonated" class="donate-link" data-donate-target="alreadyDonated">I already donated</a>
-        <button class="donate-close" aria-label="Close" data-action="donate#closeBanner">&times;</button>
-      </div>
-    </main>
+    <link rel="apple-touch-icon" href="/icons/ios/180.png" sizes="180x180">
+    
+  <title>SRS Flashcards</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #f5f5f5;
+    }
+    .spinner {
+      width: min(80vw, 80vh);
+      height: min(80vw, 80vh);
+      border: 16px solid #f3f3f3;
+      border-top: 16px solid #3498db;
+      border-radius: 50%;
+      animation: spin 2s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="spinner"></div>
 
-    <article id='category-card' style="display: none;">
-      <a href="study.html" class="category-content">
-        <h3 data-role='name'>{Category Name}</h1>
-        <p class="count"><img width=16 height=16 src="/icons/stack-32.png"> <span data-role='cards-count'>{Cards Count}</span> cards
-        <p class="last-studied"><img width=16 height=16 src="/icons/clock-32.png"> <span data-role="last-studied">{Last studied}</span>
-        <div data-role="progress" class="progress">50%</div>
-      </a>
-    </article>
-  </body>
+  <script>
+    async function registerServiceWorker() {
+      const swReadyTimeout = setTimeout(() => {
+        logToServiceWorker('Service worker ready timeout - proceeding anyway');
+        // redirectBasedOnPWAStatus();
+      }, 10000); // 10 second timeout
+
+      if ('serviceWorker' in navigator) {
+        try {
+          const reg = await navigator.serviceWorker.register('/sw.js');
+          console.log('Registration succeeded');
+
+          // Wait for controller
+          if (!navigator.serviceWorker.controller) {
+            await new Promise(resolve => 
+              navigator.serviceWorker.addEventListener('controllerchange', resolve)
+            );
+          }
+          logToServiceWorker('Controller is ready');
+
+          // Send init message with port to service worker and create promise to wait for cache complete message
+          const channel = new MessageChannel();
+          console.log('Sending init message to service worker with port:', channel.port2);
+          navigator.serviceWorker.controller.postMessage({
+            type: 'INIT_PORT',
+            port: channel.port2
+          }, [channel.port2]);
+          const cacheCompletePromise = new Promise(resolve => {
+            console.log('Creating promise to wait for cache complete message');
+            channel.port1.onmessage = (event) => {
+              if (event.data.type === 'CACHE_COMPLETE') {
+                logToServiceWorker('All assets cached');
+                resolve();
+              }
+            };
+          });
+
+          logToServiceWorker('Communication between UI and Service Worker established');
+
+          logToServiceWorker('Waiting for cache complete message');
+          await cacheCompletePromise;
+          logToServiceWorker('Cache complete message received');
+
+          await navigator.serviceWorker.ready;
+          clearTimeout(swReadyTimeout);
+          logToServiceWorker('Service worker and cache ready');
+          redirectBasedOnPWAStatus();
+        } catch (error) {
+          clearTimeout(swReadyTimeout);
+          logToServiceWorker('Service worker failed:', error);
+          //redirectBasedOnPWAStatus();
+        }
+      } else {
+        console.log('Service worker not supported');
+        //redirectBasedOnPWAStatus();
+      }
+    }
+
+    // Start the registration
+    registerServiceWorker();
+
+    function redirectBasedOnPWAStatus() {
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                 (window.navigator.standalone) ||
+                 document.referrer.includes('android-app://');
+                 
+      logToServiceWorker('Redirecting to:', isPWA ? 'categories.html' : 'install.html');
+      window.location.href = isPWA ? 'categories.html' : 'install.html';
+    }
+
+    function logToServiceWorker(message, ...args) {
+      if (navigator.serviceWorker && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({
+          type: 'UI_LOG',
+          message,
+          args
+        });
+      } else {
+        console.log(message, ...args);
+      }
+    }
+  </script>
+</body>
 </html>

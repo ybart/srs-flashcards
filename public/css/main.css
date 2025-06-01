@@ -178,25 +178,6 @@ article a:hover {
   --pico-background-color: var(--pico-form-element-selected-background-color);
 }
 
-@media (prefers-color-scheme: light) {
-  article > :where(a:not([role=button])) {
-    --pico-color: #373c44
-  }
-  article > :where(a:not([role=button])):is([aria-current]:not([aria-current=false]),:hover,:active,:focus), [role=link]:is([aria-current]:not([aria-current=false]),:hover,:active,:focus) {
-    --pico-color: #373c44
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  article > :where(a:not([role=button])) {
-    --pico-color: rgb(224, 227, 231);
-  }
-  article > :where(a:not([role=button])):is([aria-current]:not([aria-current=false]),:hover,:active,:focus), [role=link]:is([aria-current]:not([aria-current=false]),:hover,:active,:focus) {
-    --pico-color: rgb(224, 227, 231);
-  }
-  section[data-role=card] { background: #222 }
-}
-
 .spinner:not(:only-child) {
   display: none;
 }
@@ -549,4 +530,34 @@ div.spinner div.bar12 {
     margin-top: 5px;
     width: 100%;
   }
+}
+
+@media (prefers-color-scheme: light) {
+  article > :where(a:not([role=button])) {
+    --pico-color: #373c44
+  }
+  article > :where(a:not([role=button])):is([aria-current]:not([aria-current=false]),:hover,:active,:focus), [role=link]:is([aria-current]:not([aria-current=false]),:hover,:active,:focus) {
+    --pico-color: #373c44
+  }
+  details.dropdown summary+ul {
+    --pico-dropdown-background-color: #ffffff;
+    --pico-dropdown-color: #2d3748;
+    border: 1px solid #e2e8f0;
+  }
+  details.dropdown summary+ul li a {
+    color: var(--pico-dropdown-color);
+  }
+  details.dropdown summary+ul li a:hover {
+    background-color: #f8fafc;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  article > :where(a:not([role=button])) {
+    --pico-color: rgb(224, 227, 231);
+  }
+  article > :where(a:not([role=button])):is([aria-current]:not([aria-current=false]),:hover,:active,:focus), [role=link]:is([aria-current]:not([aria-current=false]),:hover,:active,:focus) {
+    --pico-color: rgb(224, 227, 231);
+  }
+  section[data-role=card] { background: #222 }
 }

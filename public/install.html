@@ -2,76 +2,271 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"></meta>
+    <link rel="apple-touch-icon" href="/icons/ios/1024.png" />
+    <script src="https://cdn.jsdelivr.net/npm/ios-pwa-splash@1.0.0/cdn.min.js"></script>
+    <script>iosPWASplash('/icons/ios/1024.png', '#000000');</script>
+
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/icons/ios/32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/icons/ios/192.png" type="image/png" sizes="192x192">
+
+    <link rel="manifest" href="manifest.json" />
+
     <title>Install SRS Flashcards</title>
     <style>
+        /* Base Styles */
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             line-height: 1.6;
             max-width: 800px;
             margin: 0 auto;
-            padding: 20px;
-            color: #333;
+            padding: 2rem;
+            color: #2d3748;
+            background-color: #f8fafc;
         }
+
         h1 {
-            color: #2c3e50;
+            color: #1e3a8a;
             text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 1.5rem;
+            font-weight: 700;
         }
+
+        /* Section Styling */
         .device-section {
-            background: #f9f9f9;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 30px;
+            background: white;
+            border-radius: 12px;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid #e2e8f0;
         }
+
+        .device-section h2 {
+            color: #1e40af;
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        /* Step Styling */
         .step {
-            margin-bottom: 15px;
+            margin-bottom: 1.5rem;
             display: flex;
-            align-items: baseline;
+            align-items: flex-start;
         }
+
         .step-number {
-            background: #3498db;
+            background: #2563eb;
             color: white;
-            width: 25px;
-            height: 25px;
+            width: 28px;
+            height: 28px;
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-right: 15px;
+            margin-right: 1rem;
             flex-shrink: 0;
-            line-height: 25px;
-            text-align: center;
-            font-size: 14px;
+            font-size: 0.9rem;
             font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            line-height: 28px;
+            position: relative;
+            top: 1em;
         }
+
+        /* Note Box */
+        .note {
+            background: #fffbeb;
+            padding: 1rem;
+            border-left: 4px solid #f59e0b;
+            margin: 1.5rem 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+        .note strong {
+            color: #b45309;
+        }
+
+        /* Buttons */
+        .direct-access-button {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: #10b981;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 1rem 0;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .direct-access-button:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Back to Top */
+        .back-to-top {
+            display: block;
+            text-align: right;
+            margin-top: 1.5rem;
+        }
+
+        .back-to-top a {
+            color: #4b5563;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+        }
+
+        .back-to-top a:hover {
+            color: #1e40af;
+        }
+
+        /* Links */
+        a {
+            color: #2563eb;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Lists */
+        ul {
+            padding-left: 1.25rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Illustration */
         .illustration {
             width: 100%;
             max-width: 300px;
             height: auto;
-            border: 1px dashed #ccc;
-            background: #f0f0f0;
+            border: 1px solid #e2e8f0;
+            background: white;
             display: block;
-            margin: 15px 0;
-            padding: 20px;
+            margin: 1rem 0;
+            padding: 1rem;
             text-align: center;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
-        .note {
-            background: #fff8e1;
-            padding: 10px;
-            border-left: 4px solid #ffc107;
-            margin: 20px 0;
+
+        /* App Store Buttons */
+        .app-store-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .app-button {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .app-button img {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+
+        .android-button {
+            background: white;
+            color: black;
+            border: 1px solid #e0e0e0;
+        }
+
+        .ios-button {
+            background: black;
+            color: white;
+        }
+
+        .android-button:hover {
+            background: #f5f5f5;
+            transform: translateY(-1px);
+        }
+
+        .ios-button:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+
+        .preview-warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffeeba;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 4px 4px 0;
+            font-size: 0.9em;
+        }
+        
+        .preview-warning strong {
+            font-weight: 600;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            .preview-warning {
+                background-color: #332701;
+                color: #ffd351;
+                border-left-color: #856404;
+            }
         }
     </style>
 </head>
-<body>
+<body id="top">
     <h1>Install SRS Flashcards as a Home Screen App</h1>
-    <p>Get the app-like experience with offline access and home screen launching.</p>
+
+    <img src="/icons/ios/256.png" alt="SRS Flashcards App Icon" style="width: 100px; height: 100px; border-radius: 20%; display: block; margin: 0 auto 1rem;">
+
+    <p style="text-align: center;">Get the app-like experience with offline access and home screen launching.</p>
+
+    <div class="preview-warning">
+        <strong>⚠️ Preview Notice:</strong> This app is currently in preview. The update mechanism doesn't work properly yet - 
+        to update, you'll need to <strong>completely delete and reinstall</strong> the app. 
+        Since data restoration isn't fully implemented, this means <strong>your progress will be lost</strong> during updates.
+        <br><br>
+        <strong>Note:</strong> You can download your progress data for backup, but the mechanism to restore it is not yet implemented.
+    </div>
+
+    <div class="app-store-buttons">
+        <a href="#android" class="app-button android-button">
+            <span>Download for Android</span>
+        </a>
+        <a href="#ios" class="app-button ios-button">
+            <span>Download for iPhone, iPad, Mac</span>
+        </a>
+    </div>
 
     <div class="device-section" id="toc">
         <h2>Table of Contents</h2>
         <ul>
             <li><a href="#android">Android Instructions</a></li>
-            <li><a href="#ios">iPhone/iOS Instructions</a></li>
+            <li><a href="#ios">iPhone, iOS & macOS Instructions</a></li>
+            <li><a href="#direct-access">Direct Web Access</a></li>
             <li><a href="#after-install">After Installation</a></li>
             <li><a href="#uninstall">Uninstalling</a></li>
             <li><a href="#learn-more">Learn More About PWAs (Installable Web Apps)</a></li>
@@ -84,7 +279,7 @@
         <div class="step">
             <div class="step-number">1</div>
             <div>
-                <p>Open <a href="https://srs-flashcards.ilyba.fr/" target="_blank">SRS Flashcards</a> in <strong>Chrome</strong> browser and tap the <strong>three-dot menu</strong> in the top right</p>
+                <p>Tap the <strong>three-dot menu</strong> in the top right</p>
                 <div class="illustration">
                     <img src="/images/screenshots/android-step1.png" alt="Android Chrome browser showing SRS Flashcards website" style="max-width: 100%; border: none;">
                 </div>
@@ -113,17 +308,22 @@
         </div>
 
         <div class="note">
-            <strong>Note:</strong> If you don't see the install option, try using Chrome and ensure you've visited the site at least once before.
+            <strong>Note:</strong> If you don't see the install option, try using Chrome and ensure you are on the right page.
+        </div>
+
+        <div class="back-to-top">
+            <a href="#top">↑ Back to top</a>
         </div>
     </div>
 
     <div class="device-section" id="ios">
-        <h2>iPhone/iOS Instructions</h2>
+        <h2>iPhone, iOS & macOS Instructions</h2>
 
         <div class="step">
             <div class="step-number">1</div>
             <div>
-                <p>Open <a href="https://srs-flashcards.ilyba.fr/" target="_blank">SRS Flashcards</a> in <strong>Safari</strong> and tap the <strong>share icon</strong> (box with arrow)</p>
+                <p>Tap the <strong>share icon</strong> (box with arrow) in the bottom (you may need to scroll up a bit to see it)</p>
+                <p>On macOS, you can also use the <strong>box with arrow</strong> button in the top right of Safari. In Chrome, there is an install button on the right side of the address bar.</p>
                 <div class="illustration">
                     <img src="/images/screenshots/ios-step1.jpg" alt="Safari address bar showing SRS Flashcards website with share icon" style="max-width: 100%; border: none;">
                 </div>
@@ -133,7 +333,7 @@
         <div class="step">
             <div class="step-number">2</div>
             <div>
-                <p>Select <strong>"Add to Home Screen"</strong></p>
+                <p>Select <strong>"Add to Home Screen" (or "Add to Dock" on macOS)</strong></p>
                 <div class="illustration">
                     <img src="/images/screenshots/ios-step2.png" alt="Safari share menu showing 'Add to Home Screen' option" style="max-width: 100%; border: none;">
                 </div>
@@ -153,6 +353,35 @@
         <div class="note">
             <strong>Note:</strong> For best experience, iOS 16.4+ is recommended for full PWA features.
         </div>
+
+        <div class="back-to-top">
+            <a href="#top">↑ Back to top</a>
+        </div>
+    </div>
+
+    <div class="device-section" id="direct-access">
+        <h2>Direct Web Access</h2>
+        
+        <div class="note">
+            <strong>Note about web version:</strong>
+            <p>This is the web version of the app. It is not as feature-rich as the installed version.
+                It's a good way to try the app without installing it, however we recommend installing
+                the app for the best experience.
+            </p>
+            <ul>
+                <li>Your progress will be lost when the browser clears the web site cache</li>
+                <li>No notifications to help you remember to review your flashcards</li>
+                <li>No offline access - requires internet connection</li>
+                <li>Some features may not work as expected</li>
+            </ul>
+        </div>
+
+        <p>Continue using the web version without installing:</p>
+        <a href="/categories.html" class="direct-access-button">Open Web Version Now</a>
+
+        <div class="back-to-top">
+            <a href="#top">↑ Back to top</a>
+        </div>
     </div>
 
     <div class="device-section" id="after-install">
@@ -163,6 +392,10 @@
             <li>Use offline during commutes or travel</li>
             <li>Receive automatic updates</li>
         </ul>
+
+        <div class="back-to-top">
+            <a href="#top">↑ Back to top</a>
+        </div>
     </div>
 
     <div class="device-section" id="uninstall">
@@ -177,6 +410,10 @@
             </li>
             <li><strong>iOS:</strong> Long-press app icon > Delete App</li>
         </ul>
+
+        <div class="back-to-top">
+            <a href="#top">↑ Back to top</a>
+        </div>
     </div>
 
     <div class="device-section" id="learn-more">
@@ -187,6 +424,10 @@
             <li><a href="https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps" target="_blank">MDN Web Docs: PWAs</a></li>
             <li><a href="https://support.google.com/chrome/answer/9658361" target="_blank">Chrome's PWA Help Center</a></li>
         </ul>
+
+        <div class="back-to-top">
+            <a href="#top">↑ Back to top</a>
+        </div>
     </div>
 </body>
 </html>

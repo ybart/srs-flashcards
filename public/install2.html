@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Install App</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    button {
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>Install SRS Flashcards</h1>
+  <p>For the best experience, install this app to your home screen.</p>
+  
+  <div id="installContainer" style="margin: 2rem 0;">
+    <!-- Install button will appear here for supported browsers -->
+  </div>
+
+  <script>
+    // PWA installation prompt
+    let deferredPrompt;
+    
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      
+      const installButton = document.createElement('button');
+      installButton.textContent = 'Install App';
+      installButton.addEventListener('click', () => {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(() => {
+          window.location.href = 'categories.html';
+        });
+      });
+      
+      document.getElementById('installContainer').appendChild(installButton);
+    });
+
+    // If no install prompt after 3 seconds, offer manual instructions
+    setTimeout(() => {
+      if (!deferredPrompt) {
+        document.getElementById('installContainer').innerHTML = `
+          <p>Look for the "Add to Home Screen" option in your browser's menu.</p>
+          <a href="categories.html">
+            <button>Continue to Web Version</button>
+          </a>
+        `;
+      }
+    }, 3000);
+  </script>
+</body>
+</html>

@@ -1,3 +1,4 @@
 #!/bin/sh
 
-scp -r public web.ybart.fr:/var/www/srs-flashcards.ilyba.fr
+# scp -r public web.ybart.fr:/var/www/srs-flashcards.ilyba.fr
+rsync -avz --delete -e ssh public/ web.ybart.fr:/var/www/srs-flashcards.ilyba.fr/public/

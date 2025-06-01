@@ -46,6 +46,7 @@ export default class extends Controller {
 
   async validateAnswer(isCorrect) {
     if (!this.currentCard.label) this.currentCard.label = 0
+    const labels = this.constructor.labels
 
     // TODO: Update the session progress
 
@@ -53,8 +54,8 @@ export default class extends Controller {
     if (isCorrect && this.currentCard.label < 4) { this.currentCard.label += 1 }
     if (!isCorrect) { this.currentCard.label = 0 }
 
-    this.session.progress[previousLabel] -= 1
-    this.session.progress[this.currentCard.label] += 1
+    this.session.progress[labels[previousLabel]] -= 1
+    this.session.progress[labels[this.currentCard.label]] += 1
 
     // awaits here to prevent picking the card we just updated later
     await this.session.updateCard(this.currentCard, isCorrect)
