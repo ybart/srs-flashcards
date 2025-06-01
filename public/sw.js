@@ -1,12 +1,10 @@
-console.log('[ServiceWorker] root sw.js loaded');
-
 // Service worker version (update this when making changes)
 const CACHE_VERSION = 'v1';
 const CACHE_NAME = `srs-flashcards-${CACHE_VERSION}`;
 const FAILED_ASSETS = new Set();
 const CACHE_COMPLETE_MESSAGE = 'CACHE_COMPLETE';
 const LOG_MESSAGE = 'UI_LOG';
-const INIT_PORT_MESSAGE = 'INIT_PORT';
+// const INIT_PORT_MESSAGE = 'INIT_PORT';
 
 // State for UI communication
 const state = {
@@ -17,13 +15,7 @@ const state = {
 // Set up message listener IMMEDIATELY (before any events)
 console.log('[ServiceWorker] Setting up message listener');
 self.addEventListener('message', (event) => {
-  console.log('[ServiceWorker] Message received:', event.data);
-  
-  if (event.data.type === INIT_PORT_MESSAGE) {
-    state.port = event.ports[0];
-    console.log('[ServiceWorker] Port received and stored');
-  }
-  else if (event.data.type === LOG_MESSAGE) {
+  if (event.data.type === LOG_MESSAGE) {
     console.log(`[UI] ${event.data.message}`, ...(event.data.args || []));
   }
 });
@@ -84,46 +76,46 @@ const PRECACHE_ASSETS = [
   '/js/sqlite3/sqlite3-opfs-async-proxy.js',
 ];
 
+async function precacheAssets() {
+  const cache = await caches.open(CACHE_NAME);
+  let cachedCount = 0; // Counter for successfully cached assets
+
+  await Promise.all(
+    PRECACHE_ASSETS.map(async (asset) => {
+      try {
+        await cache.add(asset);
+        cachedCount++;
+        console.log(`[ServiceWorker] Cached (${cachedCount}/${PRECACHE_ASSETS.length}): ${asset}`);
+        notifyUI("CACHE_PROGRESS", cachedCount, PRECACHE_ASSETS.length);
+      } catch (error) {
+        console.error(`[ServiceWorker] Failed to cache ${asset}:`, error);
+        FAILED_ASSETS.add(asset);
+      }
+    })
+  );
+
+  console.log(`[ServiceWorker] Caching complete: ${cachedCount}/${PRECACHE_ASSETS.length} assets cached`);
+
+  await notifyUI("CACHE_COMPLETE");
+}
+
+async function notifyUI(message, ...args) {
+  const allClients = await clients.matchAll();
+  allClients.forEach(client => {
+    client.postMessage({ type: message, args: args });
+  });
+}
+
 self.addEventListener('install', async (event) => {
   try {
     console.log('[ServiceWorker] Install event');
-    const cache = await caches.open(CACHE_NAME);
-    let cachedCount = 0; // Counter for successfully cached assets
-    
-    await Promise.all(
-      PRECACHE_ASSETS.map(async (asset) => {
-        try {
-          await cache.add(asset);
-          cachedCount++;
-          console.log(`[ServiceWorker] Cached (${cachedCount}/${PRECACHE_ASSETS.length}): ${asset}`);
-        } catch (error) {
-          console.error(`[ServiceWorker] Failed to cache ${asset}:`, error);
-          FAILED_ASSETS.add(asset);
-        }
-      })
-    );
-
-    console.log(`[ServiceWorker] Caching complete: ${cachedCount}/${PRECACHE_ASSETS.length} assets cached`);
-    
-    // Notify UI if port is available
-    if (state.port) {
-      try {
-        state.port.postMessage({ type: CACHE_COMPLETE_MESSAGE });
-        console.log('[ServiceWorker] Notified UI via port');
-      } catch (error) {
-        console.error('[ServiceWorker] Failed to notify UI via port:', error);
-      }
-    } else {
-      console.log('[ServiceWorker] No port available, UI will need to poll or timeout');
-    }
-    
-    await self.skipWaiting();    
+    await precacheAssets();    
   } catch (error) {
     console.error('[ServiceWorker] Installation failed:', error);
+  } finally {
     await self.skipWaiting();
   }
 });
-
 
 self.addEventListener('activate', async (event) => {
   try {

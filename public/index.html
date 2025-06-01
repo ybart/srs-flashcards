@@ -26,63 +26,65 @@
       align-items: center;
       background: #f5f5f5;
     }
-    .spinner {
-      width: min(80vw, 80vh);
-      height: min(80vw, 80vh);
-      border: 16px solid #f3f3f3;
-      border-top: 16px solid #3498db;
-      border-radius: 50%;
-      animation: spin 2s linear infinite;
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .hidden {
+      display: none;
     }
   </style>
 </head>
 <body>
-  <div class="spinner"></div>
+  <progress class="hidden" id="cache-progress" max="100"></progress>
 
   <script>
+    const progressBar = document.getElementById('cache-progress');
+    
+    function updateProgress(current, total) {
+      const percent = Math.round((current / total) * 100);
+      progressBar.value = percent;
+      progressBar.textContent = `${percent}%`;
+    }
+
     async function registerServiceWorker() {
+      if (!isPWA()) {
+        redirectBasedOnPWAStatus();
+        return;
+      }
+
       const swReadyTimeout = setTimeout(() => {
         logToServiceWorker('Service worker ready timeout - proceeding anyway');
-        // redirectBasedOnPWAStatus();
-      }, 10000); // 10 second timeout
+        redirectBasedOnPWAStatus();
+      }, 30000); // 10 second timeout
 
       if ('serviceWorker' in navigator) {
         try {
           const reg = await navigator.serviceWorker.register('/sw.js');
-          console.log('Registration succeeded');
+          console.log('[UI] Registration succeeded');
 
-          // Wait for controller
-          if (!navigator.serviceWorker.controller) {
-            await new Promise(resolve => 
-              navigator.serviceWorker.addEventListener('controllerchange', resolve)
-            );
+          if (navigator.serviceWorker.controller?.state === 'activated') {
+            console.log('[UI] Service worker is already activated');
+            redirectBasedOnPWAStatus();
+            return;
           }
-          logToServiceWorker('Controller is ready');
 
-          // Send init message with port to service worker and create promise to wait for cache complete message
-          const channel = new MessageChannel();
-          console.log('Sending init message to service worker with port:', channel.port2);
-          navigator.serviceWorker.controller.postMessage({
-            type: 'INIT_PORT',
-            port: channel.port2
-          }, [channel.port2]);
-          const cacheCompletePromise = new Promise(resolve => {
-            console.log('Creating promise to wait for cache complete message');
-            channel.port1.onmessage = (event) => {
+          progressBar.classList.remove('hidden');
+
+          // Wait for service worker to be ready
+          await navigator.serviceWorker.ready;
+          console.log('[UI] Service worker is ready. Waiting for cache complete message');
+
+          let cacheCompletePromise = new Promise(resolve => {
+            navigator.serviceWorker.addEventListener('message', (event) => {
               if (event.data.type === 'CACHE_COMPLETE') {
-                logToServiceWorker('All assets cached');
+                progressBar.value = 100;
                 resolve();
+              } else if (event.data.type === 'CACHE_PROGRESS') {
+                const [current, total] = event.data.args;
+                updateProgress(current, total);
+              } else {
+                logToServiceWorker('Unknown message received:', event.data);
               }
-            };
+            });
           });
 
-          logToServiceWorker('Communication between UI and Service Worker established');
-
-          logToServiceWorker('Waiting for cache complete message');
           await cacheCompletePromise;
           logToServiceWorker('Cache complete message received');
 
@@ -93,24 +95,23 @@
         } catch (error) {
           clearTimeout(swReadyTimeout);
           logToServiceWorker('Service worker failed:', error);
-          //redirectBasedOnPWAStatus();
+          redirectBasedOnPWAStatus();
         }
       } else {
         console.log('Service worker not supported');
-        //redirectBasedOnPWAStatus();
+        redirectBasedOnPWAStatus();
       }
     }
 
-    // Start the registration
-    registerServiceWorker();
-
-    function redirectBasedOnPWAStatus() {
-      const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+    function isPWA() {
+      return window.matchMedia('(display-mode: standalone)').matches || 
                  (window.navigator.standalone) ||
                  document.referrer.includes('android-app://');
-                 
-      logToServiceWorker('Redirecting to:', isPWA ? 'categories.html' : 'install.html');
-      window.location.href = isPWA ? 'categories.html' : 'install.html';
+    }
+
+    function redirectBasedOnPWAStatus() {
+      logToServiceWorker('Redirecting to:', isPWA() ? 'categories.html' : 'install.html');
+      window.location.href = isPWA() ? 'categories.html' : 'install.html';
     }
 
     function logToServiceWorker(message, ...args) {
@@ -124,6 +125,9 @@
         console.log(message, ...args);
       }
     }
+
+    // Start the registration
+    registerServiceWorker();
   </script>
 </body>
 </html>

@@ -10,16 +10,3 @@ window.Stimulus = Application.start()
 Stimulus.register("categories", CategoriesController);
 Stimulus.register("study-session", StudySessionController);
 Stimulus.register("donate", DonateController);
-
-// Register Service Worker for caching
-console.log('[ServiceWorker] Registering');
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
-    .then(registration => {
-      console.log('ServiceWorker registration successful with scope:', registration.scope);
-    })
-    .catch(err => {
-      console.log('ServiceWorker registration failed:', err);
-    });
-}
