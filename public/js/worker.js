@@ -13,6 +13,9 @@ export default class ApplicationWorker {
       case 'load_database':
         await this.openPersistentDb(event.ports[0], event.data.file);
         break;
+      case 'import_database':
+        await this.importDatabase(event.ports[0], event.data.data);
+        break;
       case 'execute':
         this.executeQuery(event.ports[0], event.data.sql, event.data.bind);
         break;
@@ -45,6 +48,22 @@ export default class ApplicationWorker {
     }
 
     port.postMessage({ result: 'success' })
+  }
+
+  // Replace the persistent OPFS database with the bytes of an uploaded file.
+  // importDb validates the SQLite header, so a bad file rejects cleanly.
+  async importDatabase(port, rawData) {
+    try {
+      const sqlite3 = await sqlite3InitModule();
+      if (this.db) { this.db.close(); this.db = null; }
+
+      await sqlite3.oo1.OpfsDb.importDb('flashcards.db', rawData);
+      this.db = new sqlite3.oo1.OpfsDb('flashcards.db', 'c');
+
+      port.postMessage({ result: 'success' });
+    } catch (error) {
+      port.postMessage({ error: String(error) });
+    }
   }
 
   // TODO: Fallback to transient DB when persistent is not available

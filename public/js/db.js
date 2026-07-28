@@ -102,4 +102,12 @@ export default class ApplicationDatabase {
     a.download = 'srs-flashcards.db'
     a.click()
   }
+
+  // Replace the persistent database with the contents of an uploaded file.
+  // Rejects if the worker reports the file is not a valid SQLite database.
+  async import(file) {
+    if (!this.workerLoaded) { await this.waitForWorker() }
+    const arrayBuffer = await file.arrayBuffer()
+    return this.sendMessage("import_database", { "data": arrayBuffer })
+  }
 }

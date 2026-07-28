@@ -11,6 +11,21 @@ export default class extends Controller {
   async connect() {
     this.checkPWAStatus();
     this.refresh();
+
+    // Gray out online-only features ([data-online-only]) when offline.
+    this.boundOnlineStatus = this.updateOnlineStatus.bind(this);
+    window.addEventListener('online', this.boundOnlineStatus);
+    window.addEventListener('offline', this.boundOnlineStatus);
+    this.updateOnlineStatus();
+  }
+
+  disconnect() {
+    window.removeEventListener('online', this.boundOnlineStatus);
+    window.removeEventListener('offline', this.boundOnlineStatus);
+  }
+
+  updateOnlineStatus() {
+    this.element.classList.toggle('offline', !navigator.onLine);
   }
 
   async versionTargetConnected(element) {
@@ -110,6 +125,26 @@ export default class extends Controller {
   async reset() {
     await ApplicationRecord.database.reset();
     alert('DB supprimée')
+  }
+
+  async importDatabase() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.db,.sqlite,.sqlite3,application/x-sqlite3,application/vnd.sqlite3';
+    input.addEventListener('change', async () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      if (!confirm('Importing will REPLACE your current data with this file. Continue?')) return;
+      try {
+        await ApplicationRecord.database.import(file);
+        alert('Database imported. Reloading…');
+        window.location.reload();
+      } catch (error) {
+        console.error('Import failed:', error);
+        alert('Import failed — is this a valid SRS Flashcards database file?');
+      }
+    });
+    input.click();
   }
 
   checkPWAStatus() {
