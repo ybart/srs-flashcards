@@ -9,9 +9,6 @@
 #
 # The web root is owned by the `my_webapp` user, so we stage into a temp dir and
 # sudo-move it into place. `ssh -t` lets sudo prompt for a password if needed.
-#
-# Aborts if the version to deploy is already live (installed clients wouldn't
-# see it as an update); pass --force to deploy anyway.
 
 set -eu
 
@@ -37,40 +34,39 @@ git fetch -q origin main 2>/dev/null || echo "!! could not fetch origin; using l
 
 PUSHED="$(git rev-parse "$REMOTE_REF")"
 
-# We deploy the last pushed commit, so uncommitted changes and unpushed commits
-# would be silently left out. Abort on either unless --force.
-block=0
-if [ -n "$(git status --porcelain)" ]; then
-  echo "!! uncommitted changes present — they will NOT be deployed."
-  block=1
-fi
-ahead="$(git rev-list --count "$PUSHED..HEAD" 2>/dev/null || echo 0)"
-if [ "$ahead" -gt 0 ]; then
-  echo "!! $ahead local commit(s) not pushed to $REMOTE_REF — they will NOT be deployed."
-  block=1
-fi
-if [ "$block" -eq 1 ]; then
-  if [ "$FORCE" -eq 1 ]; then
-    echo "!! deploying the last pushed commit anyway (--force)."
-  else
-    echo "ABORT: commit + push first, or re-run with --force." >&2
-    exit 1
-  fi
-fi
-
 version="$(git show "$PUSHED:public/version.json" | jq -r '.version')"
 
-# Clients key their update off version.json (bin/deploy stamps it into the
-# service worker's CACHE_VERSION). Redeploying the same version is a silent
-# no-op for installed clients, so ABORT unless --force is given.
+# Collect EVERY blocker first, then decide once — so --force can't silently
+# bypass a second problem hidden behind the first, and a no-force run reports
+# them all instead of exiting on the first. Blockers: we deploy the last pushed
+# commit (uncommitted/unpushed changes are left out), and redeploying an
+# already-live version is a no-op for installed clients.
+problems=""
+add_problem() {
+  problems="${problems}  - ${1}
+"
+}
+
+if [ -n "$(git status --porcelain)" ]; then
+  add_problem "uncommitted changes present — they will NOT be deployed"
+fi
+
+ahead="$(git rev-list --count "$PUSHED..HEAD" 2>/dev/null || echo 0)"
+if [ "$ahead" -gt 0 ]; then
+  add_problem "$ahead local commit(s) not pushed to $REMOTE_REF — they will NOT be deployed"
+fi
+
 live_version="$(curl -fsS https://srs-flashcards.ilyba.fr/version.json 2>/dev/null | jq -r '.version' 2>/dev/null || echo '')"
 if [ -n "$live_version" ] && [ "$live_version" = "$version" ]; then
+  add_problem "version $version is already live — installed clients won't see an update"
+fi
+
+if [ -n "$problems" ]; then
+  printf '%s\n%s' "Deploy blockers:" "$problems" >&2
   if [ "$FORCE" -eq 1 ]; then
-    echo "!! version $version is already live — deploying anyway (--force)."
+    echo "Proceeding anyway (--force)." >&2
   else
-    echo "ABORT: version $version is already live." >&2
-    echo "Installed clients will NOT see this as an update. Bump" >&2
-    echo "public/version.json (then commit + push), or re-run with --force." >&2
+    echo "ABORT: fix the above, or re-run with --force." >&2
     exit 1
   fi
 fi
