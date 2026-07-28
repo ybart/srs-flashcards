@@ -7,24 +7,38 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"></meta>
     <link rel="apple-touch-icon" href="/icons/ios/1024.png" />
     <script>
-      /* TEMP diagnostic (offline-dialog hunt) — remove once identified. */
+      /* TEMP diagnostic (offline-dialog hunt) — remove once identified.
+         Logs persist to localStorage['diagLog'] so they can be read AFTER
+         attaching a console. Retrieve:  copy(localStorage.getItem('diagLog'))
+         or:  JSON.parse(localStorage.getItem('diagLog')).join('\n')
+         Clear:  localStorage.removeItem('diagLog') */
+      function diagLog() {
+        var args = Array.prototype.slice.call(arguments);
+        try { console.warn.apply(console, ['[diag]'].concat(args)); } catch (e) {}
+        try {
+          var log = JSON.parse(localStorage.getItem('diagLog') || '[]');
+          log.push(new Date().toISOString() + ' [' + location.pathname + '] ' + args.join(' '));
+          if (log.length > 300) log = log.slice(-300);
+          localStorage.setItem('diagLog', JSON.stringify(log));
+        } catch (e) {}
+      }
       window.addEventListener('error', function (e) {
         var t = e && e.target;
         if (t && t !== window && (t.src || t.href)) {
-          console.warn('[diag] resource FAILED:', t.tagName, t.src || t.href);
+          diagLog('resource FAILED:', t.tagName, t.src || t.href);
         }
       }, true);
       window.addEventListener('unhandledrejection', function (e) {
-        console.warn('[diag] unhandledrejection:', e.reason);
+        diagLog('unhandledrejection:', (e.reason && (e.reason.message || e.reason)) || 'unknown');
       });
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.addEventListener('message', function (e) {
           if (e.data && e.data.type === 'FETCH_FAILED') {
-            console.warn('[diag] SW network FAILED:', e.data.args[0], '(mode:', e.data.args[1] + ')');
+            diagLog('SW network FAILED:', e.data.args[0], '(mode:', e.data.args[1] + ')');
           }
         });
       }
-      console.log('[diag]', location.pathname, 'onLine =', navigator.onLine);
+      diagLog('page load, onLine =', navigator.onLine);
     </script>
     <script src="https://cdn.jsdelivr.net/npm/ios-pwa-splash@1.0.0/cdn.min.js"></script>
     <script>iosPWASplash('/icons/ios/1024.png', '#000000');</script>
