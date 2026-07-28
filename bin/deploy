@@ -3,9 +3,9 @@
 # Deploy to the YunoHost my_webapp on cloud.ilyba.fr.
 #
 # Deploys public/ from the LAST PUSHED commit (origin/main) — never the working
-# tree — so what's live always matches what's in the git remote. Warns if the
-# local working tree has uncommitted changes or unpushed commits, since those
-# will NOT be deployed.
+# tree — so what's live always matches what's in the git remote. Aborts if the
+# local working tree has uncommitted changes or unpushed commits (they would
+# NOT be deployed) or if that version is already live; --force overrides.
 #
 # The web root is owned by the `my_webapp` user, so we stage into a temp dir and
 # sudo-move it into place. `ssh -t` lets sudo prompt for a password if needed.
@@ -37,15 +37,25 @@ git fetch -q origin main 2>/dev/null || echo "!! could not fetch origin; using l
 
 PUSHED="$(git rev-parse "$REMOTE_REF")"
 
-# Warn: uncommitted (incl. untracked) changes are not part of the pushed commit.
+# We deploy the last pushed commit, so uncommitted changes and unpushed commits
+# would be silently left out. Abort on either unless --force.
+block=0
 if [ -n "$(git status --porcelain)" ]; then
-  echo "!! WARNING: working tree has uncommitted changes — they will NOT be deployed."
+  echo "!! uncommitted changes present — they will NOT be deployed."
+  block=1
 fi
-
-# Warn: local commits not yet on origin/main won't be deployed.
 ahead="$(git rev-list --count "$PUSHED..HEAD" 2>/dev/null || echo 0)"
 if [ "$ahead" -gt 0 ]; then
-  echo "!! WARNING: $ahead local commit(s) not pushed to $REMOTE_REF — they will NOT be deployed."
+  echo "!! $ahead local commit(s) not pushed to $REMOTE_REF — they will NOT be deployed."
+  block=1
+fi
+if [ "$block" -eq 1 ]; then
+  if [ "$FORCE" -eq 1 ]; then
+    echo "!! deploying the last pushed commit anyway (--force)."
+  else
+    echo "ABORT: commit + push first, or re-run with --force." >&2
+    exit 1
+  fi
 fi
 
 version="$(git show "$PUSHED:public/version.json" | jq -r '.version')"
