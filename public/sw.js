@@ -1,5 +1,5 @@
 // Service worker version (update this when making changes)
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `srs-flashcards-${CACHE_VERSION}`;
 const FAILED_ASSETS = new Set();
 const CACHE_COMPLETE_MESSAGE = 'CACHE_COMPLETE';
@@ -97,7 +97,11 @@ async function precacheAssets() {
   await Promise.all(
     PRECACHE_ASSETS.map(async (asset) => {
       try {
-        await cache.add(asset);
+        // {cache: 'reload'} bypasses the browser HTTP cache so we never
+        // precache a stale copy (e.g. an old .mjs served as octet-stream).
+        const response = await fetch(asset, { cache: 'reload' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        await cache.put(asset, response);
         cachedCount++;
         console.log(`[ServiceWorker] Cached (${cachedCount}/${PRECACHE_ASSETS.length}): ${asset}`);
         notifyUI("CACHE_PROGRESS", cachedCount, PRECACHE_ASSETS.length);
