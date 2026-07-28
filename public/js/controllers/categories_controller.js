@@ -12,16 +12,26 @@ export default class extends Controller {
     this.checkPWAStatus();
     this.refresh();
 
-    // Gray out online-only features ([data-online-only]) when offline.
+    // Gray out online-only features when offline; refresh the update badge on
+    // reconnect and when the app is brought back to the foreground.
     this.boundOnlineStatus = this.updateOnlineStatus.bind(this);
     window.addEventListener('online', this.boundOnlineStatus);
     window.addEventListener('offline', this.boundOnlineStatus);
+
+    this.boundVisibility = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        this.checkUpdateAvailable();
+      }
+    };
+    document.addEventListener('visibilitychange', this.boundVisibility);
+
     this.updateOnlineStatus();
   }
 
   disconnect() {
     window.removeEventListener('online', this.boundOnlineStatus);
     window.removeEventListener('offline', this.boundOnlineStatus);
+    document.removeEventListener('visibilitychange', this.boundVisibility);
   }
 
   updateOnlineStatus() {
