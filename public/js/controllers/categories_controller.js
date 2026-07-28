@@ -130,9 +130,11 @@ export default class extends Controller {
   async importDatabase() {
     const input = document.createElement('input');
     input.type = 'file';
-    // No `accept` filter: iOS Files greys out .db/.sqlite files whose MIME it
-    // doesn't recognize. The worker validates the SQLite header on import, so
-    // an invalid pick is rejected cleanly anyway.
+    // Accept database-like/binary types. Excluding image & video types is what
+    // makes iOS show the Files browser instead of a "Take Photo / Photo Library
+    // / Choose File" menu, and it hides photos in the desktop picker. The worker
+    // also validates the SQLite header on import, so a bad pick fails cleanly.
+    input.accept = '.db,.sqlite,.sqlite3,application/octet-stream';
     input.addEventListener('change', async () => {
       const file = input.files && input.files[0];
       if (!file) return;
@@ -143,7 +145,7 @@ export default class extends Controller {
         window.location.reload();
       } catch (error) {
         console.error('Import failed:', error);
-        alert('Import failed — is this a valid SRS Flashcards database file?');
+        alert(`Import failed: ${error}\n\nIs this a valid SRS Flashcards database file?`);
       }
     });
     input.click();

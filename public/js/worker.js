@@ -51,18 +51,28 @@ export default class ApplicationWorker {
   }
 
   // Replace the persistent OPFS database with the bytes of an uploaded file.
-  // importDb validates the SQLite header, so a bad file rejects cleanly.
   async importDatabase(port, rawData) {
     try {
+      const bytes = new Uint8Array(rawData);
+
+      // Reject non-SQLite files up front with a clear message. Every SQLite
+      // file starts with the 16-byte magic string "SQLite format 3\0".
+      const MAGIC = 'SQLite format 3\0';
+      const looksLikeSqlite = bytes.length >= 16 &&
+        Array.from(MAGIC).every((ch, i) => bytes[i] === ch.charCodeAt(0));
+      if (!looksLikeSqlite) {
+        throw new Error('Not a SQLite database (bad file header)');
+      }
+
       const sqlite3 = await sqlite3InitModule();
       if (this.db) { this.db.close(); this.db = null; }
 
-      await sqlite3.oo1.OpfsDb.importDb('flashcards.db', rawData);
+      await sqlite3.oo1.OpfsDb.importDb('flashcards.db', bytes);
       this.db = new sqlite3.oo1.OpfsDb('flashcards.db', 'c');
 
       port.postMessage({ result: 'success' });
     } catch (error) {
-      port.postMessage({ error: String(error) });
+      port.postMessage({ error: String((error && error.message) || error) });
     }
   }
 
