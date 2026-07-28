@@ -135,19 +135,26 @@ export default class extends Controller {
     // / Choose File" menu, and it hides photos in the desktop picker. The worker
     // also validates the SQLite header on import, so a bad pick fails cleanly.
     input.accept = '.db,.sqlite,.sqlite3,application/octet-stream';
+    // Attach to the DOM before clicking: a detached input's change event fires
+    // unreliably on iOS Safari (the "selecting a file does nothing" case).
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
     input.addEventListener('change', async () => {
       const file = input.files && input.files[0];
+      input.remove();
       if (!file) return;
       if (!confirm('Importing will REPLACE your current data with this file. Continue?')) return;
       try {
         await ApplicationRecord.database.import(file);
-        alert('Database imported. Reloading…');
+        // No blocking "done" alert; just reload — the fresh data is the feedback.
         window.location.reload();
       } catch (error) {
         console.error('Import failed:', error);
         alert(`Import failed: ${error}\n\nIs this a valid SRS Flashcards database file?`);
       }
-    });
+    }, { once: true });
+
     input.click();
   }
 
