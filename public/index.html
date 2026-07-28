@@ -118,17 +118,30 @@
       }
     }
 
-    // Cold-start auto-update: if online and a newer version is published, show
-    // "Updating…" and apply it before entering the app. Never runs offline.
+    // Cold-start auto-update: discover a newer service worker and apply it
+    // before entering, showing "Updating…". No version.json network fetch — that
+    // fired even in airplane mode (navigator.onLine is unreliable there) and
+    // triggered the offline dialog. reg.update() is an SW-level check; any
+    // failure (e.g. offline) is ignored.
     async function maybeUpdateThenRedirect(reg) {
-      if (!navigator.onLine) { redirectBasedOnPWAStatus(); return; }
       try {
-        const current = await fetch('/version.json').then(r => r.json()).then(d => d.version);            // cached/installed
-        const latest = await fetch('/version.json?t=' + Date.now()).then(r => r.json()).then(d => d.version); // network
-        if (!latest || latest === current) { redirectBasedOnPWAStatus(); return; }
+        try { await reg.update(); } catch (e) { /* offline / failed — ignore */ }
 
-        // Update available -> apply it; the page reloads when the new worker
-        // takes control, then this runs again and (now up to date) redirects.
+        // Wait for a freshly-found worker to finish installing.
+        const installing = reg.installing;
+        if (installing) {
+          await new Promise((resolve) => {
+            installing.addEventListener('statechange', () => {
+              if (installing.state === 'installed' || installing.state === 'redundant') resolve();
+            });
+            setTimeout(resolve, 8000);
+          });
+        }
+
+        if (!reg.waiting) { redirectBasedOnPWAStatus(); return; }
+
+        // A downloaded update is ready -> apply it; the page reloads when the
+        // new worker takes control, then re-runs and (now current) redirects.
         loader.classList.remove('hidden');
         statusEl.textContent = 'Updating…';
 
@@ -138,19 +151,11 @@
           done = true;
           window.location.reload();
         });
-        const activateWaiting = () => { if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' }); };
-        reg.addEventListener('updatefound', () => {
-          const nw = reg.installing;
-          if (!nw) return;
-          nw.addEventListener('statechange', () => { if (nw.state === 'installed') activateWaiting(); });
-        });
-        await reg.update();
-        activateWaiting();
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
 
-        // Safety: if the update doesn't land, proceed anyway.
         setTimeout(() => { if (!done) redirectBasedOnPWAStatus(); }, 15000);
       } catch (e) {
-        console.log('[UI] cold-start update check failed:', e);
+        console.log('[UI] cold-start update failed:', e);
         redirectBasedOnPWAStatus();
       }
     }

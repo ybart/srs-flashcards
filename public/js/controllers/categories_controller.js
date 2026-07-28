@@ -12,64 +12,75 @@ export default class extends Controller {
     this.checkPWAStatus();
     this.refresh();
 
-    // Gray out online-only features when offline; refresh the update badge on
-    // reconnect and when the app is brought back to the foreground.
+    // Offline graying of online-only features.
     this.boundOnlineStatus = this.updateOnlineStatus.bind(this);
     window.addEventListener('online', this.boundOnlineStatus);
     window.addEventListener('offline', this.boundOnlineStatus);
+    this.updateOnlineStatus();
+
+    // Update availability is derived from the service worker's own state — a
+    // "waiting" worker means a downloaded update is ready — so showing the badge
+    // needs NO network fetch from us. (Our old version.json check fired even in
+    // airplane mode and triggered the "no internet" dialog.) New versions are
+    // discovered when connectivity is (re)gained, on the manual check, and by
+    // the browser's own periodic SW checks.
+    const reg = await this.registration();
+    if (reg) {
+      this.refreshUpdateBadge();
+      reg.addEventListener('updatefound', () => {
+        const nw = reg.installing;
+        if (nw) nw.addEventListener('statechange', () => this.refreshUpdateBadge());
+      });
+    }
 
     this.boundVisibility = () => {
-      if (document.visibilityState === 'visible' && navigator.onLine) {
-        this.checkUpdateAvailable();
-      }
+      if (document.visibilityState === 'visible') this.refreshUpdateBadge();
     };
     document.addEventListener('visibilitychange', this.boundVisibility);
 
-    this.updateOnlineStatus();
+    this.boundDiscover = () => this.discoverUpdate();
+    window.addEventListener('online', this.boundDiscover);
   }
 
   disconnect() {
     window.removeEventListener('online', this.boundOnlineStatus);
     window.removeEventListener('offline', this.boundOnlineStatus);
+    window.removeEventListener('online', this.boundDiscover);
     document.removeEventListener('visibilitychange', this.boundVisibility);
   }
 
   updateOnlineStatus() {
-    const online = navigator.onLine;
-    this.element.classList.toggle('offline', !online);
-    if (online) {
-      this.checkUpdateAvailable();
-    } else {
-      this.element.classList.remove('update-available');
-    }
+    this.element.classList.toggle('offline', !navigator.onLine);
   }
 
-  // Toggle the red "update available" badge by comparing the installed version
-  // (cached version.json) against the latest on the server. Online only.
-  async checkUpdateAvailable() {
+  registration() {
+    return 'serviceWorker' in navigator ? navigator.serviceWorker.getRegistration() : null;
+  }
+
+  // Badge = a new worker is installed and waiting to activate. No network.
+  async refreshUpdateBadge() {
+    const reg = await this.registration();
+    this.element.classList.toggle('update-available', !!(reg && reg.waiting));
+  }
+
+  // Ask the browser to look for a new service worker (SW-level network; any
+  // failure, e.g. offline, is ignored), then refresh the badge.
+  async discoverUpdate() {
     try {
-      const current = await this.getCurrentVersion();
-      if (current === 'unknown') return;
-      const res = await fetch('/version.json?t=' + Date.now());
-      const { version: latest } = await res.json();
-      this.element.classList.toggle('update-available', !!latest && latest !== current);
+      const reg = await this.registration();
+      if (reg) await reg.update();
     } catch (e) {
-      // offline or fetch error — leave the badge as-is
+      // offline / failed — ignore
     }
+    this.refreshUpdateBadge();
   }
 
-  // Fetch the newest service worker, ask it to take over, and reload once it
-  // controls the page. Shared by the manual check and the auto-prompt.
+  // Activate the waiting worker; reload once it controls the page. Works
+  // offline too (activating a waiting worker needs no network).
   async applyUpdate() {
-    const registration = 'serviceWorker' in navigator
-      ? await navigator.serviceWorker.getRegistration()
-      : null;
-
-    if (!registration) {
-      // No service worker (e.g. not a PWA): reload to pick up new files.
-      window.location.reload();
-      return;
-    }
+    const reg = await this.registration();
+    if (!reg) { window.location.reload(); return; }
+    if (!reg.waiting) return;
 
     let reloaded = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
@@ -77,23 +88,7 @@ export default class extends Controller {
       reloaded = true;
       window.location.reload();
     });
-
-    const activateWaiting = () => {
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
-    };
-
-    registration.addEventListener('updatefound', () => {
-      const nw = registration.installing;
-      if (!nw) return;
-      nw.addEventListener('statechange', () => {
-        if (nw.state === 'installed') activateWaiting();
-      });
-    });
-
-    await registration.update();
-    activateWaiting(); // in case a worker was already waiting from before
+    reg.waiting.postMessage({ type: 'SKIP_WAITING' });
   }
 
   async versionTargetConnected(element) {
@@ -255,34 +250,38 @@ export default class extends Controller {
 
   async checkForUpdates(event) {
     const isUserRequested = event instanceof Event;  // True when called from UI
+    const reg = await this.registration();
+
+    if (!reg) {
+      if (isUserRequested) alert('Updates are unavailable here.');
+      return;
+    }
 
     try {
-      console.log('Checking for updates');
-      const currentVersion = await this.getCurrentVersion();
-      const response = await fetch('/version.json?t=' + Date.now());
-      const { version: latestVersion } = await response.json();
-
-      if (!latestVersion) {
-        throw new Error('Invalid version format');
+      // Look for a new worker unless one is already downloaded and waiting.
+      if (!reg.waiting) {
+        await reg.update();
+        const installing = reg.installing;
+        if (installing) {
+          await new Promise((resolve) => {
+            installing.addEventListener('statechange', () => {
+              if (installing.state === 'installed' || installing.state === 'redundant') resolve();
+            });
+          });
+        }
       }
+      this.refreshUpdateBadge();
 
-      console.log('Current version:', currentVersion, 'Latest version:', latestVersion);
-
-      if (latestVersion === currentVersion) {
-        if (isUserRequested) alert(`You're up to date (v${currentVersion})`);
-        return;
+      if (reg.waiting) {
+        if (!isUserRequested || confirm('A new version is available. Install now?')) {
+          await this.applyUpdate();
+        }
+      } else if (isUserRequested) {
+        alert(`You're up to date (v${await this.getCurrentVersion()})`);
       }
-
-      if (isUserRequested && !confirm(`Update available (v${latestVersion}). Install now?`)) {
-        return;
-      }
-
-      await this.applyUpdate();
     } catch (error) {
       console.error('Update check failed:', error);
-      if (isUserRequested) {
-        alert('Update check failed. Please try again later.');
-      }
+      if (isUserRequested) alert('Update check failed. Please try again later.');
     }
   }
 }
