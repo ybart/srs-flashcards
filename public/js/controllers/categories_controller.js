@@ -130,7 +130,9 @@ export default class extends Controller {
   async importDatabase() {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.db,.sqlite,.sqlite3,application/x-sqlite3,application/vnd.sqlite3';
+    // No `accept` filter: iOS Files greys out .db/.sqlite files whose MIME it
+    // doesn't recognize. The worker validates the SQLite header on import, so
+    // an invalid pick is rejected cleanly anyway.
     input.addEventListener('change', async () => {
       const file = input.files && input.files[0];
       if (!file) return;
