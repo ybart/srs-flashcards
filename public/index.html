@@ -78,55 +78,59 @@
         return;
       }
 
+      if (!('serviceWorker' in navigator)) {
+        console.log('Service worker not supported');
+        redirectBasedOnPWAStatus();
+        return;
+      }
+
       const swReadyTimeout = setTimeout(() => {
         logToServiceWorker('Service worker ready timeout - proceeding anyway');
         redirectBasedOnPWAStatus();
-      }, 30000); // 10 second timeout
+      }, 30000);
 
-      if ('serviceWorker' in navigator) {
-        try {
-          if (navigator.serviceWorker.controller) {
-            // Returning launch: the SW already controls the page. Do NOT call
-            // register() — register() runs a soft update (a /sw.js network
-            // fetch) that fails and pops the offline dialog in airplane mode.
-            // Just reuse the existing registration and apply any already-
-            // downloaded update. Discovery of new versions happens later
-            // (deferred + gated on navigator.onLine) from the categories page.
-            clearTimeout(swReadyTimeout);
-            const reg = await navigator.serviceWorker.getRegistration();
-            if (reg) { await maybeUpdateThenRedirect(reg); }
-            else { redirectBasedOnPWAStatus(); }
-            return;
-          }
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        console.log('[UI] Registration succeeded');
 
-          // First install (no controller yet): register + precache.
-          // updateViaCache 'all' makes later soft updates use the HTTP cache.
-          await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'all' });
-          console.log('[UI] Registration succeeded');
-
+        // First install: show the loader and wait for the precache to finish.
+        if (!navigator.serviceWorker.controller) {
           loader.classList.remove('hidden');
-
-          // Wait for the SW to finish precaching (or the 30s safety timeout).
           await cacheComplete;
           clearTimeout(swReadyTimeout);
           logToServiceWorker('Service worker and cache ready');
           redirectBasedOnPWAStatus();
-        } catch (error) {
-          clearTimeout(swReadyTimeout);
-          logToServiceWorker('Service worker failed:', error);
-          redirectBasedOnPWAStatus();
+          return;
         }
-      } else {
-        console.log('Service worker not supported');
+
+        // Returning launch: check for an update and apply it automatically.
+        clearTimeout(swReadyTimeout);
+        await maybeUpdateThenRedirect(reg);
+      } catch (error) {
+        clearTimeout(swReadyTimeout);
+        logToServiceWorker('Service worker failed:', error);
         redirectBasedOnPWAStatus();
       }
     }
 
-    // Cold start does ZERO network: if an update was already downloaded (a
-    // waiting worker), apply it ("Updating…"); otherwise go straight in. This
-    // guarantees no offline "no internet" dialog on launch. New versions are
-    // discovered later (deferred + on reconnect/manual) by the categories page.
+    // At launch, check for a new version and apply it automatically ("Updating…").
+    // If offline the check just fails and we proceed. (Safari may show its own
+    // "no internet" dialog on that failed check — a known PWA limitation we
+    // accept; the app itself works fully offline.)
     async function maybeUpdateThenRedirect(reg) {
+      try {
+        await reg.update();
+        const installing = reg.installing;
+        if (installing) {
+          await new Promise((resolve) => {
+            installing.addEventListener('statechange', () => {
+              if (installing.state === 'installed' || installing.state === 'redundant') resolve();
+            });
+            setTimeout(resolve, 8000);
+          });
+        }
+      } catch (e) { /* offline / failed — proceed */ }
+
       if (!reg.waiting) { redirectBasedOnPWAStatus(); return; }
 
       loader.classList.remove('hidden');
