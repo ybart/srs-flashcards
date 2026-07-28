@@ -1,5 +1,5 @@
 // Service worker version (update this when making changes)
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `srs-flashcards-${CACHE_VERSION}`;
 const FAILED_ASSETS = new Set();
 const CACHE_COMPLETE_MESSAGE = 'CACHE_COMPLETE';
@@ -120,66 +120,74 @@ async function notifyUI(message, ...args) {
   });
 }
 
-self.addEventListener('install', async (event) => {
-  try {
-    console.log('[ServiceWorker] Install event');
-    await precacheAssets();
-    
-    const version = await fetch('/version.json').then(res => res.json()).then(data => data.version);
-    const allClients = await clients.matchAll();
-    allClients.forEach(client => {
-      client.postMessage({ type: 'VERSION_INSTALLED', version: version });
-    });
+self.addEventListener('install', (event) => {
+  // waitUntil keeps the SW in "installing" until the precache finishes,
+  // so we never activate with a half-populated cache.
+  event.waitUntil((async () => {
+    try {
+      console.log('[ServiceWorker] Install event');
+      await precacheAssets();
 
-  } catch (error) {
-    console.error('[ServiceWorker] Installation failed:', error);
-  } finally {
-    await self.skipWaiting();
-  }
+      const version = await fetch('/version.json').then(res => res.json()).then(data => data.version);
+      const allClients = await clients.matchAll();
+      allClients.forEach(client => {
+        client.postMessage({ type: 'VERSION_INSTALLED', version: version });
+      });
+    } catch (error) {
+      console.error('[ServiceWorker] Installation failed:', error);
+    } finally {
+      await self.skipWaiting();
+    }
+  })());
 });
 
-self.addEventListener('activate', async (event) => {
-  try {
-    console.log('[ServiceWorker] Activate event');
-    const cacheNames = await caches.keys();
-    
-    await Promise.all(
-      cacheNames.map(async (cacheName) => {
-        if (cacheName !== CACHE_NAME) {
-          console.log('[ServiceWorker] Deleting old cache:', cacheName);
-          await caches.delete(cacheName);
-        }
-      })
-    );
-    
-    await self.clients.claim();
-    console.log('[ServiceWorker] Ready to handle fetches');
-  } catch (error) {
-    console.error('[ServiceWorker] Activation failed:', error);
-  }
+self.addEventListener('activate', (event) => {
+  event.waitUntil((async () => {
+    try {
+      console.log('[ServiceWorker] Activate event');
+      const cacheNames = await caches.keys();
+
+      await Promise.all(
+        cacheNames.map(async (cacheName) => {
+          if (cacheName !== CACHE_NAME) {
+            console.log('[ServiceWorker] Deleting old cache:', cacheName);
+            await caches.delete(cacheName);
+          }
+        })
+      );
+
+      await self.clients.claim();
+      console.log('[ServiceWorker] Ready to handle fetches');
+    } catch (error) {
+      console.error('[ServiceWorker] Activation failed:', error);
+    }
+  })());
 });
-  
-self.addEventListener('fetch', async (event) => {
+
+self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
-  try {
+  // respondWith MUST be called synchronously here for the SW to intercept the
+  // request at all. Strategy: cache-first, fall back to network; when offline
+  // and uncached, serve the app shell for navigations so the PWA still opens.
+  event.respondWith((async () => {
     const cachedResponse = await caches.match(event.request);
     if (cachedResponse) {
-      console.log('[ServiceWorker] Serving from cache:', event.request.url);
       return cachedResponse;
     }
 
-    if (FAILED_ASSETS.has(event.request.url)) {
-      console.warn('[ServiceWorker] Serving previously failed asset from network:', event.request.url);
+    try {
+      return await fetch(event.request);
+    } catch (error) {
+      if (event.request.mode === 'navigate') {
+        const shell = await caches.match('/index.html') || await caches.match('/');
+        if (shell) return shell;
+      }
+      console.error('[ServiceWorker] Offline and not cached:', event.request.url, error);
+      return new Response('Offline', {
+        status: 503,
+        headers: { 'Content-Type': 'text/plain' }
+      });
     }
-
-    console.log('[ServiceWorker] Serving from network:', event.request.url);
-    return fetch(event.request);
-  } catch (error) {
-    console.error('[ServiceWorker] Fetch handler failed:', error);
-    return new Response('Network error', { 
-      status: 408,
-      headers: { 'Content-Type': 'text/plain' }
-    });
-  }
+  })());
 });
