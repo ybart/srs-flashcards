@@ -34,6 +34,11 @@
       - Create the commit.
    - Do a partial checkout of latest release commit of the public folder contents
    - Upload this copy with rsync over ssh
+- [ ] Kanji-of-the-Day (KOAD) generator for growth/marketing
+   - Read `flashcards.db` and generate daily social posts (kanji + reading + meaning + example)
+   - Level 1: output a batch of ready-to-paste posts (no API keys)
+   - Level 2: auto-post to Bluesky via the API on a schedule (app password)
+   - Rationale + strategy in `docs/MARKETING.md` (Bluesky community section)
 - [ ] Notifications (after 1 day (morning, midday, evening), after 2 day, after 1 week, after 1 month)
 - [ ] Progress UI
 

@@ -89,6 +89,32 @@ You already have a JLPT kanji/vocabulary database — turn it into content:
 
 ---
 
+# Talking about it offline (introvert-friendly)
+
+You don't have to pitch. Two low-pressure moves do most of the work:
+
+**1. Let a QR card do the talking.** Make a business-card-sized card (or a
+sticker) with a QR code to https://srs-flashcards.ilyba.fr/ and the one-liner.
+When Japanese study comes up, hand it over instead of explaining: "I made this,
+might help." No speech required — ideal if you'd rather not hold the floor.
+
+**2. Demo, don't describe.** Pull it up on your phone and let someone try one
+card for 15 seconds. The app sells itself better than a sentence can.
+
+**Keep one line ready** so you never improvise:
+> "It's a free flashcard app I made for JLPT kanji — works offline, no account.
+> Want the link?"
+
+**Where it comes up naturally** (no cold approaches needed):
+- Language-exchange meetups and Japanese conversation groups
+- A class, tutor, or university Japanese club
+- Japan-culture events, or friends who mention studying Japanese
+
+The whole tactic is "be ready when it comes up", not "bring it up". Keep a few
+QR cards in your wallet and let conversations do the rest.
+
+---
+
 # Draft launch posts (paste-ready)
 
 > Tone: humble, helpful, "made this for myself, sharing in case it helps."
