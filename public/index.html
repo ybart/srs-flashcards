@@ -85,7 +85,11 @@
 
       if ('serviceWorker' in navigator) {
         try {
-          const reg = await navigator.serviceWorker.register('/sw.js');
+          // updateViaCache 'all': use the HTTP cache for sw.js instead of
+          // hitting the network on every launch (the offline "no internet"
+          // dialog is that background fetch). Explicit registration.update()
+          // in the app still detects new versions when online.
+          const reg = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'all' });
           console.log('[UI] Registration succeeded');
 
           if (navigator.serviceWorker.controller) {
