@@ -85,20 +85,24 @@
 
       if ('serviceWorker' in navigator) {
         try {
-          // updateViaCache 'all': use the HTTP cache for sw.js instead of
-          // hitting the network on every launch (the offline "no internet"
-          // dialog is that background fetch). Explicit registration.update()
-          // in the app still detects new versions when online.
-          const reg = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'all' });
-          console.log('[UI] Registration succeeded');
-
           if (navigator.serviceWorker.controller) {
-            // Returning launch: the SW already controls the page. Apply any
-            // pending update now (online only), then go in.
+            // Returning launch: the SW already controls the page. Do NOT call
+            // register() — register() runs a soft update (a /sw.js network
+            // fetch) that fails and pops the offline dialog in airplane mode.
+            // Just reuse the existing registration and apply any already-
+            // downloaded update. Discovery of new versions happens later
+            // (deferred + gated on navigator.onLine) from the categories page.
             clearTimeout(swReadyTimeout);
-            await maybeUpdateThenRedirect(reg);
+            const reg = await navigator.serviceWorker.getRegistration();
+            if (reg) { await maybeUpdateThenRedirect(reg); }
+            else { redirectBasedOnPWAStatus(); }
             return;
           }
+
+          // First install (no controller yet): register + precache.
+          // updateViaCache 'all' makes later soft updates use the HTTP cache.
+          await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'all' });
+          console.log('[UI] Registration succeeded');
 
           loader.classList.remove('hidden');
 
