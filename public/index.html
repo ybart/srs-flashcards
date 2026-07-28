@@ -31,22 +31,26 @@
       display: none;
     }
     #loader { width: min(80vw, 320px); text-align: center; }
+    #loader-icon { width: 96px; height: 96px; margin-bottom: 20px; border-radius: 22%; }
     #loader progress { width: 100%; }
     #cache-status { margin-top: 12px; color: #666; font-size: 0.9rem; }
   </style>
 </head>
 <body>
   <div id="loader" class="hidden">
+    <img id="loader-icon" src="/icons/ios/192.png" alt="" width="96" height="96">
     <progress id="cache-progress" max="100"></progress>
-    <p id="cache-status">Installing…</p>
+    <p id="cache-status">Preparing…</p>
   </div>
 
   <script>
     const loader = document.getElementById('loader');
     const progressBar = document.getElementById('cache-progress');
+    const statusEl = document.getElementById('cache-status');
 
     function updateProgress(current, total) {
       if (!total) return;
+      statusEl.textContent = 'Installing…'; // real progress -> determinate
       progressBar.value = Math.round((current / total) * 100);
     }
 
