@@ -144,24 +144,44 @@ export default class extends Controller {
       }
 
       console.log('Current version:', currentVersion, 'Latest version:', latestVersion);
-      if (latestVersion !== currentVersion) {
-        if (confirm(`Update available (v${latestVersion}). Install now?`)) {
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.addEventListener('message', (event) => {
-              if (event.data.type === 'VERSION_INSTALLED') {
-                console.log('Version installed:', event.data.version);
-                localStorage.setItem('version', event.data.version);
-                window.location.reload();
-              }
-            });            
-            navigator.serviceWorker.controller.postMessage({
-              type: 'UPDATE_AVAILABLE',
-              version: latestVersion
-            });
-          }
-        }
-      } else if (isUserRequested) {
-        alert(`You're up to date (v${currentVersion})`);
+
+      if (latestVersion === currentVersion) {
+        if (isUserRequested) alert(`You're up to date (v${currentVersion})`);
+        return;
+      }
+
+      if (isUserRequested && !confirm(`Update available (v${latestVersion}). Install now?`)) {
+        return;
+      }
+
+      const registration = 'serviceWorker' in navigator
+        ? await navigator.serviceWorker.getRegistration()
+        : null;
+
+      if (!registration) {
+        // No service worker (e.g. not running as a PWA): reload to get new files.
+        localStorage.setItem('version', latestVersion);
+        window.location.reload();
+        return;
+      }
+
+      // Reload exactly once, as soon as the new worker takes control of the page.
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloaded) return;
+        reloaded = true;
+        localStorage.setItem('version', latestVersion);
+        window.location.reload();
+      });
+
+      // Fetch the latest sw.js. If it changed, it installs, calls skipWaiting()
+      // (see sw.js install handler), then activates — purging old caches and
+      // re-precaching — which fires the controllerchange above.
+      await registration.update();
+
+      // If a new worker is already installed and merely waiting, nudge it.
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
       }
     } catch (error) {
       console.error('Update check failed:', error);

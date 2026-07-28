@@ -96,6 +96,19 @@ never the working tree — and warns if there are uncommitted or unpushed change
 It stages the tree with `git archive`, rsyncs to a temp dir, then `sudo`-installs
 into the web root and fixes ownership.
 
+### Releasing an update to installed PWAs
+
+`public/version.json` is the single source of truth for the release version.
+Bump it when you want installed clients to pick up new files:
+
+- `bin/deploy` stamps that version into `sw.js`'s `CACHE_VERSION`, so each
+  release ships a byte-changed service worker.
+- A client's **Check for Updates** menu item compares `version.json` to its
+  stored version, calls `registration.update()`, and reloads once the new
+  worker takes control (`controllerchange`). The new worker's `activate`
+  handler purges old caches and re-precaches — no force-quit needed.
+- The user's OPFS/IndexedDB database is never touched by this.
+
 ## 6. Verify
 
 ```
@@ -105,6 +118,7 @@ curl -s -o /dev/null -w '%{content_type}\n' https://srs-flashcards.ilyba.fr/js/s
 
 Expect `200`, the three `Cross-Origin-*` headers, and `.mjs` as `text/javascript`.
 
-> **Service worker cache:** `sw.js` precaches assets, so a plain browser refresh
-> can keep serving stale files after a deploy. Fully relaunch the app (or bump
-> `CACHE_VERSION` in `public/sw.js`) to pick up changes.
+> **Service worker cache:** `sw.js` precaches assets and serves cache-first, so
+> installed clients keep serving cached files until a new release is picked up.
+> Bump `public/version.json` (see *Releasing an update* above) — don't hand-edit
+> `CACHE_VERSION`, `bin/deploy` stamps it from `version.json`.

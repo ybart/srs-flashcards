@@ -1,4 +1,6 @@
-// Service worker version (update this when making changes)
+// Cache version. bin/deploy overwrites this with the app version from
+// version.json at deploy time, so every release ships a byte-changed sw.js
+// (which is what makes the browser install the new worker on an update check).
 const CACHE_VERSION = 'v3';
 const CACHE_NAME = `srs-flashcards-${CACHE_VERSION}`;
 const FAILED_ASSETS = new Set();
@@ -14,25 +16,14 @@ const state = {
 
 // Set up message listener IMMEDIATELY (before any events)
 console.log('[ServiceWorker] Setting up message listener');
-self.addEventListener('message', async (event) => {
+self.addEventListener('message', (event) => {
   if (event.data.type === LOG_MESSAGE) {
     console.log(`[UI] ${event.data.message}`, ...(event.data.args || []));
-  } else if (event.data.type === 'UPDATE_AVAILABLE') {
-    await update(event.data.version);
+  } else if (event.data.type === 'SKIP_WAITING') {
+    // A client asked a freshly-installed worker to take over immediately.
+    self.skipWaiting();
   }
 });
-
-async function update(version) {
-  console.log(`[ServiceWorker] Updating to version: ${version}`);
-  const cache = await caches.delete(CACHE_NAME);
-  console.log(`[ServiceWorker] Deleted cache: ${cache}`);
-  const currentVersion = await self.registration.update();
-  console.log(`[ServiceWorker] Updated to version: ${currentVersion}, reloading...`);
-  const allClients = await clients.matchAll();
-  allClients.forEach(client => {
-    client.postMessage({ type: 'VERSION_INSTALLED', version: version });
-  });
-}
 
 // List of static assets to precache
 const PRECACHE_ASSETS = [

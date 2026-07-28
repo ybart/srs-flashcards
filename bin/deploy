@@ -44,6 +44,12 @@ stage="$(mktemp -d)"
 trap 'rm -rf "$stage"' EXIT
 git archive "$PUSHED" public | tar -x -C "$stage"
 
+# Stamp the service-worker cache version with the app version, so every release
+# ships a byte-changed sw.js. That is what makes the browser install the new
+# worker (which purges the old cache and re-precaches) on the next update check.
+sed -i.bak "s/^const CACHE_VERSION = .*/const CACHE_VERSION = '${version}';/" "$stage/public/sw.js"
+rm -f "$stage/public/sw.js.bak"
+
 # Upload, then sudo-install into the my_webapp web root.
 rsync -avz --delete "$stage/public/" "$HOST:$REMOTE_TMP/"
 ssh -t "$HOST" "
