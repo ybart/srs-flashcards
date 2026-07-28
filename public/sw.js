@@ -29,6 +29,7 @@ self.addEventListener('message', (event) => {
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
+  '/version.json',
   '/manifest.json',
   '/favicon.ico',
   '/icons/ios/32.png',

@@ -34,6 +34,11 @@
       - Create the commit.
    - Do a partial checkout of latest release commit of the public folder contents
    - Upload this copy with rsync over ssh
+- [ ] First launch: show progress for DB initialisation on the categories page
+      (worker -> UI messaging), not just asset precache.
+- [ ] Consider distributing/updating the app as a single zip archive: atomic
+      install and one download instead of ~150 files — faster first launch, and
+      no partial-update tears where the version label and loaded code disagree.
 - [ ] Kanji-of-the-Day (KOAD) generator for growth/marketing
    - Read `flashcards.db` and generate daily social posts (kanji + reading + meaning + example)
    - Level 1: output a batch of ready-to-paste posts (no API keys)

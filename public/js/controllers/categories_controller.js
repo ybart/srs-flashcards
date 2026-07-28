@@ -173,7 +173,16 @@ export default class extends Controller {
   }
 
   async getCurrentVersion() {
-    return localStorage.getItem('version') || 'unknown';
+    // The installed version = the version of the downloaded files. version.json
+    // is precached, so fetching it (served cache-first by the service worker)
+    // reflects what's actually installed, not a separately-tracked number.
+    try {
+      const res = await fetch('/version.json');
+      const { version } = await res.json();
+      return version || 'unknown';
+    } catch (e) {
+      return 'unknown';
+    }
   }
 
   async checkForUpdates(event) {
@@ -206,7 +215,6 @@ export default class extends Controller {
 
       if (!registration) {
         // No service worker (e.g. not running as a PWA): reload to get new files.
-        localStorage.setItem('version', latestVersion);
         window.location.reload();
         return;
       }
@@ -216,7 +224,6 @@ export default class extends Controller {
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (reloaded) return;
         reloaded = true;
-        localStorage.setItem('version', latestVersion);
         window.location.reload();
       });
 
