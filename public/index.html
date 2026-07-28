@@ -118,46 +118,25 @@
       }
     }
 
-    // Cold-start auto-update: discover a newer service worker and apply it
-    // before entering, showing "Updating…". No version.json network fetch — that
-    // fired even in airplane mode (navigator.onLine is unreliable there) and
-    // triggered the offline dialog. reg.update() is an SW-level check; any
-    // failure (e.g. offline) is ignored.
+    // Cold start does ZERO network: if an update was already downloaded (a
+    // waiting worker), apply it ("Updating…"); otherwise go straight in. This
+    // guarantees no offline "no internet" dialog on launch. New versions are
+    // discovered later (deferred + on reconnect/manual) by the categories page.
     async function maybeUpdateThenRedirect(reg) {
-      try {
-        try { await reg.update(); } catch (e) { /* offline / failed — ignore */ }
+      if (!reg.waiting) { redirectBasedOnPWAStatus(); return; }
 
-        // Wait for a freshly-found worker to finish installing.
-        const installing = reg.installing;
-        if (installing) {
-          await new Promise((resolve) => {
-            installing.addEventListener('statechange', () => {
-              if (installing.state === 'installed' || installing.state === 'redundant') resolve();
-            });
-            setTimeout(resolve, 8000);
-          });
-        }
+      loader.classList.remove('hidden');
+      statusEl.textContent = 'Updating…';
 
-        if (!reg.waiting) { redirectBasedOnPWAStatus(); return; }
+      let done = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (done) return;
+        done = true;
+        window.location.reload();
+      });
+      reg.waiting.postMessage({ type: 'SKIP_WAITING' });
 
-        // A downloaded update is ready -> apply it; the page reloads when the
-        // new worker takes control, then re-runs and (now current) redirects.
-        loader.classList.remove('hidden');
-        statusEl.textContent = 'Updating…';
-
-        let done = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          if (done) return;
-          done = true;
-          window.location.reload();
-        });
-        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-
-        setTimeout(() => { if (!done) redirectBasedOnPWAStatus(); }, 15000);
-      } catch (e) {
-        console.log('[UI] cold-start update failed:', e);
-        redirectBasedOnPWAStatus();
-      }
+      setTimeout(() => { if (!done) redirectBasedOnPWAStatus(); }, 15000);
     }
 
     function isPWA() {

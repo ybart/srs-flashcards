@@ -34,12 +34,20 @@ export default class extends Controller {
     }
 
     this.boundVisibility = () => {
-      if (document.visibilityState === 'visible') this.refreshUpdateBadge();
+      if (document.visibilityState === 'visible') {
+        this.refreshUpdateBadge();
+        this.scheduleDiscovery();
+      }
     };
     document.addEventListener('visibilitychange', this.boundVisibility);
 
     this.boundDiscover = () => this.discoverUpdate();
     window.addEventListener('online', this.boundDiscover);
+
+    // Defer the first network discovery: navigator.onLine can read stale-online
+    // right after launch/activation (iOS reports online in airplane mode
+    // briefly), so waiting a few seconds lets it settle and the onLine gate hold.
+    this.scheduleDiscovery();
   }
 
   disconnect() {
@@ -47,6 +55,7 @@ export default class extends Controller {
     window.removeEventListener('offline', this.boundOnlineStatus);
     window.removeEventListener('online', this.boundDiscover);
     document.removeEventListener('visibilitychange', this.boundVisibility);
+    clearTimeout(this._discoveryTimer);
   }
 
   updateOnlineStatus() {
@@ -63,9 +72,16 @@ export default class extends Controller {
     this.element.classList.toggle('update-available', !!(reg && reg.waiting));
   }
 
-  // Ask the browser to look for a new service worker (SW-level network; any
-  // failure, e.g. offline, is ignored), then refresh the badge.
+  // Defer discovery ~5s so navigator.onLine has settled before we gate on it.
+  scheduleDiscovery() {
+    clearTimeout(this._discoveryTimer);
+    this._discoveryTimer = setTimeout(() => this.discoverUpdate(), 5000);
+  }
+
+  // Ask the browser to look for a new service worker (SW-level network). Skipped
+  // when offline so we never make a doomed request. Any failure is ignored.
   async discoverUpdate() {
+    if (!navigator.onLine) { this.refreshUpdateBadge(); return; }
     try {
       const reg = await this.registration();
       if (reg) await reg.update();
