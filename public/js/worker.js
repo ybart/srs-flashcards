@@ -1,12 +1,11 @@
 // import sqlite3InitModule from "@sqlite.org/sqlite-wasm"
 import sqlite3InitModule from "./sqlite3/sqlite3.mjs"
 
-class ApplicationWorker {
+export default class ApplicationWorker {
   constructor() {
     this.db = null;
-
     addEventListener("message", this.receiveMessage.bind(this));
-    postMessage({ 'name': 'worker_loaded' })
+    postMessage({ 'name': 'worker_loaded' });
   }
 
   async receiveMessage(event) {
@@ -15,7 +14,7 @@ class ApplicationWorker {
         await this.openPersistentDb(event.ports[0], event.data.file);
         break;
       case 'execute':
-        this.executeQuery(event.ports[0], event.data.sql, event.data.bind)
+        this.executeQuery(event.ports[0], event.data.sql, event.data.bind);
         break;
       default:
         console.log(`Worker: received unhandled event ${event.data.name}`);

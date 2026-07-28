@@ -4,6 +4,10 @@ import Card from './card.js'
 export default class Session extends ApplicationRecord {
   static async create(attributes = {}) {
     const progress = JSON.stringify(attributes.progress)
+    if (Object.isFrozen(progress)) {
+      console.log('progress is frozen')
+    }
+
 
     const id = (await ApplicationRecord.execute(`
       INSERT INTO sessions(category_id, started_at, progress)
@@ -17,7 +21,15 @@ export default class Session extends ApplicationRecord {
     // TODO: Add a CHECK constraint ensuring only one session is open in DB.
 
     // let clonedAttribues = JSON.parse(JSON.stringify(attributes))
-    return new Session({ ...attributes, ...{ id: id } })
+    // console.log('attributes', attributes)
+    // return new Session({ ...attributes, ...{ id: id } })
+
+    const mutableAttributes = {
+      ...attributes,
+      progress: attributes.progress ? {...attributes.progress} : {}
+    };
+    return new Session({ ...mutableAttributes, id });
+  
   }
 
   // Cards for all sessions of the session category

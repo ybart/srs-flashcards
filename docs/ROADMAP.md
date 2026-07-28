@@ -2,7 +2,38 @@
 
 ## Features to Implement
 
-- [ ] PWA Update mechanism (cache, automated version check, etc.)
+- [ ] PWA Update mechanism (cache, automated version check, detect when not PWA and suggest installing, etc.)
+   [x] Store all pages and assets in a cache (including external dependencies)
+   [x] Change the first page to a waiting page
+      - In PWA mode, we will install the app
+      - If not PWA, we redirect to the install page
+      - We might also allow non-pwa to access the app in the browser without installing.
+   [x] Manual updates
+      - Store a version number in the server (for now, just create a version file with version information with a simple '0.9.0' string)
+      - Provide an UI to check the current version and the update status (up to date, update in progress, restart required)
+      - Create a manifest file listing all files in public necessary to run the app (including external dependencies).
+   [ ] In Chrome PWA, refreshing using Cmd-R bust the cache, it should fetch from cache instead.
+   [ ] At first install, the version is 'unknown'
+   [ ] When offline, refreshing cause the app to be unavailable
+   [ ] Automatic update strategy:
+      - On activation, if we did not check for updates for at least 24h, do an automatic check.
+      - If an update is available, download the files in the background, but do not apply update
+      - When app is going background, perform the update process (replacing the files and clearing the cache)
+
+   - Implement version check logic using localStorage to implement once a day max logic, cancel the process when no connectivity.
+   - Remove the old files from the cache, download the new ones using the manifest.
+   - The service worker should hijack fetch to only use the cache and error when requesting a file not in the cache (except version)
+   - When opening the PWA, once a day at most, try to check the version number on the server
+   - If we were able to check the version number, compare to the current version and update the files
+- [ ] Add an option to upload
+- [ ] Fix Install page screenshots positioning on mobile (make the containers full-width so we do not have a double-padding).
+- [ ] Release script
+   - We we update our upload script to be purely based on git
+   - If the last commit is not a release commit, we should to a release commit first :
+      - The script should then ask if we do a minor (default), major, or bug fix release (choosable with arrow keys)
+      - Create the commit.
+   - Do a partial checkout of latest release commit of the public folder contents
+   - Upload this copy with rsync over ssh
 - [ ] Notifications (after 1 day (morning, midday, evening), after 2 day, after 1 week, after 1 month)
 - [ ] Progress UI
 
