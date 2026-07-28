@@ -1,5 +1,57 @@
 #!/bin/sh
+#
+# Deploy to the YunoHost my_webapp on cloud.ilyba.fr.
+#
+# Deploys public/ from the LAST PUSHED commit (origin/main) — never the working
+# tree — so what's live always matches what's in the git remote. Warns if the
+# local working tree has uncommitted changes or unpushed commits, since those
+# will NOT be deployed.
+#
+# The web root is owned by the `my_webapp` user, so we stage into a temp dir and
+# sudo-move it into place. `ssh -t` lets sudo prompt for a password if needed.
 
-# scp -r public web.ybart.fr:/var/www/srs-flashcards.ilyba.fr
-rsync -avz --delete -e ssh public/ web.ybart.fr:/var/www/srs-flashcards.ilyba.fr/public/
-echo "Deployed version: $(cat public/version.json | jq -r '.version')"
+set -eu
+
+HOST="ybart@cloud.ilyba.fr"
+WEBROOT="/var/www/my_webapp/www"
+REMOTE_TMP="/tmp/srs-upload"
+REMOTE_REF="origin/main"
+
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO"
+
+# Refresh the remote-tracking ref so "last pushed" is accurate (tolerate offline).
+git fetch -q origin main 2>/dev/null || echo "!! could not fetch origin; using local $REMOTE_REF"
+
+PUSHED="$(git rev-parse "$REMOTE_REF")"
+
+# Warn: uncommitted (incl. untracked) changes are not part of the pushed commit.
+if [ -n "$(git status --porcelain)" ]; then
+  echo "!! WARNING: working tree has uncommitted changes — they will NOT be deployed."
+fi
+
+# Warn: local commits not yet on origin/main won't be deployed.
+ahead="$(git rev-list --count "$PUSHED..HEAD" 2>/dev/null || echo 0)"
+if [ "$ahead" -gt 0 ]; then
+  echo "!! WARNING: $ahead local commit(s) not pushed to $REMOTE_REF — they will NOT be deployed."
+fi
+
+version="$(git show "$PUSHED:public/version.json" | jq -r '.version')"
+echo "==> Deploying public/ from $REMOTE_REF @ $(git rev-parse --short "$PUSHED") (version $version)"
+
+# Stage the pushed public/ tree into a clean local dir.
+stage="$(mktemp -d)"
+trap 'rm -rf "$stage"' EXIT
+git archive "$PUSHED" public | tar -x -C "$stage"
+
+# Upload, then sudo-install into the my_webapp web root.
+rsync -avz --delete "$stage/public/" "$HOST:$REMOTE_TMP/"
+ssh -t "$HOST" "
+  set -eu
+  sudo rsync -av --delete '$REMOTE_TMP/' '$WEBROOT/'
+  sudo chown -R my_webapp:www-data '$WEBROOT'
+  rm -rf '$REMOTE_TMP'
+"
+
+echo "==> Deployed version $version"
+echo "==> Live: https://srs-flashcards.ilyba.fr/"

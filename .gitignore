@@ -1,6 +1,7 @@
 node_modules/
 tmp/
 .nova/
+.DS_Store
 /db/*.db
 /public/db/*.db
 !/public/db/flashcards.db
