@@ -122,9 +122,11 @@
           const reg = await navigator.serviceWorker.register('/sw.js');
           console.log('[UI] Registration succeeded');
 
-          if (navigator.serviceWorker.controller?.state === 'activated') {
-            console.log('[UI] Service worker is already activated');
-            redirectBasedOnPWAStatus();
+          if (navigator.serviceWorker.controller) {
+            // Returning launch: the SW already controls the page. Apply any
+            // pending update now (online only), then go in.
+            clearTimeout(swReadyTimeout);
+            await maybeUpdateThenRedirect(reg);
             return;
           }
 
@@ -142,6 +144,43 @@
         }
       } else {
         console.log('Service worker not supported');
+        redirectBasedOnPWAStatus();
+      }
+    }
+
+    // Cold-start auto-update: if online and a newer version is published, show
+    // "Updating…" and apply it before entering the app. Never runs offline.
+    async function maybeUpdateThenRedirect(reg) {
+      if (!navigator.onLine) { redirectBasedOnPWAStatus(); return; }
+      try {
+        const current = await fetch('/version.json').then(r => r.json()).then(d => d.version);            // cached/installed
+        const latest = await fetch('/version.json?t=' + Date.now()).then(r => r.json()).then(d => d.version); // network
+        if (!latest || latest === current) { redirectBasedOnPWAStatus(); return; }
+
+        // Update available -> apply it; the page reloads when the new worker
+        // takes control, then this runs again and (now up to date) redirects.
+        loader.classList.remove('hidden');
+        statusEl.textContent = 'Updating…';
+
+        let done = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (done) return;
+          done = true;
+          window.location.reload();
+        });
+        const activateWaiting = () => { if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' }); };
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => { if (nw.state === 'installed') activateWaiting(); });
+        });
+        await reg.update();
+        activateWaiting();
+
+        // Safety: if the update doesn't land, proceed anyway.
+        setTimeout(() => { if (!done) redirectBasedOnPWAStatus(); }, 15000);
+      } catch (e) {
+        console.log('[UI] cold-start update check failed:', e);
         redirectBasedOnPWAStatus();
       }
     }

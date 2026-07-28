@@ -48,6 +48,44 @@ export default class extends Controller {
     }
   }
 
+  // Fetch the newest service worker, ask it to take over, and reload once it
+  // controls the page. Shared by the manual check and the auto-prompt.
+  async applyUpdate() {
+    const registration = 'serviceWorker' in navigator
+      ? await navigator.serviceWorker.getRegistration()
+      : null;
+
+    if (!registration) {
+      // No service worker (e.g. not a PWA): reload to pick up new files.
+      window.location.reload();
+      return;
+    }
+
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    });
+
+    const activateWaiting = () => {
+      if (registration.waiting) {
+        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+    };
+
+    registration.addEventListener('updatefound', () => {
+      const nw = registration.installing;
+      if (!nw) return;
+      nw.addEventListener('statechange', () => {
+        if (nw.state === 'installed') activateWaiting();
+      });
+    });
+
+    await registration.update();
+    activateWaiting(); // in case a worker was already waiting from before
+  }
+
   async versionTargetConnected(element) {
     element.textContent = `v${await this.getCurrentVersion()}`;
   }
@@ -229,45 +267,7 @@ export default class extends Controller {
         return;
       }
 
-      const registration = 'serviceWorker' in navigator
-        ? await navigator.serviceWorker.getRegistration()
-        : null;
-
-      if (!registration) {
-        // No service worker (e.g. not running as a PWA): reload to get new files.
-        window.location.reload();
-        return;
-      }
-
-      // Reload exactly once, as soon as the new worker takes control.
-      let reloaded = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (reloaded) return;
-        reloaded = true;
-        window.location.reload();
-      });
-
-      const activateWaiting = () => {
-        if (registration.waiting) {
-          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-        }
-      };
-
-      // The SW no longer skipWaiting()s on its own (background updates stay
-      // dormant so the shown version matches the running code). So when the new
-      // worker finishes installing, ask it to take over — it then activates and
-      // fires the controllerchange above.
-      registration.addEventListener('updatefound', () => {
-        const nw = registration.installing;
-        if (!nw) return;
-        nw.addEventListener('statechange', () => {
-          if (nw.state === 'installed') activateWaiting();
-        });
-      });
-
-      await registration.update();
-      activateWaiting(); // in case a worker was already waiting from before
-
+      await this.applyUpdate();
     } catch (error) {
       console.error('Update check failed:', error);
       if (isUserRequested) {
