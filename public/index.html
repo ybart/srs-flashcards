@@ -25,6 +25,7 @@
       justify-content: center;
       align-items: center;
       background: #f5f5f5;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     .hidden {
       display: none;
@@ -45,9 +46,26 @@
     const progressBar = document.getElementById('cache-progress');
 
     function updateProgress(current, total) {
-      const percent = Math.round((current / total) * 100);
-      progressBar.value = percent;
-      progressBar.textContent = `${percent}%`;
+      if (!total) return;
+      progressBar.value = Math.round((current / total) * 100);
+    }
+
+    // Attach the SW message listener immediately (before register) so we don't
+    // miss CACHE_PROGRESS messages sent during install — that timing gap is why
+    // the bar previously stayed indeterminate.
+    let resolveCacheComplete;
+    const cacheComplete = new Promise(resolve => { resolveCacheComplete = resolve; });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        const data = event.data || {};
+        if (data.type === 'CACHE_PROGRESS') {
+          updateProgress(data.args[0], data.args[1]);
+        } else if (data.type === 'CACHE_COMPLETE') {
+          progressBar.value = 100;
+          resolveCacheComplete();
+        }
+      });
     }
 
     async function registerServiceWorker() {
@@ -74,32 +92,8 @@
 
           loader.classList.remove('hidden');
 
-          // Wait for service worker to be ready
-          await navigator.serviceWorker.ready;
-          console.log('[UI] Service worker is ready. Waiting for cache complete message');
-
-          let cacheCompletePromise = new Promise(resolve => {
-            navigator.serviceWorker.addEventListener('message', (event) => {
-              if (event.data.type === 'CACHE_COMPLETE') {
-                progressBar.value = 100;
-                resolve();
-              } else if (event.data.type === 'CACHE_PROGRESS') {
-                const [current, total] = event.data.args;
-                updateProgress(current, total);
-              } else if (event.data.type === 'VERSION_INSTALLED') {
-                logToServiceWorker('Version installed:', event.data.version);
-                localStorage.setItem('version', event.data.version);
-                redirectBasedOnPWAStatus();
-              } else {
-                logToServiceWorker('Unknown message received:', event.data);
-              }
-            });
-          });
-
-          await cacheCompletePromise;
-          logToServiceWorker('Cache complete message received');
-
-          await navigator.serviceWorker.ready;
+          // Wait for the SW to finish precaching (or the 30s safety timeout).
+          await cacheComplete;
           clearTimeout(swReadyTimeout);
           logToServiceWorker('Service worker and cache ready');
           redirectBasedOnPWAStatus();

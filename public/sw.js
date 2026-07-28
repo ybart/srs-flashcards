@@ -110,7 +110,9 @@ async function precacheAssets() {
 }
 
 async function notifyUI(message, ...args) {
-  const allClients = await clients.matchAll();
+  // includeUncontrolled: on first install the page isn't controlled yet, so
+  // without this the CACHE_PROGRESS/CACHE_COMPLETE messages reach no one.
+  const allClients = await clients.matchAll({ includeUncontrolled: true, type: 'window' });
   allClients.forEach(client => {
     client.postMessage({ type: message, args: args });
   });
@@ -125,7 +127,7 @@ self.addEventListener('install', (event) => {
       await precacheAssets();
 
       const version = await fetch('/version.json').then(res => res.json()).then(data => data.version);
-      const allClients = await clients.matchAll();
+      const allClients = await clients.matchAll({ includeUncontrolled: true, type: 'window' });
       allClients.forEach(client => {
         client.postMessage({ type: 'VERSION_INSTALLED', version: version });
       });
