@@ -8,6 +8,26 @@
     <meta name="mobile-web-app-capable" content="yes"></meta>
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"></meta>
     <link rel="apple-touch-icon" href="/icons/srs-ai-logo-192.png" />
+    <script>
+      /* TEMP diagnostic (offline-dialog hunt) — remove once identified. */
+      window.addEventListener('error', function (e) {
+        var t = e && e.target;
+        if (t && t !== window && (t.src || t.href)) {
+          console.warn('[diag] resource FAILED:', t.tagName, t.src || t.href);
+        }
+      }, true);
+      window.addEventListener('unhandledrejection', function (e) {
+        console.warn('[diag] unhandledrejection:', e.reason);
+      });
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', function (e) {
+          if (e.data && e.data.type === 'FETCH_FAILED') {
+            console.warn('[diag] SW network FAILED:', e.data.args[0], '(mode:', e.data.args[1] + ')');
+          }
+        });
+      }
+      console.log('[diag]', location.pathname, 'onLine =', navigator.onLine);
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/ios-pwa-splash@1.0.0/cdn.min.js"></script>
     <script>iosPWASplash('/icons/ios/1024.png', '#000000');</script>
     <link rel="manifest" href="manifest.json" />

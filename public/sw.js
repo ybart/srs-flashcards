@@ -182,6 +182,8 @@ self.addEventListener('fetch', (event) => {
         if (shell) return shell;
       }
       console.error('[ServiceWorker] Offline and not cached:', event.request.url, error);
+      // TEMP diagnostic: tell the page which request missed cache and failed.
+      notifyUI('FETCH_FAILED', event.request.url, event.request.mode);
       return new Response('Offline', {
         status: 503,
         headers: { 'Content-Type': 'text/plain' }
