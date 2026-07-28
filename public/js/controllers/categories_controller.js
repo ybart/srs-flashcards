@@ -219,7 +219,7 @@ export default class extends Controller {
         return;
       }
 
-      // Reload exactly once, as soon as the new worker takes control of the page.
+      // Reload exactly once, as soon as the new worker takes control.
       let reloaded = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (reloaded) return;
@@ -227,15 +227,27 @@ export default class extends Controller {
         window.location.reload();
       });
 
-      // Fetch the latest sw.js. If it changed, it installs, calls skipWaiting()
-      // (see sw.js install handler), then activates — purging old caches and
-      // re-precaching — which fires the controllerchange above.
-      await registration.update();
+      const activateWaiting = () => {
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+      };
 
-      // If a new worker is already installed and merely waiting, nudge it.
-      if (registration.waiting) {
-        registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      }
+      // The SW no longer skipWaiting()s on its own (background updates stay
+      // dormant so the shown version matches the running code). So when the new
+      // worker finishes installing, ask it to take over — it then activates and
+      // fires the controllerchange above.
+      registration.addEventListener('updatefound', () => {
+        const nw = registration.installing;
+        if (!nw) return;
+        nw.addEventListener('statechange', () => {
+          if (nw.state === 'installed') activateWaiting();
+        });
+      });
+
+      await registration.update();
+      activateWaiting(); // in case a worker was already waiting from before
+
     } catch (error) {
       console.error('Update check failed:', error);
       if (isUserRequested) {

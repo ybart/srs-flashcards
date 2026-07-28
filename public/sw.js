@@ -133,9 +133,11 @@ self.addEventListener('install', (event) => {
       });
     } catch (error) {
       console.error('[ServiceWorker] Installation failed:', error);
-    } finally {
-      await self.skipWaiting();
     }
+    // NOTE: intentionally no skipWaiting() here. A new worker stays "waiting" so
+    // a background browser update never takes over mid-session — which would make
+    // the shown version (read from the cached version.json) disagree with the
+    // running code. checkForUpdates() sends SKIP_WAITING on an explicit update.
   })());
 });
 
