@@ -51,6 +51,44 @@ one short video/week in the JLPT tag.
 
 ---
 
+# Building a Bluesky community (introvert-friendly)
+
+You don't need to be loud or post constantly. In a narrow niche, quiet and
+consistent beats loud and sporadic.
+
+**Principles**
+- Let the *content* be loud, not you. Post useful things (a kanji, a tip) that
+  stand alone — no "look at me", no hard sell.
+- Reply > broadcast. Thoughtful replies to others in the JLPT / 日本語 community
+  are lower-pressure than original posts and build real relationships. This is
+  where quiet people win.
+- Consistency over volume. 2–3 posts/week is plenty.
+- Batch it. Write a week of posts in one 20-min sitting and schedule them, so
+  there's no daily "must post" pressure.
+
+**A low-effort content engine: Kanji of the Day**
+You already have a JLPT kanji/vocabulary database — turn it into content:
+- One post/day: a kanji + reading + meaning + a short example. Zero invention
+  required; it comes straight from your data.
+- It's genuinely useful (people follow "X of the day" accounts), on-brand, and
+  quietly links to the app from the profile.
+- It can be semi- or fully-automated: a script generates the week's posts (or
+  posts directly via the Bluesky API). The habit becomes a cron job, not a
+  personality change.
+
+**One-time setup (~30 min)**
+- Bio = the one-liner + app link. Pin the 20–30s demo clip.
+- Join langlearn/JLPT starter packs; follow the relevant custom feeds so you
+  show up in the conversation.
+- Follow 20–30 active JLPT learners/teachers.
+
+**Weekly rhythm (~15 min)**
+- Mon: schedule the week's Kanji-of-the-Day (from the generator).
+- Midweek: 2–3 genuine replies to others' posts.
+- Fri: one optional "build in public" note if you shipped something.
+
+---
+
 # Draft launch posts (paste-ready)
 
 > Tone: humble, helpful, "made this for myself, sharing in case it helps."
