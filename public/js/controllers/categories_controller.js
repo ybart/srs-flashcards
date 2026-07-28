@@ -25,7 +25,27 @@ export default class extends Controller {
   }
 
   updateOnlineStatus() {
-    this.element.classList.toggle('offline', !navigator.onLine);
+    const online = navigator.onLine;
+    this.element.classList.toggle('offline', !online);
+    if (online) {
+      this.checkUpdateAvailable();
+    } else {
+      this.element.classList.remove('update-available');
+    }
+  }
+
+  // Toggle the red "update available" badge by comparing the installed version
+  // (cached version.json) against the latest on the server. Online only.
+  async checkUpdateAvailable() {
+    try {
+      const current = await this.getCurrentVersion();
+      if (current === 'unknown') return;
+      const res = await fetch('/version.json?t=' + Date.now());
+      const { version: latest } = await res.json();
+      this.element.classList.toggle('update-available', !!latest && latest !== current);
+    } catch (e) {
+      // offline or fetch error — leave the badge as-is
+    }
   }
 
   async versionTargetConnected(element) {

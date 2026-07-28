@@ -197,6 +197,26 @@ main.offline [data-online-only] {
   pointer-events: none;
 }
 
+/* Red badge shown when an app update is available. */
+.update-dot { display: none; }
+main.update-available .update-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  background: #e5484d;
+  border-radius: 50%;
+}
+main.update-available details.dropdown > summary { position: relative; }
+main.update-available details.dropdown > summary .update-dot {
+  position: absolute;
+  top: 0;
+  right: -3px;
+}
+main.update-available details.dropdown summary + ul .update-dot {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
 .progress {
   width: 100%;
   height: 18px;
