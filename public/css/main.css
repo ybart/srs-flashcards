@@ -357,7 +357,9 @@ details.dropdown summary+ul li:last-of-type {
 }
 
 details.dropdown summary+ul li a {
-  display: block;
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem; /* ~44px: comfortable touch target */
   margin: calc(var(--pico-form-element-spacing-vertical) * -.5) calc(var(--pico-form-element-spacing-horizontal) * -1);
   padding: calc(var(--pico-form-element-spacing-vertical) * .5) var(--pico-form-element-spacing-horizontal);
   overflow: hidden;
