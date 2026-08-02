@@ -101,6 +101,23 @@
 - [ ] Make question font smaller when more than 4 chars
 - [ ] Add links to related cards with a back button (or maybe using a modal UI).
 - [ ] Store deck status in the session and in the category
+- [ ] Category availability dot at the top-right of a category: red when it has available
+      studied cards (due); gray when the only available cards are unstudied; no dot when
+      nothing is available.
+- [ ] Study mode: thin red availability bar per colored deck counter, directly under the
+      color strip (no gap, overlaid on the count, no layout change). Width is the deck's
+      available cards (next study time past) over deck size; full when all are due, hidden
+      when none are.
+- [ ] Medal button moves the card to the last (green) deck instead of one deck up.
+- [ ] Block entering study mode for a category with no available cards.
+        1. The "insert cards of wrong color" finish screen (studying ahead of schedule) is a
+           lower-priority alternative.
+- [ ] Card picking order (open question, needs experimentation):
+        1. Current behaviour: ORDER BY label DESC, so on a new session due green cards outrank
+           freshly red ones (reds only show while still in the in-memory deck). Document this.
+        2. Add an option to order by overdue-ness (most overdue first) instead of by label.
+        3. Try per-deck exclusion from picking and a "closer to red" on wrong answer; keep as
+           options if they work in practice.
 - [ ] Settings page with download DB, upload DB, set Japanese voice
 - [ ] At init, check if persistent storage is available and if not explain why
 (check for COOP/COEP headers, 'isSecureContext' and if and protocol includes https or wss).
