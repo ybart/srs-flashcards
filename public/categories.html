@@ -72,16 +72,22 @@
         </span>
       </a>
 
-      <dialog data-categories-target="reminderDialog">
+      <!-- Backdrop click, Esc and the close button all land on the dialog's
+           close event, which is what resolves the pending choice. -->
+      <dialog data-categories-target="reminderDialog"
+              data-action="click->categories#dismissReminder close->categories#reminderClosed">
         <article>
-          <header><strong data-categories-target="reminderTitle">Remind me</strong></header>
-          <p>These cards are ready now. How often should the reminder repeat?</p>
-          <footer>
-            <a href="#" role="button" data-action="categories#chooseRepeat" data-repeat="daily">Every day</a>
-            <a href="#" role="button" data-action="categories#chooseRepeat" data-repeat="weekly">Every week</a>
-            <a href="#" role="button" data-action="categories#chooseRepeat" data-repeat="monthly">Every month</a>
-            <a href="#" role="button" class="secondary" data-action="categories#chooseRepeat">Cancel</a>
-          </footer>
+          <header>
+            <button aria-label="Close" rel="prev" data-action="categories#chooseRepeat"></button>
+            <p><strong data-categories-target="reminderTitle">Remind me</strong></p>
+          </header>
+          <p>These cards are ready now, so there is no date to put in the calendar.
+             How often should the reminder repeat?</p>
+          <div class="reminder-choices">
+            <a href="#" role="button" class="outline" data-action="categories#chooseRepeat" data-repeat="daily">Every day</a>
+            <a href="#" role="button" class="outline" data-action="categories#chooseRepeat" data-repeat="weekly">Every week</a>
+            <a href="#" role="button" class="outline" data-action="categories#chooseRepeat" data-repeat="monthly">Every month</a>
+          </div>
         </article>
       </dialog>
 

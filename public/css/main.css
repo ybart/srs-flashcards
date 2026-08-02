@@ -296,20 +296,19 @@ article.unavailable a.category-content { opacity: 0.5; cursor: default; }
 }
 .category-progress-icon svg rect { fill: #888; }
 
-/* Reminder dialog: Pico lays the footer out as a row, which four buttons overflow
-   on a phone and turn into scroll in both directions. Stack them instead. */
+/* Reminder dialog: choices stacked full width so they stay thumb-sized on a
+   phone, outlined so they read as options rather than three primary actions. */
 dialog > article {
   width: 100%;
   max-width: 24rem;
   margin: 0 auto;
 }
-dialog > article > footer {
+.reminder-choices {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  text-align: left;
 }
-dialog > article > footer a[role=button] {
+.reminder-choices a[role=button] {
   width: 100%;
   margin: 0;
 }

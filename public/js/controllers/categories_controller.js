@@ -242,21 +242,37 @@ export default class extends Controller {
     })
   }
 
-  // Resolves with 'daily' / 'weekly' / 'monthly', or null when cancelled.
+  // Resolves with 'daily' / 'weekly' / 'monthly', or null when dismissed.
   askRepeat(categoryName) {
     this.reminderTitleTarget.innerText = `Remind me to study ${categoryName}`
+    this.chosenRepeat = null
     this.reminderDialogTarget.showModal()
 
     return new Promise((resolve) => { this.resolveRepeat = resolve })
   }
 
+  // Every button, including the close one, just records its choice and closes;
+  // the close event below is the single place the promise is settled, so Esc
+  // and the backdrop cannot leave it pending.
   chooseRepeat(event) {
     event.preventDefault()
+    this.chosenRepeat = event.currentTarget.dataset.repeat || null
     this.reminderDialogTarget.close()
+  }
 
+  // A click that lands on the dialog itself is on the backdrop — the article
+  // covers everything else.
+  dismissReminder(event) {
+    if (event.target === this.reminderDialogTarget) { this.reminderDialogTarget.close() }
+  }
+
+  reminderClosed() {
     const resolve = this.resolveRepeat
+    const repeat = this.chosenRepeat
+
     this.resolveRepeat = null
-    if (resolve) { resolve(event.currentTarget.dataset.repeat || null) }
+    this.chosenRepeat = null
+    if (resolve) { resolve(repeat) }
   }
 
   percentageDone(counts) {
