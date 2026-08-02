@@ -170,12 +170,17 @@ export default class extends Controller {
     card.querySelector('[data-role=progress-link]')
       .setAttribute('href', `progress.html#category=${category.id}`)
 
-    let startedAtAgo = null
-    if (category.started_at) {
+    // A category with nothing to study is a dead end unless we say when it
+    // wakes up, so the clock line switches from "last studied" to "next card".
+    let clockText = null
+    if (!hasStudied && !hasUnstudied && avail?.next_available) {
+      const next = RelativeDate.dateFromSqliteTimestamp(avail.next_available)
+      clockText = `next ${new RelativeDate(next).format()}`
+    } else if (category.started_at) {
       const startedAt = RelativeDate.dateFromSqliteTimestamp(category.started_at)
-      startedAtAgo = new RelativeDate(startedAt).format()
+      clockText = new RelativeDate(startedAt).format()
     } else {
-      startedAtAgo = 'never'
+      clockText = 'never'
     }
 
     let counts = [0, 0, 0, 0, 0, 0]
@@ -184,7 +189,7 @@ export default class extends Controller {
       if (deck.label != null) { counts[deck.label + 1] = deck.count } else { counts[0] = deck.count }
     }
 
-    card.querySelector('[data-role=last-studied]').innerText = startedAtAgo
+    card.querySelector('[data-role=last-studied]').innerText = clockText
     card.querySelector('[data-role=progress]').innerText = `${this.percentageDone(counts)} %`
 
     style.insertRule(this.progressRule(`#${card.id}`, counts))
@@ -262,6 +267,10 @@ export default class extends Controller {
                  window.navigator.standalone || 
                  document.referrer.includes('android-app://');
   
+    // Outside an installed PWA the OPFS database can be evicted by the browser,
+    // so the corner ribbon warns that progress is not safe here.
+    this.element.classList.toggle('demo', !isPWA);
+
     if (!isPWA) {
       const installItem = this.element.querySelector('li[data-pwa-only]');
       installItem.classList.remove('hidden');

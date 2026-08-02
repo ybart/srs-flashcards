@@ -15,6 +15,24 @@ export default class Card extends ApplicationRecord {
       END
     )`
 
+  // When a studied card comes back up: its last study plus the SRS interval for
+  // its label. The mirror of AVAILABILITY, which compares the same interval
+  // against `now`.
+  static NEXT_AVAILABLE = `
+    CASE cards.label
+      WHEN 0 THEN datetime(most_recent.last_studied)               -- red
+      WHEN 1 THEN datetime(most_recent.last_studied, '+5 minutes') -- orange
+      WHEN 2 THEN datetime(most_recent.last_studied, '+3 days')    -- yellow
+      WHEN 3 THEN datetime(most_recent.last_studied, '+9 days')    -- lightgreen
+      WHEN 4 THEN datetime(most_recent.last_studied, '+20 days')   -- green
+    END`
+
+  // Soonest moment a card of the category comes back up, ignoring the cards
+  // that are available right now. NULL when the category has nothing waiting.
+  static NEXT_AVAILABLE_AT = `
+    MIN(CASE WHEN cards.label IS NOT NULL AND NOT (${this.AVAILABILITY})
+             THEN ${this.NEXT_AVAILABLE} END)`
+
   static MOST_RECENT_STUDIES = `
     SELECT session_cards.card_id, MAX(studied_at) last_studied
     FROM session_cards
@@ -36,6 +54,22 @@ export default class Card extends ApplicationRecord {
       WHERE cards.category_id = :category_id
       GROUP BY cards.label
     `, { category_id: category_id })
+  }
+
+  // When the next card of a category comes back up, for the empty-deck screen.
+  static async nextAvailable(category_id) {
+    const rows = await ApplicationRecord.execute(`
+      SELECT ${this.NEXT_AVAILABLE_AT} as next_available
+      FROM cards
+      LEFT JOIN (
+        ${this.MOST_RECENT_STUDIES}
+        WHERE sessions.category_id = :category_id
+        GROUP BY session_cards.card_id
+      ) most_recent ON cards.id = most_recent.card_id
+      WHERE cards.category_id = :category_id
+    `, { category_id: category_id })
+
+    return rows[0] ? rows[0].next_available : null
   }
 
   static RELATED_CARDS_QUERY = `

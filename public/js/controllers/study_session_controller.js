@@ -2,6 +2,7 @@ import { Controller } from 'https://cdn.jsdelivr.net/npm/@hotwired/stimulus@3.2.
 
 import Session from '../models/session.js'
 import Card from '../models/card.js'
+import RelativeDate from '../models/relative_date.js'
 
 
 export default class extends Controller {
@@ -102,6 +103,15 @@ export default class extends Controller {
       const message = document.createElement("p")
       message.classList.add("message")
       message.append("The deck is now empty")
+
+      // Say when it refills, so the screen is not a dead end.
+      const nextAvailable = await Card.nextAvailable(this.session.category)
+      if (nextAvailable) {
+        const next = RelativeDate.dateFromSqliteTimestamp(nextAvailable)
+        message.append(document.createElement("br"))
+        message.append(`Next card ${new RelativeDate(next).format()}`)
+      }
+
       if (oldElement) { oldElement.remove(); }
       container.appendChild(message)
       return
