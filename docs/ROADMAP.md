@@ -68,22 +68,52 @@ and within each section the order is the intended order of work.
      desktop; needs confirming on a device.
    - The events are static once added: changing the schedule means issuing a new
      file, and there is no way to withdraw one we already handed out.
-4. [ ] **French translation** — the UI was localised to English early on; put the
+4. [ ] **Progress view redesign** — the data layer is done (snapshots, the
+   replay migration); this replaces how it is drawn. The current labelled rows
+   read as a table, one row at a time, when the thing worth seeing is a
+   trajectory.
+   - One page for every category, not one view per category: a vertical list of
+     preview charts, name and percentage beside each, tap one to expand it with
+     dates and a range selector. Tap-to-expand advertises itself, where the
+     scrub interaction that inspired this does not.
+   - Drop the histogram icon from the category cards and reach the page from the
+     header menu instead. Sequencing: the icon is the only way in today, so it
+     goes when the new page lands, not before.
+   - Stacked area on a linear time axis, green filling from the bottom, with the
+     completion percentage drawn over it as a line. Bucket to the pixel width
+     rather than to a column count, so three years and three weeks cost the same
+     and detail is bounded by the screen.
+   - Accept the flat stretches. Mocked against real history, 52 % of the N4
+     chart and 77 % of the N3 chart is idle time — "you stopped for two months"
+     is the most actionable thing here, and skipping empty buckets is what the
+     old view did to look dense. The range selector is the answer to wanting
+     recent detail, not a non-linear axis.
+   - Second chart for effort: cards per period, and active time per period. Time
+     is honest if it is the sum of gaps between consecutive answers with each
+     gap capped (60s or so) — the span from first to last answer counts a tab
+     left open, which is why `sessions.finished_at` was never worth writing.
+     Both are reconstructable from existing `session_cards` history.
+   - Shareable: render to canvas, then `navigator.share` with a file, falling
+     back to a download on desktop. Someone's own five-month curve is the growth
+     material the KOAD item is after, at a fraction of the cost.
+   - Open at phone width: whether 6 colour bands stay legible at ~350px across
+     and 60px tall in the previews. Needs a device, not a mockup.
+5. [ ] **French translation** — the UI was localised to English early on; put the
    strings behind a catalogue and ship French alongside. Pick the language from
    `navigator.language` with an override in `localStorage`, since the settings
    page itself is after 1.0. Covers the app, the install page and the manifest.
-5. [ ] **Public-facing sweep** — the README badge pins Ruby 3.1.0 while
+6. [ ] **Public-facing sweep** — the README badge pins Ruby 3.1.0 while
    `.ruby-version` is 3.4.5, and it reads as if Ruby were the runtime: it is the
    import/build toolchain (`lib/`, `Rakefile`, `bin/`), the app itself is a
    static JS PWA. Flip the `in_development` badge at release.
-6. [ ] **Kanji-of-the-Day (KOAD) generator** for growth/marketing — independent of
+7. [ ] **Kanji-of-the-Day (KOAD) generator** for growth/marketing — independent of
    the app, but wanted at the same time as 1.0.
    - Read `flashcards.db` and generate daily social posts (kanji + reading +
      meaning + example)
    - Level 1: output a batch of ready-to-paste posts (no API keys)
    - Level 2: auto-post to Bluesky via the API on a schedule (app password)
    - Rationale + strategy in `docs/MARKETING.md` (Bluesky community section)
-7. [ ] **Single-archive distribution** — ship the app as one zip instead of ~150
+8. [ ] **Single-archive distribution** — ship the app as one zip instead of ~150
    files: atomic install, one download, and no partial-update tears where the
    version label and the loaded code disagree.
 
@@ -227,12 +257,10 @@ are no harder after the release than before it.
 - Progress UI
   - Dedicated view, navigated to like study, opened from a histogram icon on
     each category card.
-  - Stacked horizontal colour bars (gray included), smaller than the category
-    bars, with no border, no rounded corners, and no interaction.
-  - One bar per time bucket, showing the overall state after the last session in
-    the bucket: one bar per 3 months above 1 year, per month from 1 month to
-    1 year, per week from 1 week to 1 month, per day below. Empty buckets are
-    skipped, labels are short and width-capped.
+  - First drawing: stacked horizontal bars, one per time bucket, empty buckets
+    skipped, adaptive granularity. Superseded by the redesign in 1.0 — the
+    labels it needed were a symptom of a static list, and skipping empty buckets
+    hid the breaks in studying.
   - Per-session snapshots persisted going forward, and history reconstructed by
     replaying `session_cards` in a migration (approximate, since neither the
     order of the answers nor the resulting label was recorded per event). On a
