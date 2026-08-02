@@ -248,6 +248,10 @@ main.update-available details.dropdown summary + ul .update-dot {
 }
 .availability-dot.show { display: block; }
 
+/* Category with nothing available to study: dimmed and not clickable. */
+article.unavailable { opacity: 0.55; }
+article.unavailable a { cursor: default; }
+
 /* Study-mode per-deck availability bar: red, flush under the colour strip,
    over the count. Width = available cards / deck size; never shifts layout. */
 [data-role=decks] [data-role=line] { position: relative; overflow: hidden; }

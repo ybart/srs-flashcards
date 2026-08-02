@@ -44,15 +44,21 @@ export default class extends Controller {
     this.validateAnswer(false)
   }
 
-  async validateAnswer(isCorrect) {
+  // Promote the card straight to the last (green) deck.
+  medal() {
+    this.validateAnswer(true, 4)
+  }
+
+  async validateAnswer(isCorrect, forcedLabel = null) {
     if (!this.currentCard.label) this.currentCard.label = 0
     const labels = this.constructor.labels
 
     // TODO: Update the session progress
 
     const previousLabel = this.currentCard.label
-    if (isCorrect && this.currentCard.label < 4) { this.currentCard.label += 1 }
-    if (!isCorrect) { this.currentCard.label = 0 }
+    if (forcedLabel !== null) { this.currentCard.label = forcedLabel }
+    else if (isCorrect && this.currentCard.label < 4) { this.currentCard.label += 1 }
+    else if (!isCorrect) { this.currentCard.label = 0 }
 
     this.session.progress[labels[previousLabel]] -= 1
     this.session.progress[labels[this.currentCard.label]] += 1

@@ -137,23 +137,34 @@ export default class extends Controller {
 
     card.removeAttribute('style')
     card.id = `category-${category.id}`
-    card.querySelector('a').setAttribute('href', `study.html#category=${category.id}`)
     card.querySelector('[data-role=name]').innerText = category.name
     card.querySelector('[data-role=cards-count]').innerText = category.cards_count
 
-    // Availability dot: colour of the reddest available studied card, gray when
-    // only unstudied cards are available, hidden otherwise.
+    // Availability: colour the dot by the reddest available studied card, gray
+    // when only unstudied cards are available; when nothing is available, hide
+    // the dot and block entering study mode.
     const avail = this.availabilityByCategory?.get(category.id)
+    const hasStudied = avail && avail.min_available_label != null
+    const hasUnstudied = avail && avail.unstudied > 0
+
     const dot = card.querySelector('[data-role=availability-dot]')
     if (dot) {
       dot.classList.remove('show')
-      if (avail && avail.min_available_label != null) {
+      if (hasStudied) {
         dot.style.background = this.constructor.LABEL_COLORS[avail.min_available_label]
         dot.classList.add('show')
-      } else if (avail && avail.unstudied > 0) {
+      } else if (hasUnstudied) {
         dot.style.background = '#888'
         dot.classList.add('show')
       }
+    }
+
+    const link = card.querySelector('a')
+    if (hasStudied || hasUnstudied) {
+      link.setAttribute('href', `study.html#category=${category.id}`)
+    } else {
+      link.removeAttribute('href')
+      card.classList.add('unavailable')
     }
 
     let startedAtAgo = null
