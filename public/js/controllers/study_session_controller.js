@@ -138,22 +138,20 @@ export default class extends Controller {
   async updateDecks() {
     const labels = this.constructor.labels
     const decks = await Card.decks(this.session.category)
+    const byLabel = {}
+    for (const deck of decks) { byLabel[deck.label] = deck }
 
-    for (const label of labels) {
-      const element = this.element.querySelector(
+    for (const [index, label] of labels.entries()) {
+      const line = this.element.querySelector(
         `[data-role=label][aria-label=${label}] + [data-role=line]`
       )
-      element.innerText = 0
-    }
+      const deck = byLabel[index]
+      const count = deck ? deck.count : 0
+      const available = deck ? deck.available : 0
 
-    for (const deck of decks) {
-      const label = labels[deck.label]
-      if (!label) { continue; }
-
-      const element = this.element.querySelector(
-        `[data-role=label][aria-label=${label}] + [data-role=line]`
-      )
-      element.innerText = deck.count
+      line.querySelector('[data-role=count]').innerText = count
+      line.querySelector('[data-role=avail-bar]').style.width =
+        count > 0 ? `${Math.round(100 * available / count)}%` : '0'
     }
   }
 

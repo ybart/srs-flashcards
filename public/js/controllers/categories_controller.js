@@ -107,6 +107,10 @@ export default class extends Controller {
       this.stylesheet.deleteRule(0);
     }
 
+    // Availability per category, for the dot on each card.
+    const availability = await Category.availability()
+    this.availabilityByCategory = new Map(availability.map((a) => [a.category_id, a]))
+
     // Create Elements
     for (let category of await Category.all()) {
       this.appendCategory(category)
@@ -135,6 +139,16 @@ export default class extends Controller {
     card.querySelector('a').setAttribute('href', `study.html#category=${category.id}`)
     card.querySelector('[data-role=name]').innerText = category.name
     card.querySelector('[data-role=cards-count]').innerText = category.cards_count
+
+    // Availability dot: red when studied cards are due, gray when only
+    // unstudied cards are available, hidden otherwise.
+    const avail = this.availabilityByCategory?.get(category.id)
+    const dot = card.querySelector('[data-role=availability-dot]')
+    if (dot) {
+      dot.classList.remove('red', 'gray')
+      if (avail && avail.available_studied > 0) { dot.classList.add('red') }
+      else if (avail && avail.unstudied > 0) { dot.classList.add('gray') }
+    }
 
     let startedAtAgo = null
     if (category.started_at) {

@@ -164,6 +164,7 @@ nav { padding-left: 20px; padding-right: 20px; }
 nav a:hover:not([role=button]) { text-decoration: none; }
 
 article {
+  position: relative;
   padding: 0; margin-bottom: 0;
   border-bottom: 1px solid #555;
   border-radius: 0;
@@ -228,6 +229,35 @@ main.update-available details.dropdown > summary .update-dot {
 main.update-available details.dropdown summary + ul .update-dot {
   margin-left: 8px;
   vertical-align: middle;
+}
+
+/* Category availability dot (top-right of a category card). */
+.availability-dot { display: none; }
+.availability-dot.red,
+.availability-dot.gray {
+  display: block;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+}
+.availability-dot.red { background: #ed3b3b; }
+.availability-dot.gray { background: #888; }
+
+/* Study-mode per-deck availability bar: red, flush under the colour strip,
+   over the count. Width = available cards / deck size; never shifts layout. */
+[data-role=decks] [data-role=line] { position: relative; overflow: hidden; }
+.avail-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 4px;
+  width: 0;
+  background: #ed3b3b;
 }
 
 .progress {
