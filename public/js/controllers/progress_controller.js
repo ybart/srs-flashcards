@@ -4,36 +4,30 @@ export default class extends Controller {
   static targets = ['history']
 
   // Stacked-bar colours, in order: gray, red, orange, yellow, lightgreen, green.
-  // Matches the category progress bar palette.
   static COLORS = ['#778787', '#ed3b3b', '#f29132', '#c2bb3b', '#7fe851', '#0a8f45']
-
   static DAY = 24 * 60 * 60 * 1000
+  static MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
   connect() {
     // TODO: replace with persisted per-session snapshots (reconstructed history
     // + snapshots stored going forward). Mock data for now to build the view.
-    const sessions = this.mockSessions()
-    this.render(this.bucketize(sessions))
+    this.render(this.bucketize(this.mockSessions()))
   }
 
-  // Assign a session's date to a bucket, coarser the older it is.
-  bucketFor(time, now) {
-    const age = now - time
-    const d = new Date(time)
-    const year = d.getFullYear()
+  granularity(age) {
+    const DAY = this.constructor.DAY
+    if (age > 365 * DAY) return 'quarter'
+    if (age > 30 * DAY) return 'month'
+    if (age > 7 * DAY) return 'week'
+    return 'day'
+  }
 
-    if (age > 365 * this.constructor.DAY) {
-      const quarter = Math.floor(d.getMonth() / 3)
-      return { key: `${year}-Q${quarter}`, label: `'${String(year).slice(2)}` }
-    }
-    if (age > 30 * this.constructor.DAY) {
-      return { key: `${year}-M${d.getMonth()}`, label: d.toLocaleDateString('en', { month: 'short' }) }
-    }
-    if (age > 7 * this.constructor.DAY) {
-      const week = this.isoWeek(d)
-      return { key: `${year}-W${week}`, label: `W${week}` }
-    }
-    return { key: d.toISOString().slice(0, 10), label: d.toLocaleDateString('en', { weekday: 'short' }) }
+  bucketKey(d, gran) {
+    const y = d.getFullYear()
+    if (gran === 'quarter') return `${y}-Q${Math.floor(d.getMonth() / 3)}`
+    if (gran === 'month') return `${y}-M${d.getMonth()}`
+    if (gran === 'week') return `${y}-W${this.isoWeek(d)}`
+    return d.toISOString().slice(0, 10)
   }
 
   isoWeek(d) {
@@ -44,51 +38,96 @@ export default class extends Controller {
     return 1 + Math.round((date - firstThursday) / (7 * this.constructor.DAY))
   }
 
-  // Keep the last session in each bucket (its state is "after all sessions up
-  // to it"). Ordered oldest -> newest. Empty buckets simply don't appear.
+  // Keep the last session in each bucket, newest first. Empty buckets are absent.
   bucketize(sessions) {
     const now = Date.now()
     const buckets = new Map()
     for (const s of sessions) {
       const time = new Date(s.started_at).getTime()
-      const b = this.bucketFor(time, now)
-      const current = buckets.get(b.key)
-      if (!current || time > current.time) {
-        buckets.set(b.key, { label: b.label, time, dist: s.dist })
-      }
+      const gran = this.granularity(now - time)
+      const key = this.bucketKey(new Date(time), gran)
+      const current = buckets.get(key)
+      if (!current || time > current.time) buckets.set(key, { time, dist: s.dist, gran })
     }
-    return [...buckets.values()].sort((a, b) => a.time - b.time)
+    return [...buckets.values()].sort((a, b) => b.time - a.time)
   }
 
   render(buckets) {
-    this.historyTarget.innerHTML = ''
-    let lastLabel = null
+    const el = this.historyTarget
+    el.innerHTML = ''
+    let lastYear = null
+    let lastMonth = null
+
     for (const bucket of buckets) {
-      const total = bucket.dist.reduce((a, b) => a + b, 0) || 1
+      const d = new Date(bucket.time)
+      const year = d.getFullYear()
+      const month = d.getMonth()
+      const fine = bucket.gran === 'week' || bucket.gran === 'day'
 
-      const bar = document.createElement('div')
-      bar.className = 'ph-bar'
-      bucket.dist.forEach((count, i) => {
-        if (count <= 0) return
-        const seg = document.createElement('span')
-        seg.className = 'ph-seg'
-        seg.style.width = `${100 * count / total}%`
-        seg.style.background = this.constructor.COLORS[i]
-        bar.appendChild(seg)
-      })
+      if (year !== lastYear) {
+        this.appendHeader(el, `${year}`, 0)
+        lastYear = year
+        lastMonth = null
+      }
+      if (fine) {
+        if (month !== lastMonth) {
+          this.appendHeader(el, this.constructor.MONTHS[month], 1)
+          lastMonth = month
+        }
+      } else {
+        lastMonth = null // a later week/day re-emits its month header
+      }
 
-      // Only show a label when it changes, so repeats (e.g. two quarters in the
-      // same year) read as one boundary marker.
-      const label = document.createElement('span')
-      label.className = 'ph-label'
-      label.textContent = bucket.label === lastLabel ? '' : bucket.label
-      lastLabel = bucket.label
-
-      const row = document.createElement('div')
-      row.className = 'ph-row'
-      row.append(label, bar)
-      this.historyTarget.appendChild(row)
+      this.appendBar(el, this.subLabel(bucket.gran, d), bucket.dist, fine ? 2 : 1)
     }
+  }
+
+  subLabel(gran, d) {
+    if (gran === 'quarter') return `Q${Math.floor(d.getMonth() / 3) + 1}`
+    if (gran === 'month') return this.constructor.MONTHS[d.getMonth()]
+    if (gran === 'week') return this.weekRange(d)
+    return String(d.getDate()).padStart(2, '0')
+  }
+
+  // Day-of-month range (Mon..Sun) of the bucket's week, e.g. "01-07".
+  weekRange(d) {
+    const pad = (n) => String(n).padStart(2, '0')
+    const monday = new Date(d)
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
+    const sunday = new Date(monday)
+    sunday.setDate(monday.getDate() + 6)
+    return `${pad(monday.getDate())}-${pad(sunday.getDate())}`
+  }
+
+  appendHeader(el, text, level) {
+    const h = document.createElement('div')
+    h.className = `ph-header ph-lvl-${level}`
+    h.textContent = text
+    el.appendChild(h)
+  }
+
+  appendBar(el, label, dist, level) {
+    const total = dist.reduce((a, b) => a + b, 0) || 1
+
+    const bar = document.createElement('div')
+    bar.className = 'ph-bar'
+    dist.forEach((count, i) => {
+      if (count <= 0) return
+      const seg = document.createElement('span')
+      seg.className = 'ph-seg'
+      seg.style.width = `${100 * count / total}%`
+      seg.style.background = this.constructor.COLORS[i]
+      bar.appendChild(seg)
+    })
+
+    const lab = document.createElement('span')
+    lab.className = 'ph-label'
+    lab.textContent = label
+
+    const row = document.createElement('div')
+    row.className = `ph-row ph-lvl-${level}`
+    row.append(lab, bar)
+    el.appendChild(row)
   }
 
   // TEMP: representative history (gray shrinking, green growing) sampled denser

@@ -256,23 +256,25 @@ article.unavailable a { cursor: default; }
 .nav-icon { display: inline-flex; align-items: center; }
 .nav-icon svg rect { fill: #888; }
 
-/* Progress view: condensed stacked colour bars, one per time bucket. */
-.progress-history { padding: 12px 16px; }
-.ph-row { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
+/* Progress view: condensed stacked colour bars, one per time bucket, grouped
+   under year / month headers. Newest first. */
+.progress-history { padding: 10px 16px; }
+.ph-header { font-size: 0.72rem; font-weight: 600; color: #777; margin: 8px 0 2px; }
+.ph-lvl-1 { padding-left: 10px; }
+.ph-lvl-2 { padding-left: 22px; }
+.ph-row { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
 .ph-label {
   flex: 0 0 auto;
-  width: 2.4em;
-  font-size: 0.7rem;
-  color: #888;
+  width: 3.2em;
+  font-size: 0.68rem;
+  color: #999;
   text-align: right;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 .ph-bar {
   flex: 1 1 auto;
   display: flex;
-  height: 10px;
+  height: 9px;
   overflow: hidden;
   /* deliberately no border, no radius, no interaction */
 }
