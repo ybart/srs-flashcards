@@ -78,12 +78,15 @@ export default class extends Controller {
         lastMonth = null // a later week/day re-emits its month header
       }
 
-      this.appendBar(el, this.subLabel(bucket.gran, d), bucket.dist, fine ? 2 : 1)
+      this.appendBar(el, this.subLabel(bucket.gran, d), bucket.dist)
     }
   }
 
   subLabel(gran, d) {
-    if (gran === 'quarter') return `Q${Math.floor(d.getMonth() / 3) + 1}`
+    if (gran === 'quarter') {
+      const q = Math.floor(d.getMonth() / 3)
+      return `${this.constructor.MONTHS[q * 3]}-${this.constructor.MONTHS[q * 3 + 2]}`
+    }
     if (gran === 'month') return this.constructor.MONTHS[d.getMonth()]
     if (gran === 'week') return this.weekRange(d)
     return String(d.getDate()).padStart(2, '0')
@@ -106,7 +109,7 @@ export default class extends Controller {
     el.appendChild(h)
   }
 
-  appendBar(el, label, dist, level) {
+  appendBar(el, label, dist) {
     const total = dist.reduce((a, b) => a + b, 0) || 1
 
     const bar = document.createElement('div')
@@ -125,7 +128,7 @@ export default class extends Controller {
     lab.textContent = label
 
     const row = document.createElement('div')
-    row.className = `ph-row ph-lvl-${level}`
+    row.className = 'ph-row'
     row.append(lab, bar)
     el.appendChild(row)
   }

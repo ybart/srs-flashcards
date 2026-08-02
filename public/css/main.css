@@ -252,21 +252,28 @@ main.update-available details.dropdown summary + ul .update-dot {
 article.unavailable { opacity: 0.55; }
 article.unavailable a { cursor: default; }
 
-/* Header histogram icon (left of the settings cog). */
-.nav-icon { display: inline-flex; align-items: center; }
-.nav-icon svg rect { fill: #888; }
+/* Per-category histogram icon (top-left of a card) → that category's progress. */
+.category-progress-icon {
+  position: absolute;
+  top: 6px;
+  left: 8px;
+  z-index: 2;
+  line-height: 0;
+  opacity: 0.5;
+}
+.category-progress-icon svg rect { fill: #888; }
 
 /* Progress view: condensed stacked colour bars, one per time bucket, grouped
    under year / month headers. Newest first. */
 .progress-history { padding: 10px 16px; }
 .ph-header { font-size: 0.72rem; font-weight: 600; color: #777; margin: 8px 0 2px; }
-.ph-lvl-1 { padding-left: 10px; }
-.ph-lvl-2 { padding-left: 22px; }
-.ph-row { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
+.ph-header.ph-lvl-1 { padding-left: 12px; }
+/* All bars share one fixed label column so their widths line up exactly;
+   hierarchy is conveyed by the year/month headers, not by indenting bars. */
+.ph-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
 .ph-label {
-  flex: 0 0 auto;
-  width: 3.2em;
-  font-size: 0.68rem;
+  flex: 0 0 3.6em; /* fits the widest label, e.g. "Jul-Sep" */
+  font-size: 0.66rem;
   color: #999;
   text-align: right;
   white-space: nowrap;

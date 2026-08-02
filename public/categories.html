@@ -27,15 +27,6 @@
           <ul><li class="title"><strong>SRS Flashcards</strong></li></ul>
           <ul>
             <li>
-              <a href="progress.html" class="nav-icon" aria-label="Progress">
-                <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
-                  <rect x="3" y="13" width="4" height="7"></rect>
-                  <rect x="10" y="8" width="4" height="12"></rect>
-                  <rect x="17" y="4" width="4" height="16"></rect>
-                </svg>
-              </a>
-            </li>
-            <li>
               <details class="dropdown">
                 <summary><span class="update-dot"></span></summary>
                 <ul>
@@ -80,6 +71,13 @@
 
     <article id='category-card' style="display: none;">
       <span data-role="availability-dot" class="availability-dot"></span>
+      <a href="progress.html" data-role="progress-link" class="category-progress-icon" aria-label="Progress">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <rect x="3" y="13" width="4" height="7"></rect>
+          <rect x="10" y="8" width="4" height="12"></rect>
+          <rect x="17" y="4" width="4" height="16"></rect>
+        </svg>
+      </a>
       <a href="study.html" class="category-content">
         <h3 data-role='name'>{Category Name}</h1>
         <p class="count"><img width=16 height=16 src="/icons/stack-32.png"> <span data-role='cards-count'>{Cards Count}</span> cards

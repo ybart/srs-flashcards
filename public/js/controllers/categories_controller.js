@@ -159,13 +159,16 @@ export default class extends Controller {
       }
     }
 
-    const link = card.querySelector('a')
+    const link = card.querySelector('a.category-content')
     if (hasStudied || hasUnstudied) {
       link.setAttribute('href', `study.html#category=${category.id}`)
     } else {
       link.removeAttribute('href')
       card.classList.add('unavailable')
     }
+
+    card.querySelector('[data-role=progress-link]')
+      .setAttribute('href', `progress.html#category=${category.id}`)
 
     let startedAtAgo = null
     if (category.started_at) {
