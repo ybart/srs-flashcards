@@ -38,11 +38,50 @@ export function bucketize(series, from, to, count) {
   return buckets
 }
 
+// Effort is a flow rather than a state, so an empty bucket is zero — carrying
+// the last value forward the way the area chart does would invent work.
+export function bucketSum(events, from, to, count, value) {
+  const buckets = new Array(count).fill(0)
+  const step = (to - from) / count || 1
+
+  for (const event of events) {
+    if (event.time < from || event.time > to) { continue }
+    buckets[Math.min(count - 1, Math.floor((event.time - from) / step))] += value(event)
+  }
+
+  return buckets
+}
+
 function element(name, attributes) {
   const node = document.createElementNS(NS, name)
   for (const [key, value] of Object.entries(attributes)) { node.setAttribute(key, value) }
 
   return node
+}
+
+// Effort over the same span as the area above it, scaled to its own busiest
+// bucket: the question is which stretches were worked, not how many cards that
+// was against some absolute.
+export function bars(events, { from, to, value, width = 600, height = 60, columns = 160 }) {
+  const buckets = bucketSum(events, from, to, columns, value)
+  const peak = Math.max(...buckets) || 1
+  const slot = width / columns
+
+  const svg = element('svg', {
+    viewBox: `0 0 ${width} ${height}`, preserveAspectRatio: 'none',
+    class: 'progress-bars', 'aria-hidden': 'true'
+  })
+
+  buckets.forEach((total, i) => {
+    if (!total) { return }
+    const bar = height * total / peak
+    svg.appendChild(element('rect', {
+      x: (i * slot).toFixed(2), y: (height - bar).toFixed(2),
+      width: Math.max(slot * 0.7, 0.5).toFixed(2), height: bar.toFixed(2)
+    }))
+  })
+
+  return svg
 }
 
 // `series` is [{ time, dist }] sorted oldest first.

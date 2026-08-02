@@ -43,6 +43,44 @@ export default class Session extends ApplicationRecord {
     await ApplicationRecord.execute(this.constructor.SAVE_PROGRESS_QUERY, { id: this.id })
   }
 
+  // How long an answer can be credited with. The span from a session's first
+  // answer to its last would charge a tab left open over lunch; counting the gap
+  // before each answer and capping it bills only the time worked. On a real
+  // history the cap leaves ordinary sessions alone — median 3.6 minutes either
+  // way — and cuts a 2.5 hour span down to the 10 minutes spent inside it.
+  static ACTIVE_GAP_SECONDS = 60
+
+  // Cards answered and active time per session, for the effort chart.
+  static EFFORT_QUERY = `
+    WITH answers AS (
+      SELECT
+        session_cards.session_id,
+        sessions.category_id,
+        session_cards.studied_at,
+        (julianday(session_cards.studied_at) - julianday(COALESCE(
+          LAG(session_cards.studied_at) OVER (
+            PARTITION BY session_cards.session_id ORDER BY session_cards.studied_at
+          ),
+          sessions.started_at
+        ))) * 86400 AS gap
+      FROM session_cards
+      INNER JOIN sessions ON sessions.id = session_cards.session_id
+      WHERE session_cards.studied_at IS NOT NULL AND session_cards.times_studied > 0
+    )
+    SELECT
+      category_id,
+      MIN(studied_at) as started_at,
+      COUNT(*) as cards,
+      SUM(MIN(MAX(gap, 0), ${this.ACTIVE_GAP_SECONDS})) as seconds
+    FROM answers
+    GROUP BY session_id
+    ORDER BY started_at
+  `
+
+  static effort() {
+    return ApplicationRecord.execute(this.EFFORT_QUERY)
+  }
+
   // When the recent real study sessions started, and how much was covered in
   // each. Sessions under ten cards are noise — opening the app and answering
   // twice says nothing about when someone studies — so they are left out.

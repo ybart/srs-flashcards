@@ -4,7 +4,7 @@ import Category from '../models/category.js'
 import Session from '../models/session.js'
 import RelativeDate from '../models/relative_date.js'
 import { LABELS } from '../migrations.js'
-import { chart, completion } from '../progress_chart.js'
+import { bars, chart, completion } from '../progress_chart.js'
 
 export default class extends Controller {
   static targets = ['list']
@@ -17,27 +17,45 @@ export default class extends Controller {
     { label: '3 months', months: 3 },
     { label: '1 month', months: 1 }
   ]
+  static METRICS = [
+    { key: 'cards', label: 'Cards', value: (event) => event.cards },
+    { key: 'time', label: 'Time', value: (event) => event.seconds }
+  ]
   static MONTH = 30 * 24 * 60 * 60 * 1000
   static PREVIEW_COLUMNS = 90
   static DETAIL_COLUMNS = 160
 
   async connect() {
-    const [categories, snapshots] = await Promise.all([Category.all(), Session.history()])
+    const [categories, snapshots, effort] = await Promise.all([
+      Category.all(), Session.history(), Session.effort()
+    ])
 
-    this.series = new Map()
-    for (const row of snapshots) {
+    this.series = this.group(snapshots, (row) => {
       const progress = JSON.parse(row.progress)
-      const point = {
+
+      return {
         time: RelativeDate.dateFromSqliteTimestamp(row.started_at).getTime(),
         dist: LABELS.map((label) => progress[label] || 0)
       }
-      if (!this.series.has(row.category_id)) { this.series.set(row.category_id, []) }
-      this.series.get(row.category_id).push(point)
-    }
+    })
+    this.effort = this.group(effort, (row) => ({
+      time: RelativeDate.dateFromSqliteTimestamp(row.started_at).getTime(),
+      cards: row.cards, seconds: row.seconds || 0
+    }))
 
     this.listTarget.innerHTML = ''
     for (const category of categories) { this.append(category) }
     if (!this.listTarget.children.length) { this.renderEmpty() }
+  }
+
+  group(rows, build) {
+    const grouped = new Map()
+    for (const row of rows) {
+      if (!grouped.has(row.category_id)) { grouped.set(row.category_id, []) }
+      grouped.get(row.category_id).push(build(row))
+    }
+
+    return grouped
   }
 
   append(category) {
@@ -49,56 +67,89 @@ export default class extends Controller {
     item.removeAttribute('style')
     item.id = `progress-${category.id}`
     item.dataset.category = category.id
+    item.dataset.metric = this.constructor.METRICS[0].key
     item.querySelector('[data-role=name]').innerText = category.name
     item.querySelector('[data-role=percent]').innerText =
       `${completion(series.at(-1).dist).toFixed(0)} %`
 
     this.listTarget.appendChild(item)
-    this.draw(item, null)
+    this.draw(item)
   }
 
-  // Redraws in place; `months` null means the whole history.
-  draw(item, months) {
-    const series = this.series.get(Number(item.dataset.category))
+  // Redraws in place from the range and metric held on the item.
+  draw(item) {
+    const category = Number(item.dataset.category)
+    const series = this.series.get(category)
+    const months = Number(item.dataset.months) || null
     const expanded = item.classList.contains('expanded')
+
     const to = series.at(-1).time
     const from = months ? to - months * this.constructor.MONTH : series[0].time
+    const columns = expanded ? this.constructor.DETAIL_COLUMNS : this.constructor.PREVIEW_COLUMNS
 
-    const container = item.querySelector('[data-role=chart]')
-    container.innerHTML = ''
-    container.appendChild(chart(series, {
-      from: from,
-      to: to,
-      columns: expanded ? this.constructor.DETAIL_COLUMNS : this.constructor.PREVIEW_COLUMNS
-    }))
-
+    this.replace(item, 'chart', chart(series, { from: from, to: to, columns: columns }))
     if (!expanded) { return }
 
     item.querySelector('[data-role=from]').innerText = this.monthLabel(from)
     item.querySelector('[data-role=to]').innerText = this.monthLabel(to)
-    this.appendRanges(item, months, series[0].time, to)
+
+    const metric = this.constructor.METRICS.find((m) => m.key === item.dataset.metric)
+    const events = this.effort.get(category) || []
+    this.replace(item, 'effort', bars(events, {
+      from: from, to: to, columns: columns, value: metric.value
+    }))
+
+    const total = events
+      .filter((event) => event.time >= from && event.time <= to)
+      .reduce((sum, event) => sum + metric.value(event), 0)
+    item.querySelector('[data-role=total]').innerText = this.formatTotal(metric.key, total)
+
+    this.appendChoices(item, 'ranges', this.constructor.RANGES.filter((range) => {
+      // A range longer than the history draws the same chart as All.
+      return !range.months || to - range.months * this.constructor.MONTH >= series[0].time
+    }).map((range) => ({
+      label: range.label, selected: (range.months || null) === months,
+      action: 'click->progress#selectRange', data: { months: range.months || '' }
+    })))
+
+    this.appendChoices(item, 'metrics', this.constructor.METRICS.map((option) => ({
+      label: option.label, selected: option.key === metric.key,
+      action: 'click->progress#selectMetric', data: { metric: option.key }
+    })))
+  }
+
+  replace(item, role, node) {
+    const container = item.querySelector(`[data-role=${role}]`)
+    container.innerHTML = ''
+    container.appendChild(node)
+  }
+
+  appendChoices(item, role, choices) {
+    const container = item.querySelector(`[data-role=${role}]`)
+    container.innerHTML = ''
+
+    for (const choice of choices) {
+      const button = document.createElement('a')
+      button.href = '#'
+      button.innerText = choice.label
+      button.className = choice.selected ? 'progress-range selected' : 'progress-range'
+      button.dataset.action = choice.action
+      for (const [key, value] of Object.entries(choice.data)) { button.dataset[key] = value }
+      container.appendChild(button)
+    }
   }
 
   monthLabel(time) {
     return new Date(time).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
   }
 
-  // Ranges longer than the history itself would all draw the same chart.
-  appendRanges(item, current, first, last) {
-    const ranges = item.querySelector('[data-role=ranges]')
-    ranges.innerHTML = ''
+  formatTotal(metric, total) {
+    if (metric !== 'time') { return `${Math.round(total).toLocaleString()} cards` }
 
-    for (const range of this.constructor.RANGES) {
-      if (range.months && last - range.months * this.constructor.MONTH < first) { continue }
+    const minutes = Math.round(total / 60)
+    if (minutes < 60) { return `${minutes}m` }
 
-      const button = document.createElement('a')
-      button.href = '#'
-      button.innerText = range.label
-      button.className = range.months === current ? 'progress-range selected' : 'progress-range'
-      button.dataset.action = 'click->progress#selectRange'
-      button.dataset.months = range.months || ''
-      ranges.appendChild(button)
-    }
+    return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`
   }
 
   toggle(event) {
@@ -107,23 +158,42 @@ export default class extends Controller {
     const item = event.currentTarget.closest('.progress-item')
     const opening = !item.classList.contains('expanded')
 
+    // Only one open at a time, so the list stays scannable.
     for (const other of this.listTarget.children) {
       if (other === item || !other.classList.contains('expanded')) { continue }
-      other.classList.remove('expanded')
-      other.querySelector('[data-role=detail]').style.display = 'none'
-      this.draw(other, null)
+      this.collapse(other)
+      this.draw(other)
     }
 
-    item.classList.toggle('expanded', opening)
-    item.querySelector('[data-role=detail]').style.display = opening ? '' : 'none'
-    this.draw(item, null)
+    if (opening) {
+      item.classList.add('expanded')
+      item.querySelector('[data-role=detail]').style.display = ''
+    } else {
+      this.collapse(item)
+    }
+    this.draw(item)
+  }
+
+  collapse(item) {
+    item.classList.remove('expanded')
+    item.querySelector('[data-role=detail]').style.display = 'none'
+    delete item.dataset.months
   }
 
   selectRange(event) {
     event.preventDefault()
 
     const item = event.currentTarget.closest('.progress-item')
-    this.draw(item, Number(event.currentTarget.dataset.months) || null)
+    item.dataset.months = event.currentTarget.dataset.months
+    this.draw(item)
+  }
+
+  selectMetric(event) {
+    event.preventDefault()
+
+    const item = event.currentTarget.closest('.progress-item')
+    item.dataset.metric = event.currentTarget.dataset.metric
+    this.draw(item)
   }
 
   renderEmpty() {
