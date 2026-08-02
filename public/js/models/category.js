@@ -20,6 +20,14 @@ export default class Category extends ApplicationRecord {
     `)
   }
 
+  static async find(id) {
+    const categories = await ApplicationRecord.execute(
+      'SELECT id, name FROM categories WHERE id = :id', { id: id }
+    )
+
+    return categories[0] ? new Category(categories[0]) : null
+  }
+
   static all() {
     return ApplicationRecord.execute(`
       SELECT categories.id, categories.name, sessions.started_at, json(sessions.progress),

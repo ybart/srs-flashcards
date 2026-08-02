@@ -47,6 +47,7 @@ const PRECACHE_ASSETS = [
   '/js/app.js',
   '/js/db.js',
   '/js/worker.js',
+  '/js/migrations.js',
   '/sw.js',
   
   // CSS

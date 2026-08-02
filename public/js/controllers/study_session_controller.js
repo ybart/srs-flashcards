@@ -5,7 +5,6 @@ import Card from '../models/card.js'
 
 
 export default class extends Controller {
-  static defaultProgress = Object.freeze({ red: 0, orange: 0, yellow: 0, lightgreen: 0, green: 0 })
   static targets = Object.freeze(["question", "answer", "related"])
   static labels = Object.freeze(['red', 'orange', 'yellow', 'lightgreen', 'green'])
 
@@ -14,9 +13,7 @@ export default class extends Controller {
     const fragment = document.location.hash.substring(1)
     const params = Object.fromEntries(new URLSearchParams(fragment))
 
-    this.session = await Session.create(
-      { ...params, ...{ progress: this.constructor.defaultProgress } }
-    )
+    this.session = await Session.create(params)
 
     // Increment study session count for support prompt
     const prevCount = parseInt(localStorage.getItem('studySessionCount') || '0')
@@ -51,17 +48,10 @@ export default class extends Controller {
 
   async validateAnswer(isCorrect, forcedLabel = null) {
     if (!this.currentCard.label) this.currentCard.label = 0
-    const labels = this.constructor.labels
 
-    // TODO: Update the session progress
-
-    const previousLabel = this.currentCard.label
     if (forcedLabel !== null) { this.currentCard.label = forcedLabel }
     else if (isCorrect && this.currentCard.label < 4) { this.currentCard.label += 1 }
     else if (!isCorrect) { this.currentCard.label = 0 }
-
-    this.session.progress[labels[previousLabel]] -= 1
-    this.session.progress[labels[this.currentCard.label]] += 1
 
     // awaits here to prevent picking the card we just updated later
     await this.session.updateCard(this.currentCard, isCorrect)

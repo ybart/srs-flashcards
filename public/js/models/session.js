@@ -3,33 +3,55 @@ import Card from './card.js'
 
 export default class Session extends ApplicationRecord {
   static async create(attributes = {}) {
-    const progress = JSON.stringify(attributes.progress)
-    if (Object.isFrozen(progress)) {
-      console.log('progress is frozen')
-    }
-
-
     const id = (await ApplicationRecord.execute(`
-      INSERT INTO sessions(category_id, started_at, progress)
+      INSERT INTO sessions(category_id, started_at)
       VALUES(
         :category_id,
-        datetime('now', 'subsec'),
-        jsonb(:progress)
-      ) RETURNING id`, { category_id: attributes.category, progress: progress }))[0].id;
+        datetime('now', 'subsec')
+      ) RETURNING id`, { category_id: attributes.category }))[0].id;
 
     // TODO: Close all other open sessions after creating a new one.
     // TODO: Add a CHECK constraint ensuring only one session is open in DB.
 
-    // let clonedAttribues = JSON.parse(JSON.stringify(attributes))
-    // console.log('attributes', attributes)
-    // return new Session({ ...attributes, ...{ id: id } })
+    const session = new Session({ ...attributes, id });
+    await session.saveProgress();
 
-    const mutableAttributes = {
-      ...attributes,
-      progress: attributes.progress ? {...attributes.progress} : {}
-    };
-    return new Session({ ...mutableAttributes, id });
-  
+    return session;
+  }
+
+  // `progress` is an absolute snapshot of the category's card distribution,
+  // taken when the session opens and after every answer. The progress view
+  // charts one bar per snapshot; the migration in `migrations.js` rebuilt the
+  // same shape for the sessions that predate this.
+  static SAVE_PROGRESS_QUERY = `
+    UPDATE sessions
+    SET progress = jsonb((
+      SELECT json_object(
+        'gray',       SUM(label IS NULL),
+        'red',        SUM(label IS 0),
+        'orange',     SUM(label IS 1),
+        'yellow',     SUM(label IS 2),
+        'lightgreen', SUM(label IS 3),
+        'green',      SUM(label IS 4)
+      )
+      FROM cards WHERE cards.category_id = sessions.category_id
+    ))
+    WHERE id = :id
+  `
+
+  async saveProgress() {
+    await ApplicationRecord.execute(this.constructor.SAVE_PROGRESS_QUERY, { id: this.id })
+  }
+
+  // Every snapshot recorded for a category, oldest first. Sessions where nothing
+  // was ever answered carry no snapshot and are left out.
+  static history(category_id) {
+    return ApplicationRecord.execute(`
+      SELECT started_at, json(progress) as progress
+      FROM sessions
+      WHERE category_id = :category_id AND progress IS NOT NULL
+      ORDER BY started_at
+    `, { category_id: category_id })
   }
 
   // Cards for all sessions of the session category
@@ -103,5 +125,7 @@ export default class Session extends ApplicationRecord {
           times_correct = times_correct + :correct_count
         WHERE session_id = :session_id AND card_id = :card_id;
       `, { session_id: this.id, card_id: card.id, correct_count: correct ? 1 : 0 });
+
+    await this.saveProgress();
   }
 }

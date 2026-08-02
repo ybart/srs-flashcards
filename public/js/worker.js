@@ -1,5 +1,6 @@
 // import sqlite3InitModule from "@sqlite.org/sqlite-wasm"
 import sqlite3InitModule from "./sqlite3/sqlite3.mjs"
+import { migrate } from "./migrations.js"
 
 export default class ApplicationWorker {
   constructor() {
@@ -47,6 +48,8 @@ export default class ApplicationWorker {
       this.db = new sqlite3.oo1.OpfsDb('flashcards.db', 'c');
     }
 
+    migrate(this.db);
+
     port.postMessage({ result: 'success' })
   }
 
@@ -69,6 +72,9 @@ export default class ApplicationWorker {
 
       await sqlite3.oo1.OpfsDb.importDb('flashcards.db', bytes);
       this.db = new sqlite3.oo1.OpfsDb('flashcards.db', 'c');
+
+      // An imported file can come from any older version of the app.
+      migrate(this.db);
 
       port.postMessage({ result: 'success' });
     } catch (error) {

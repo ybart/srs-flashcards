@@ -1,17 +1,54 @@
 import { Controller } from 'https://cdn.jsdelivr.net/npm/@hotwired/stimulus@3.2.2/+esm'
 
-export default class extends Controller {
-  static targets = ['history']
+import Category from '../models/category.js'
+import Session from '../models/session.js'
+import RelativeDate from '../models/relative_date.js'
+import { LABELS } from '../migrations.js'
 
-  // Stacked-bar colours, in order: gray, red, orange, yellow, lightgreen, green.
+export default class extends Controller {
+  static targets = ['history', 'title']
+
+  // Stacked-bar colours, in the order of `LABELS`.
   static COLORS = ['#778787', '#ed3b3b', '#f29132', '#c2bb3b', '#7fe851', '#0a8f45']
   static DAY = 24 * 60 * 60 * 1000
   static MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-  connect() {
-    // TODO: replace with persisted per-session snapshots (reconstructed history
-    // + snapshots stored going forward). Mock data for now to build the view.
-    this.render(this.bucketize(this.mockSessions()))
+  async connect() {
+    const fragment = document.location.hash.substring(1)
+    const params = Object.fromEntries(new URLSearchParams(fragment))
+    this.category = params.category
+
+    const category = this.category ? await Category.find(this.category) : null
+    if (category) { this.titleTarget.innerText = category.name }
+
+    const sessions = await this.sessions()
+    if (sessions.length === 0) { return this.renderEmpty() }
+
+    this.render(this.bucketize(sessions))
+  }
+
+  // One entry per recorded snapshot: { time, dist }, where dist counts
+  // [gray, red, orange, yellow, lightgreen, green].
+  async sessions() {
+    if (!this.category) { return [] }
+
+    const rows = await Session.history(this.category)
+
+    return rows.map((row) => {
+      const progress = JSON.parse(row.progress)
+
+      return {
+        time: RelativeDate.dateFromSqliteTimestamp(row.started_at).getTime(),
+        dist: LABELS.map((label) => progress[label] || 0)
+      }
+    })
+  }
+
+  renderEmpty() {
+    const message = document.createElement('p')
+    message.classList.add('message')
+    message.append('No study history yet')
+    this.historyTarget.appendChild(message)
   }
 
   granularity(age) {
@@ -42,12 +79,12 @@ export default class extends Controller {
   bucketize(sessions) {
     const now = Date.now()
     const buckets = new Map()
-    for (const s of sessions) {
-      const time = new Date(s.started_at).getTime()
+    for (const session of sessions) {
+      const time = session.time
       const gran = this.granularity(now - time)
       const key = this.bucketKey(new Date(time), gran)
       const current = buckets.get(key)
-      if (!current || time > current.time) buckets.set(key, { time, dist: s.dist, gran })
+      if (!current || time > current.time) buckets.set(key, { time, dist: session.dist, gran })
     }
     return [...buckets.values()].sort((a, b) => b.time - a.time)
   }
@@ -134,27 +171,5 @@ export default class extends Controller {
     row.className = 'ph-row'
     row.append(lab, bar)
     el.appendChild(row)
-  }
-
-  // TEMP: representative history (gray shrinking, green growing) sampled denser
-  // toward now, so all bucket granularities are exercised. Removed once real
-  // snapshots exist. dist = [gray, red, orange, yellow, lightgreen, green].
-  mockSessions() {
-    const now = Date.now()
-    const totalCards = 1900
-    const sessions = []
-    for (let i = 0; i <= 40; i++) {
-      const daysAgo = Math.round(400 * Math.pow(1 - i / 40, 1.3))
-      const time = now - daysAgo * this.constructor.DAY
-      const p = i / 40
-      const green = Math.round(totalCards * 0.70 * p)
-      const lightgreen = Math.round(totalCards * 0.10 * p)
-      const yellow = Math.round(totalCards * 0.05 * p)
-      const orange = Math.round(totalCards * 0.05 * p)
-      const red = Math.round(totalCards * 0.05 * (1 - p)) + 20
-      const gray = Math.max(0, totalCards - green - lightgreen - yellow - orange - red)
-      sessions.push({ started_at: new Date(time).toISOString(), dist: [gray, red, orange, yellow, lightgreen, green] })
-    }
-    return sessions
   }
 }
