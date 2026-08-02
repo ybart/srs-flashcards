@@ -15,10 +15,9 @@
   - [ ] In Chrome PWA, refreshing using Cmd-R bust the cache, it should fetch from cache instead.
   - [x] At first install, the version is 'unknown'
   - [x] When offline, refreshing cause the app to be unavailable
-  - [ ] Automatic update strategy:
-    - On activation, if we did not check for updates for at least 24h, do an automatic check.
-    - If an update is available, download the files in the background, but do not apply update
-    - When app is going background, perform the update process (replacing the files and clearing the cache)
+  - [x] Automatic update strategy — implemented differently: check and auto-apply on
+    launch, on reactivation, and when regaining connectivity; red badge otherwise.
+    - [ ] Revisit the update UI (low priority).
   - Implement version check logic using localStorage to implement once a day max logic, cancel the process when no connectivity.
   - Remove the old files from the cache, download the new ones using the manifest.
   - The service worker should hijack fetch to only use the cache and error when requesting a file not in the cache (except version)
