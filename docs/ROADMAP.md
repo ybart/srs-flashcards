@@ -104,8 +104,8 @@
   under the color strip (no gap, overlaid on the count, no layout change). Width is the
   deck's available cards (next study time past) over deck size; full when all are due,
   hidden when none are.
-- [ ] Medal button moves the card to the last (green) deck instead of one deck up.
-- [ ] Block entering study mode for a category with no available cards.
+- [x] Medal button moves the card to the last (green) deck instead of one deck up.
+- [x] Block entering study mode for a category with no available cards.
   1. The "insert cards of wrong color" finish screen (studying ahead of schedule) is a
      lower-priority alternative.
 - [ ] Card picking order (open question, needs experimentation):
