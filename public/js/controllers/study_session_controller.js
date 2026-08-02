@@ -127,8 +127,6 @@ export default class extends Controller {
     const relatedCards = await card.related();
     relatedCards.map((card) => this.appendRelated(cardElement, card))
 
-    console.log(this.cards.map((card) => JSON.parse(card.properties).name))
-
     if (oldElement) { oldElement.remove(); }
     container.appendChild(cardElement)
   }
@@ -161,12 +159,6 @@ export default class extends Controller {
 
   setPropertyValue(container, role, attribute, value) {
     container.querySelector(`[data-role=${role}]`).setAttribute(attribute, value)
-  }
-
-  showCardDetails() {
-    // Load related cards list
-    this.questionTarget.style.display = value ? "none" : "flex"
-    this.answerTarget.style.display = value ? "flex" : "none"
   }
 
   appendRelated(cardContainer, card) {

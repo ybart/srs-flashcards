@@ -48,9 +48,6 @@ export default class Session extends ApplicationRecord {
       WHERE category_id = :category_id
       GROUP BY session_cards.card_id
     ) most_recent_studies ON cards.id = most_recent_studies.card_id
-    LEFT JOIN session_cards
-      ON session_cards.card_id = most_recent_studies.card_id
-      AND session_cards.session_id = most_recent_studies.session_id
     WHERE
       cards.category_id = :category_id
       AND cards.id NOT IN (SELECT value FROM json_each(:excluded))
