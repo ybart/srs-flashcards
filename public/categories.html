@@ -81,15 +81,12 @@
             <button aria-label="Close" rel="prev" data-action="categories#chooseRepeat"></button>
             <p><strong data-categories-target="reminderTitle">Remind me</strong></p>
           </header>
-          <!-- The first date on each row says everything the copy used to. -->
-          <ul class="reminder-choices">
-            <li><a href="#" data-action="categories#chooseRepeat" data-repeat="daily">
-              <span>Every day</span><span data-role="when"></span></a></li>
-            <li><a href="#" data-action="categories#chooseRepeat" data-repeat="weekly">
-              <span>Every week</span><span data-role="when"></span></a></li>
-            <li><a href="#" data-action="categories#chooseRepeat" data-repeat="monthly">
-              <span>Every month</span><span data-role="when"></span></a></li>
-          </ul>
+          <p>These cards are ready now. How often should the reminder repeat?</p>
+          <div class="reminder-choices">
+            <a href="#" role="button" data-action="categories#chooseRepeat" data-repeat="daily">Every day</a>
+            <a href="#" role="button" class="outline" data-action="categories#chooseRepeat" data-repeat="weekly">Every week</a>
+            <a href="#" role="button" class="outline" data-action="categories#chooseRepeat" data-repeat="monthly">Every month</a>
+          </div>
         </article>
       </dialog>
 
@@ -118,7 +115,7 @@
         <a href="#" data-role="reminder-link" class="category-reminder-icon" aria-label="Reminder"
            data-action="click->categories#addReminder">
           <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"
-               fill="none" stroke="#888" stroke-width="2" stroke-linecap="round">
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <rect x="3" y="5" width="18" height="16" rx="2"></rect>
             <path d="M3 10h18M8 3v4M16 3v4"></path>
           </svg>

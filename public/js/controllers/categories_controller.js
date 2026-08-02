@@ -246,15 +246,6 @@ export default class extends Controller {
   askRepeat(categoryName) {
     this.reminderTitleTarget.innerText = `Remind me to study ${categoryName}`
     this.chosenRepeat = null
-
-    // Each row carries when its series would start; the close button has no
-    // data-repeat, so it is left alone.
-    const date = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short' })
-    for (const choice of this.reminderDialogTarget.querySelectorAll('[data-repeat]')) {
-      choice.querySelector('[data-role=when]').innerText =
-        `from ${date.format(Reminder.nextOccurrence(choice.dataset.repeat))}`
-    }
-
     this.reminderDialogTarget.showModal()
 
     return new Promise((resolve) => { this.resolveRepeat = resolve })
