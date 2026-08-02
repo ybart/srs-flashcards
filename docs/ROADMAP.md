@@ -72,21 +72,18 @@ and within each section the order is the intended order of work.
    strings behind a catalogue and ship French alongside. Pick the language from
    `navigator.language` with an override in `localStorage`, since the settings
    page itself is after 1.0. Covers the app, the install page and the manifest.
-5. [ ] **About modal** with version check and update button. The pieces already
-   exist (version line, update dot, "Check for Updates", auto-apply on launch,
-   reactivation and reconnect); this only moves them out of the dropdown.
-6. [ ] **Public-facing sweep** — the README badge pins Ruby 3.1.0 while
+5. [ ] **Public-facing sweep** — the README badge pins Ruby 3.1.0 while
    `.ruby-version` is 3.4.5, and it reads as if Ruby were the runtime: it is the
    import/build toolchain (`lib/`, `Rakefile`, `bin/`), the app itself is a
    static JS PWA. Flip the `in_development` badge at release.
-7. [ ] **Kanji-of-the-Day (KOAD) generator** for growth/marketing — independent of
+6. [ ] **Kanji-of-the-Day (KOAD) generator** for growth/marketing — independent of
    the app, but wanted at the same time as 1.0.
    - Read `flashcards.db` and generate daily social posts (kanji + reading +
      meaning + example)
    - Level 1: output a batch of ready-to-paste posts (no API keys)
    - Level 2: auto-post to Bluesky via the API on a schedule (app password)
    - Rationale + strategy in `docs/MARKETING.md` (Bluesky community section)
-8. [ ] **Single-archive distribution** — ship the app as one zip instead of ~150
+7. [ ] **Single-archive distribution** — ship the app as one zip instead of ~150
    files: atomic install, one download, and no partial-update tears where the
    version label and the loaded code disagree.
 
@@ -155,6 +152,9 @@ a paid service.
   `Object.fromEntries(resp.headers.entries())`, then check if the headers exist
   and have the expected values.
 - Revisit the update UI (low priority).
+- About modal with version check and update button. The pieces already exist
+  (version line, update dot, "Check for Updates", auto-apply on launch,
+  reactivation and reconnect); this only moves them out of the dropdown.
 
 ### Data model
 
