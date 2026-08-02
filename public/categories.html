@@ -61,7 +61,9 @@
         </div>
       </section>
 
-      <a href="install.html" class="demo-ribbon"
+      <!-- data-turbo="false": install.html is not part of the Turbo app and its
+           page-scoped styles would leak into the head and stay there. -->
+      <a href="install.html" class="demo-ribbon" data-turbo="false"
          title="Demo mode: progress is not saved. Install the app to save it."
          aria-label="Demo mode: progress is not saved. Install the app to save it.">
         <span class="demo-band">
@@ -69,6 +71,19 @@
           <span class="demo-sub">Install to save progress</span>
         </span>
       </a>
+
+      <dialog data-categories-target="reminderDialog">
+        <article>
+          <header><strong data-categories-target="reminderTitle">Remind me</strong></header>
+          <p>These cards are ready now. How often should the reminder repeat?</p>
+          <footer>
+            <a href="#" role="button" data-action="categories#chooseRepeat" data-repeat="daily">Every day</a>
+            <a href="#" role="button" data-action="categories#chooseRepeat" data-repeat="weekly">Every week</a>
+            <a href="#" role="button" data-action="categories#chooseRepeat" data-repeat="monthly">Every month</a>
+            <a href="#" role="button" class="secondary" data-action="categories#chooseRepeat">Cancel</a>
+          </footer>
+        </article>
+      </dialog>
 
       <div class="donate-toast hidden" data-donate-target="banner">
         <span>Enjoying SRS Flashcards?
@@ -88,15 +103,25 @@
       </a>
       <div class="category-footer">
         <div data-role="progress" class="progress">50%</div>
-        <a href="progress.html" data-role="progress-link" class="category-progress-icon" aria-label="Progress">
-          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <rect x="2.75" y="12" width="3.5" height="8.4"></rect>
-            <rect x="7.75" y="7" width="3.5" height="13.4"></rect>
-            <rect x="12.75" y="14" width="3.5" height="6.4"></rect>
-            <rect x="17.75" y="4" width="3.5" height="16.4"></rect>
-            <rect x="2" y="20.4" width="20" height="1.6"></rect>
-          </svg>
-        </a>
+        <div class="category-actions">
+          <a href="#" data-role="reminder-link" class="category-reminder-icon" aria-label="Reminder"
+             data-action="click->categories#addReminder">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"
+                 fill="none" stroke="#888" stroke-width="2" stroke-linecap="round">
+              <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+              <path d="M3 10h18M8 3v4M16 3v4"></path>
+            </svg>
+          </a>
+          <a href="progress.html" data-role="progress-link" class="category-progress-icon" aria-label="Progress">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <rect x="2.75" y="12" width="3.5" height="8.4"></rect>
+              <rect x="7.75" y="7" width="3.5" height="13.4"></rect>
+              <rect x="12.75" y="14" width="3.5" height="6.4"></rect>
+              <rect x="17.75" y="4" width="3.5" height="16.4"></rect>
+              <rect x="2" y="20.4" width="20" height="1.6"></rect>
+            </svg>
+          </a>
+        </div>
       </div>
     </article>
   </body>

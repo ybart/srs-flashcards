@@ -268,14 +268,20 @@ main.update-available details.dropdown summary + ul .update-dot {
 }
 .availability-dot.show { display: block; }
 
-/* Category with nothing available to study: dim it, but the progress icon
-   in the footer stays usable (viewing history is still relevant). */
-article.unavailable { opacity: 0.55; }
-article.unavailable a.category-content { cursor: default; }
+/* Category with nothing available to study. Only the study affordance is muted:
+   the footer actions (history, reminder) stay live, so the card must not read as
+   disabled — the clock line says when it refills. */
+article.unavailable a.category-content { opacity: 0.5; cursor: default; }
 
-/* Per-category histogram button in the card footer → that category's progress. */
-.category-progress-icon {
+/* Per-category buttons in the card footer: reminder above history. */
+.category-actions {
+  display: flex;
   flex: 0 0 auto;
+  flex-direction: column;
+  gap: 4px;
+}
+.category-reminder-icon,
+.category-progress-icon {
   line-height: 0;
   opacity: 0.5;
 }
@@ -289,25 +295,17 @@ article.unavailable a.category-content { cursor: default; }
 main.demo .demo-ribbon {
   display: block;
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 190px;
-  height: 190px;
-  overflow: hidden;
-  pointer-events: none;
+  top: 9px;
+  left: 9px;
   text-decoration: none;
+  /* clip-path cuts a box-shadow away along with the corners, so the shadow has
+     to be a filter on the wrapper — it then follows the notched outline. */
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
   z-index: 900;
 }
 main.demo .demo-band {
-  /* Centred on the 30° chord of the box, so the band runs from the left edge to
-     the top edge and both ends are clipped by it. */
-  position: absolute;
-  top: 26px;
-  left: -44px;
-  width: 240px;
-  padding: 6px 0;
-  transform: rotate(-30deg);
-  pointer-events: auto;
+  display: block;
+  padding: 5px 18px;
   /* Stitched look: the two white rules sit inside the band, so red still shows
      along both edges ("couture de fil blanc"). */
   background-color: #ed3b3b;
@@ -315,9 +313,13 @@ main.demo .demo-band {
   background-size: 100% 1px, 100% 1px;
   background-position: 0 3px, 0 calc(100% - 3px);
   background-repeat: no-repeat;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   color: #fff;
   text-align: center;
+  /* A triangle notched into each end, so a horizontal band still reads as a
+     ribbon. The side padding has to clear the notch depth. */
+  clip-path: polygon(
+    0 0, 100% 0, calc(100% - 11px) 50%, 100% 100%, 0 100%, 11px 50%
+  );
 }
 main.demo .demo-title,
 main.demo .demo-sub {

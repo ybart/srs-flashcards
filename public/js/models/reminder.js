@@ -32,7 +32,21 @@ export default class Reminder {
     return parts.join('\r\n')
   }
 
-  static calendar({ at, summary, description, url }) {
+  static FREQUENCIES = { daily: 'DAILY', weekly: 'WEEKLY', monthly: 'MONTHLY' }
+
+  // First occurrence of a recurring reminder: one period from now, at the same
+  // time of day. Firing the first one immediately would just be noise.
+  static nextOccurrence(repeat) {
+    const date = new Date()
+
+    if (repeat === 'daily') { date.setDate(date.getDate() + 1) }
+    else if (repeat === 'weekly') { date.setDate(date.getDate() + 7) }
+    else { date.setMonth(date.getMonth() + 1) }
+
+    return date
+  }
+
+  static calendar({ at, summary, description, url, repeat }) {
     const end = new Date(at.getTime() + this.DURATION_MINUTES * 60 * 1000)
     const lines = [
       'BEGIN:VCALENDAR',
@@ -44,6 +58,7 @@ export default class Reminder {
       `DTSTAMP:${this.timestamp(new Date())}`,
       `DTSTART:${this.timestamp(at)}`,
       `DTEND:${this.timestamp(end)}`,
+      this.FREQUENCIES[repeat] ? `RRULE:FREQ=${this.FREQUENCIES[repeat]}` : null,
       `SUMMARY:${this.escape(summary)}`,
       `DESCRIPTION:${this.escape(description)}`,
       url ? `URL:${this.escape(url)}` : null,

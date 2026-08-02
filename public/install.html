@@ -377,7 +377,9 @@
         </div>
 
         <p>Continue using the web version without installing:</p>
-        <a href="/categories.html" class="direct-access-button">Open Web Version Now</a>
+        <!-- data-turbo="false": if this page was reached through a Turbo visit,
+             its own styles are still in the head and would follow us back. -->
+        <a href="/categories.html" class="direct-access-button" data-turbo="false">Open Web Version Now</a>
 
         <div class="back-to-top">
             <a href="#top">↑ Back to top</a>

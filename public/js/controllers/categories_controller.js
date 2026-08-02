@@ -4,9 +4,10 @@ import ApplicationRecord from '../models/application_record.js'
 import Category from '../models/category.js'
 import Card from '../models/card.js'
 import RelativeDate from '../models/relative_date.js';
+import Reminder from '../models/reminder.js';
 
 export default class extends Controller {
-  static targets = ['version']
+  static targets = ['version', 'reminderDialog', 'reminderTitle']
   static LABEL_COLORS = ['#ed3b3b', '#f29132', '#f2db5b', '#7fe851', '#0a8f45'] // red..green
 
   async connect() {
@@ -170,6 +171,15 @@ export default class extends Controller {
     card.querySelector('[data-role=progress-link]')
       .setAttribute('href', `progress.html#category=${category.id}`)
 
+    // The reminder needs the name for the event and the refill time to decide
+    // between a one-off and a recurring series.
+    const reminderLink = card.querySelector('[data-role=reminder-link]')
+    reminderLink.dataset.categoryId = category.id
+    reminderLink.dataset.categoryName = category.name
+    if (!hasStudied && !hasUnstudied && avail?.next_available) {
+      reminderLink.dataset.nextAvailable = avail.next_available
+    }
+
     // A category with nothing to study is a dead end unless we say when it
     // wakes up, so the clock line switches from "last studied" to "next card".
     let clockText = null
@@ -198,6 +208,51 @@ export default class extends Controller {
 
     // TODO: Store categories into an array and add everything add same time
     container.appendChild(card)
+  }
+
+  // A calendar event rather than a notification: the OS fires the alert, so
+  // this needs no server and no permission prompt. A category that is waiting
+  // gets a one-off event on its refill time; one that is ready now has no
+  // natural date, so we ask how often to be nudged instead.
+  async addReminder(event) {
+    event.preventDefault()
+
+    const { categoryId, categoryName, nextAvailable } = event.currentTarget.dataset
+    let at = null
+    let repeat = null
+
+    if (nextAvailable) {
+      at = RelativeDate.dateFromSqliteTimestamp(nextAvailable)
+    } else {
+      repeat = await this.askRepeat(categoryName)
+      if (!repeat) { return }
+      at = Reminder.nextOccurrence(repeat)
+    }
+
+    Reminder.download({
+      at: at,
+      repeat: repeat,
+      summary: `Study ${categoryName}`,
+      description: `Cards are ready to review in ${categoryName}.`,
+      url: `${location.origin}/study.html#category=${categoryId}`
+    })
+  }
+
+  // Resolves with 'daily' / 'weekly' / 'monthly', or null when cancelled.
+  askRepeat(categoryName) {
+    this.reminderTitleTarget.innerText = `Remind me to study ${categoryName}`
+    this.reminderDialogTarget.showModal()
+
+    return new Promise((resolve) => { this.resolveRepeat = resolve })
+  }
+
+  chooseRepeat(event) {
+    event.preventDefault()
+    this.reminderDialogTarget.close()
+
+    const resolve = this.resolveRepeat
+    this.resolveRepeat = null
+    if (resolve) { resolve(event.currentTarget.dataset.repeat || null) }
   }
 
   percentageDone(counts) {
