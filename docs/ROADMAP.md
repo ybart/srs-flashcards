@@ -20,6 +20,14 @@ and within each section the order is the intended order of work.
    - Shipped: a "Remind me" button on the empty-deck screen hands over one
      `VEVENT` at the moment the next card comes back up, with a `VALARM` on the
      start and a `URL` deep-linking to that category.
+   - The time is a proposal, not a prediction: the calendar's own edit UI is
+     where the user adjusts it, so the heuristic only has to be plausible. It
+     votes on the hour of the recent sessions of at least ten cards and needs
+     two separate study days, which is what stops one evening's three sessions
+     from pinning a daily reminder to that evening. Measured against a real
+     history it is over two hours out about half the time — that history has two
+     genuine study times, morning and late night, and no estimator can split
+     them. Do not add a time picker to the app for this.
    - Still open: the fixed ladder (1 day — morning, midday, evening — 2 days,
      1 week, 1 month), which would be several events or one `RRULE`. The
      next-due event is more accurate, so the ladder only makes sense as a
