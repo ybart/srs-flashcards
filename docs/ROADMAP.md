@@ -24,10 +24,14 @@ and within each section the order is the intended order of work.
      1 week, 1 month), which would be several events or one `RRULE`. The
      next-due event is more accurate, so the ladder only makes sense as a
      "come back regularly" nudge.
-   - Known caveat: on iOS a link tapped in Calendar opens Safari, not the
-     installed PWA, and Safari is a different storage context — the user lands
-     on the demo build with none of their progress. The demo ribbon at least
-     explains what they are looking at.
+   - Known caveat: a link tapped in Calendar opens the browser, not the
+     installed PWA, and on iOS the browser is a different storage context — the
+     user lands on the demo build with none of their progress. A home-screen web
+     app cannot claim an https URL there (that needs Universal Links, which are
+     for App Store apps), so the event carries no `URL` on iOS at all.
+     Chromium honours `handle_links: "preferred"` in the manifest (121+), which
+     is what should route the link into the installed app on Android and
+     desktop; needs confirming on a device.
    - The events are static once added: changing the schedule means issuing a new
      file, and there is no way to withdraw one we already handed out.
 4. [ ] **French translation** — the UI was localised to English early on; put the

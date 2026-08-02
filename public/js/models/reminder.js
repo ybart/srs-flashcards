@@ -34,6 +34,19 @@ export default class Reminder {
 
   static FREQUENCIES = { daily: 'DAILY', weekly: 'WEEKLY', monthly: 'MONTHLY' }
 
+  // Whether a link in the event can reach the installed app. On iOS it cannot:
+  // a home-screen web app has no way to claim an https URL (that needs Universal
+  // Links, which are for App Store apps), so Calendar hands the link to Safari —
+  // a separate storage container, where the user finds the demo build and none
+  // of their progress. Better no link at all than one that lands there.
+  static linksReachTheApp() {
+    const platform = navigator.platform || ''
+    const ios = /iPad|iPhone|iPod/.test(platform) ||
+      (platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+
+    return !ios
+  }
+
   // First occurrence of a recurring reminder: one period from now, at the same
   // time of day. Firing the first one immediately would just be noise.
   static nextOccurrence(repeat) {
@@ -61,7 +74,7 @@ export default class Reminder {
       this.FREQUENCIES[repeat] ? `RRULE:FREQ=${this.FREQUENCIES[repeat]}` : null,
       `SUMMARY:${this.escape(summary)}`,
       `DESCRIPTION:${this.escape(description)}`,
-      url ? `URL:${this.escape(url)}` : null,
+      url && this.linksReachTheApp() ? `URL:${this.escape(url)}` : null,
       'BEGIN:VALARM',
       'ACTION:DISPLAY',
       `DESCRIPTION:${this.escape(summary)}`,

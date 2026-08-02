@@ -108,7 +108,9 @@
     }
    ],
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "handle_links": "preferred",
   "theme_color": "#3333cc",
   "background_color": "#3355cc"
 }
