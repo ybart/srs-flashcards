@@ -21,6 +21,17 @@ header > nav ul:last-child li {
   padding-left: 0;
   padding-right: 0;
 }
+/* Three equal columns cannot hold a row of actions: the group is boxed to a
+   third of the width and cannot shrink, so it spills over the centred title.
+   Where there are actions, they take their content width, the title takes what
+   is left and starts at the leading edge rather than the middle of it. */
+header > nav:has(.header-icon) ul { flex: 0 1 auto; }
+header > nav:has(.header-icon) ul:nth-child(2) { flex: 1 1 auto; min-width: 0; }
+header > nav:has(.header-icon) li.title {
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+}
 .header-icon {
   display: block;
   padding: 4px 5px;
