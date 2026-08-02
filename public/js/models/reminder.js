@@ -65,20 +65,20 @@ export default class Reminder {
   // Measured on a 25k-event database the answer is the same at every window from
   // 3 to 30 study days, so there is nothing to gain by remembering longer.
   static WINDOW_DAYS = 15
+  // Sessions vote with the cards they covered. That weighting is the whole
+  // method: on a real history it holds the same hour across every window, where
+  // counting sessions equally wanders across five. Smoothing each hour with its
+  // neighbours was tried and removed — it changed not one answer that the
+  // weighting had not already fixed.
   static MINIMUM_SESSIONS = 3
   // A habit is something done on more than one day. Three sessions in a single
   // afternoon would otherwise fix a daily reminder to that afternoon.
   static MINIMUM_DAYS = 2
 
-  // The time of day someone actually studies, from their recent real sessions.
-  //
-  // The vote is by the hour, and every hour scores its neighbours as well as
-  // itself, so a single long session at an odd hour cannot decide it. Finer
-  // buckets look more precise and are not: on that same database, half-hour and
-  // quarter-hour buckets wander by up to two hours as the window moves, and at
-  // one window they hand the answer to a tight late-night cluster over a morning
-  // habit spread across a wider band. The precision comes back from the median
-  // start minute inside the winning hour, which is stable because the hour is.
+  // The hour of day someone actually studies, from their recent real sessions.
+  // Whole hours, because finer buckets let one busy quarter of an hour outvote a
+  // habit spread over a wider band — and the answer is rounded to the quarter
+  // hour on its way into the event anyway.
   //
   // Returns null when there is too little history to say anything.
   static habitualTime(sessions) {
@@ -108,23 +108,9 @@ export default class Reminder {
     if (pool.length < this.MINIMUM_SESSIONS || spread.size < this.MINIMUM_DAYS) { return null }
 
     const cards = new Array(24).fill(0)
-    const minutes = Array.from({ length: 24 }, () => [])
+    for (const session of pool) { cards[session.at.getHours()] += session.cards }
 
-    for (const session of pool) {
-      cards[session.at.getHours()] += session.cards
-      minutes[session.at.getHours()].push(session.at.getMinutes())
-    }
-
-    let hour = 0
-    let best = -1
-    for (let candidate = 0; candidate < 24; candidate++) {
-      const score = cards[(candidate + 23) % 24] + 2 * cards[candidate] + cards[(candidate + 1) % 24]
-      if (score > best) { best = score; hour = candidate }
-    }
-
-    const sorted = minutes[hour].sort((a, b) => a - b)
-
-    return { hour: hour, minute: sorted[Math.floor(sorted.length / 2)] || 0 }
+    return { hour: cards.indexOf(Math.max(...cards)), minute: 0 }
   }
 
   // First occurrence of a recurring reminder: one period out, at the hour the
