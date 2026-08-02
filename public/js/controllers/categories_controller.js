@@ -143,29 +143,28 @@ export default class extends Controller {
     card.querySelector('[data-role=cards-count]').innerText = category.cards_count
 
     // Availability: colour the dot by the reddest available studied card, gray
-    // when only unstudied cards are available; when nothing is available, hide
-    // the dot and block entering study mode.
+    // when only unstudied cards are available; when nothing is available, block
+    // entering study mode.
     const avail = this.availabilityByCategory?.get(category.id)
     const hasStudied = avail && avail.min_available_label != null
     const hasUnstudied = avail && avail.unstudied > 0
+    const available = hasStudied || hasUnstudied
 
     const dot = card.querySelector('[data-role=availability-dot]')
-    if (dot) {
-      dot.classList.remove('show')
-      if (hasStudied) {
-        dot.style.background = this.constructor.LABEL_COLORS[avail.min_available_label]
-        dot.classList.add('show')
-      } else if (hasUnstudied) {
-        dot.style.background = '#888'
-        dot.classList.add('show')
-      }
+    if (available) {
+      dot.style.background = hasStudied
+        ? this.constructor.LABEL_COLORS[avail.min_available_label] : '#888'
+      dot.classList.add('show')
+    } else {
+      // Nothing due: the slot belongs to the reminder instead.
+      dot.remove()
     }
 
     // Title row and body row are two links to the same place, so both parts of
     // the card start a study session.
     const links = card.querySelectorAll('a.category-content')
     for (const link of links) {
-      if (hasStudied || hasUnstudied) {
+      if (available) {
         link.setAttribute('href', `study.html#category=${category.id}`)
       } else {
         link.removeAttribute('href')
@@ -174,9 +173,9 @@ export default class extends Controller {
     }
 
     // Only a category with nothing to study has a moment worth reminding about;
-    // for the rest, studying now is the answer and the menu carries the nudge.
+    // for the rest, studying now is the answer and the header carries the nudge.
     const reminderLink = card.querySelector('[data-role=reminder-link]')
-    if (!hasStudied && !hasUnstudied && avail?.next_available) {
+    if (!available && avail?.next_available) {
       reminderLink.dataset.categoryId = category.id
       reminderLink.dataset.categoryName = category.name
     } else {

@@ -9,9 +9,25 @@ header > nav { min-height: 60px; }
 header > nav ul { flex: 1 0 0; }
 header > nav li { width: 100%; text-wrap: nowrap; }
 header > nav li.title { text-align: center; }
-/* Right-hand group: only the first item pushes, so several stay side by side. */
-header > nav ul:last-child li { width: max-content; }
-header > nav ul:last-child li:first-child { margin-left: auto; }
+/* Right-hand group: progress, reminder, then the settings menu. Aligning the
+   list itself rather than pushing with an auto margin keeps it right-aligned
+   whichever items are hidden — the offline chip leads it and is usually not
+   displayed. Pico's horizontal padding on nav items comes off too: three icons
+   plus that padding do not fit a third of a phone's width, so the spacing is
+   the icons' own tap padding. */
+header > nav ul:last-child { justify-content: flex-end; }
+header > nav ul:last-child li {
+  width: max-content;
+  padding-left: 0;
+  padding-right: 0;
+}
+.header-icon {
+  display: block;
+  padding: 4px 5px;
+  line-height: 0;
+  color: var(--pico-muted-color);
+}
+.header-icon:hover { color: var(--pico-primary); }
 main { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
 body > main { padding: 0; }
 section[role=content] {
@@ -75,7 +91,7 @@ a.category-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: var(--pico-block-spacing-vertical) var(--pico-block-spacing-horizontal) 0;
+  padding: var(--pico-block-spacing-vertical) 0 0 var(--pico-block-spacing-horizontal);
 }
 a.category-head > h3 { flex: 1 1 auto; margin: 0; text-align: left; }
 
@@ -191,18 +207,16 @@ article.category:last-child {
   border-bottom: none;
 }
 
-a.category-head { grid-column: 1 / -1; }
-a.category-body { grid-column: 1; }
+a.category-head { grid-column: 1; }
+a.category-body { grid-column: 1 / -1; }
 article.category a.category-content { text-decoration: none; }
 
-.category-side {
+/* Beside the title: whichever of the dot and the reminder applies. */
+.category-marker {
   display: flex;
-  flex: 0 0 auto;
-  flex-direction: column;
+  grid-column: 2;
   align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 var(--pico-block-spacing-horizontal) var(--pico-block-spacing-vertical) 0;
+  padding: var(--pico-block-spacing-vertical) var(--pico-block-spacing-horizontal) 0 8px;
 }
 
 /* Feedback belongs to the whole card, not just the part a link covers — the
@@ -273,9 +287,6 @@ main.update-available details.dropdown summary + ul .update-dot {
   flex: 0 0 auto;
   width: 10px;
   height: 10px;
-  /* Centres the dot on the buttons below it: half of their 34px box (a 24px
-     glyph plus 5px of padding either side) minus half the dot. */
-  margin-right: 12px;
   border-radius: 50%;
   pointer-events: none;
 }
@@ -289,19 +300,18 @@ main.update-available details.dropdown summary + ul .update-dot {
    the dimming stays a contrast between live and idle rather than a flat wash. */
 article.category.unavailable a.category-content { opacity: 0.5; cursor: default; }
 
-/* The reminder button, in the card's side column and only on categories with
-   nothing to study. The padding is the tap target: the glyph is only 24px. It
-   draws in the text colour rather than a fixed grey — grey is what made it read
-   as disabled next to a dimmed card, when it is the part that stays usable. */
+/* The reminder, in the dot's place and only on categories with nothing to
+   study. It draws in the text colour rather than a fixed grey — grey is what
+   made it read as disabled next to a dimmed card, when it is the part that
+   stays usable. */
 .category-reminder-icon {
   display: block;
+  margin: -5px;
   padding: 5px;
   line-height: 0;
   color: var(--pico-color);
 }
 .category-reminder-icon:hover { color: var(--pico-primary); }
-/* With no buttons left there, the column should not hold a gap open. */
-.category-side:empty { display: none; }
 
 /* Reminder dialog: choices stacked full width so they stay thumb-sized on a
    phone. Daily is the filled one — a study reminder that is not daily is the
