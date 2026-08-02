@@ -2,14 +2,14 @@ import ApplicationRecord from './application_record.js'
 import Card from './card.js'
 
 export default class Category extends ApplicationRecord {
-  // Per-category counts driving the availability dot: studied cards that are
-  // due now, and never-studied cards (always available).
+  // Per-category data driving the availability dot: the reddest (lowest) label
+  // among studied cards that are due, and the count of never-studied cards.
   static availability() {
     return ApplicationRecord.execute(`
       SELECT
         cards.category_id,
-        SUM(CASE WHEN cards.label IS NOT NULL AND (${Card.AVAILABILITY})
-                 THEN 1 ELSE 0 END) as available_studied,
+        MIN(CASE WHEN cards.label IS NOT NULL AND (${Card.AVAILABILITY})
+                 THEN cards.label END) as min_available_label,
         SUM(CASE WHEN cards.label IS NULL THEN 1 ELSE 0 END) as unstudied
       FROM cards
       LEFT JOIN (

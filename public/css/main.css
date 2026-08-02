@@ -231,11 +231,10 @@ main.update-available details.dropdown summary + ul .update-dot {
   vertical-align: middle;
 }
 
-/* Category availability dot (top-right of a category card). */
-.availability-dot { display: none; }
-.availability-dot.red,
-.availability-dot.gray {
-  display: block;
+/* Category availability dot (top-right of a category card). Its colour is set
+   from JS to the reddest available deck (or gray for unstudied-only). */
+.availability-dot {
+  display: none;
   position: absolute;
   /* Align with the content box: right edge of the progress bar (which spans the
      full width) and the title's line. */
@@ -247,8 +246,7 @@ main.update-available details.dropdown summary + ul .update-dot {
   pointer-events: none;
   z-index: 1;
 }
-.availability-dot.red { background: #ed3b3b; }
-.availability-dot.gray { background: #888; }
+.availability-dot.show { display: block; }
 
 /* Study-mode per-deck availability bar: red, flush under the colour strip,
    over the count. Width = available cards / deck size; never shifts layout. */
@@ -257,9 +255,9 @@ main.update-available details.dropdown summary + ul .update-dot {
   position: absolute;
   top: 0;
   left: 0;
-  height: 4px;
+  height: 3px;
   width: 0;
-  background: #ed3b3b;
+  background: rgba(237, 59, 59, 0.4);
 }
 
 .progress {

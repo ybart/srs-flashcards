@@ -7,6 +7,7 @@ import RelativeDate from '../models/relative_date.js';
 
 export default class extends Controller {
   static targets = ['version']
+  static LABEL_COLORS = ['#ed3b3b', '#f29132', '#f2db5b', '#7fe851', '#0a8f45'] // red..green
 
   async connect() {
     this.checkPWAStatus();
@@ -140,14 +141,19 @@ export default class extends Controller {
     card.querySelector('[data-role=name]').innerText = category.name
     card.querySelector('[data-role=cards-count]').innerText = category.cards_count
 
-    // Availability dot: red when studied cards are due, gray when only
-    // unstudied cards are available, hidden otherwise.
+    // Availability dot: colour of the reddest available studied card, gray when
+    // only unstudied cards are available, hidden otherwise.
     const avail = this.availabilityByCategory?.get(category.id)
     const dot = card.querySelector('[data-role=availability-dot]')
     if (dot) {
-      dot.classList.remove('red', 'gray')
-      if (avail && avail.available_studied > 0) { dot.classList.add('red') }
-      else if (avail && avail.unstudied > 0) { dot.classList.add('gray') }
+      dot.classList.remove('show')
+      if (avail && avail.min_available_label != null) {
+        dot.style.background = this.constructor.LABEL_COLORS[avail.min_available_label]
+        dot.classList.add('show')
+      } else if (avail && avail.unstudied > 0) {
+        dot.style.background = '#888'
+        dot.classList.add('show')
+      }
     }
 
     let startedAtAgo = null
