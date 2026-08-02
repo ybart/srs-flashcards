@@ -3,6 +3,7 @@ import { Controller } from 'https://cdn.jsdelivr.net/npm/@hotwired/stimulus@3.2.
 import ApplicationRecord from '../models/application_record.js'
 import Category from '../models/category.js'
 import Card from '../models/card.js'
+import Session from '../models/session.js'
 import RelativeDate from '../models/relative_date.js';
 import Reminder from '../models/reminder.js';
 
@@ -226,11 +227,12 @@ export default class extends Controller {
     let repeat = null
 
     if (nextAvailable) {
-      at = RelativeDate.dateFromSqliteTimestamp(nextAvailable)
+      // Rounded up, so the reminder still falls after the card comes back up.
+      at = Reminder.ceilToQuarter(RelativeDate.dateFromSqliteTimestamp(nextAvailable))
     } else {
       repeat = await this.askRepeat(categoryName)
       if (!repeat) { return }
-      at = Reminder.nextOccurrence(repeat)
+      at = Reminder.nextOccurrence(repeat, Reminder.habitualTime(await Session.studyTimes()))
     }
 
     Reminder.download({

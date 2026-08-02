@@ -81,7 +81,7 @@ export default class extends Controller {
     const name = category ? category.name : 'SRS Flashcards'
 
     Reminder.download({
-      at: this.nextAvailable,
+      at: Reminder.ceilToQuarter(this.nextAvailable),
       summary: `Study ${name}`,
       description: `Cards are ready to review in ${name}.`,
       url: `${location.origin}/study.html#category=${this.session.category}`

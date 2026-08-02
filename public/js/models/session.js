@@ -43,6 +43,23 @@ export default class Session extends ApplicationRecord {
     await ApplicationRecord.execute(this.constructor.SAVE_PROGRESS_QUERY, { id: this.id })
   }
 
+  // When the recent real study sessions started, and how much was covered in
+  // each. Sessions under ten cards are noise — opening the app and answering
+  // twice says nothing about when someone studies — so they are left out.
+  static STUDY_TIMES_QUERY = `
+    SELECT MIN(studied_at) as started_at, COUNT(*) as cards
+    FROM session_cards
+    WHERE studied_at IS NOT NULL AND times_studied > 0
+    GROUP BY session_id
+    HAVING cards >= 10
+    ORDER BY started_at DESC
+    LIMIT 100
+  `
+
+  static studyTimes() {
+    return ApplicationRecord.execute(this.STUDY_TIMES_QUERY)
+  }
+
   // Every snapshot recorded for a category, oldest first. Sessions where nothing
   // was ever answered carry no snapshot and are left out.
   static history(category_id) {
