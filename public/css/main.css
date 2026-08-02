@@ -77,7 +77,7 @@ a.category-head {
   gap: 10px;
   padding: var(--pico-block-spacing-vertical) var(--pico-block-spacing-horizontal) 0;
 }
-a.category-head > h3 { flex: 1 1 auto; margin: 0; }
+a.category-head > h3 { flex: 1 1 auto; margin: 0; text-align: left; }
 
 /* Everything under the title: card count and last study side by side, with the
    progress bar spanning underneath. The side column of buttons sits beside it. */
@@ -91,8 +91,9 @@ a.category-body {
 }
 a.category-body > p.count { grid-area: c; }
 a.category-body > p.last-studied { grid-area: l; }
-a.category-body div[data-role=progress] { grid-area: p; }
-a.category-body > p { margin: 0; font-size: 0.9em; }
+a.category-body div[data-role=progress] { grid-area: p; margin: 0; }
+/* Left-aligned so the card-count icon starts on the progress bar's edge. */
+a.category-body > p { margin: 0; padding: 0; font-size: 0.9em; text-align: left; }
 
 a.category-head > h3, a.category-body > p {
   min-width: 0;
@@ -271,6 +272,9 @@ main.update-available details.dropdown summary + ul .update-dot {
   flex: 0 0 auto;
   width: 10px;
   height: 10px;
+  /* Centres the dot on the buttons below it: half of their 34px box (a 24px
+     glyph plus 5px of padding either side) minus half the dot. */
+  margin-right: 12px;
   border-radius: 50%;
   pointer-events: none;
 }
