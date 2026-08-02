@@ -81,13 +81,15 @@
             <button aria-label="Close" rel="prev" data-action="categories#chooseRepeat"></button>
             <p><strong data-categories-target="reminderTitle">Remind me</strong></p>
           </header>
-          <p>These cards are ready now, so there is no date to put in the calendar.
-             How often should the reminder repeat?</p>
-          <div class="reminder-choices">
-            <a href="#" role="button" class="outline" data-action="categories#chooseRepeat" data-repeat="daily">Every day</a>
-            <a href="#" role="button" class="outline" data-action="categories#chooseRepeat" data-repeat="weekly">Every week</a>
-            <a href="#" role="button" class="outline" data-action="categories#chooseRepeat" data-repeat="monthly">Every month</a>
-          </div>
+          <!-- The first date on each row says everything the copy used to. -->
+          <ul class="reminder-choices">
+            <li><a href="#" data-action="categories#chooseRepeat" data-repeat="daily">
+              <span>Every day</span><span data-role="when"></span></a></li>
+            <li><a href="#" data-action="categories#chooseRepeat" data-repeat="weekly">
+              <span>Every week</span><span data-role="when"></span></a></li>
+            <li><a href="#" data-action="categories#chooseRepeat" data-repeat="monthly">
+              <span>Every month</span><span data-role="when"></span></a></li>
+          </ul>
         </article>
       </dialog>
 

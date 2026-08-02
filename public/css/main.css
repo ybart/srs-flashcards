@@ -284,7 +284,13 @@ main.update-available details.dropdown summary + ul .update-dot {
 /* Category with nothing available to study. Only the study affordance is muted:
    the footer actions (history, reminder) stay live, so the card must not read as
    disabled — the clock line says when it refills. */
-article.category.unavailable a.category-content { opacity: 0.5; cursor: default; }
+/* Nothing to study: no opacity anywhere. Fading the study links took the counts,
+   the progress bar and the still-usable buttons down with them, which is what
+   made the card read as switched off. The missing dot, the "next in ..." line
+   and the absence of hover feedback carry the state; only the title steps back
+   to the muted colour. */
+article.category.unavailable a.category-content { cursor: default; }
+article.category.unavailable a.category-head > h3 { color: var(--pico-muted-color); }
 
 /* Reminder above history, in the card's side column. The padding is the tap
    target: the glyphs themselves are only 24px. */
@@ -297,21 +303,27 @@ article.category.unavailable a.category-content { opacity: 0.5; cursor: default;
 }
 .category-progress-icon svg rect { fill: #888; }
 
-/* Reminder dialog: choices stacked full width so they stay thumb-sized on a
-   phone, outlined so they read as options rather than three primary actions. */
-dialog > article {
-  width: 100%;
-  max-width: 24rem;
-  margin: 0 auto;
-}
-.reminder-choices {
+/* Reminder dialog: the choices are rows, not buttons — the interval reads as the
+   label and its first date as secondary, which gives the list a hierarchy three
+   identical bars never had, and carries what the copy used to explain. */
+dialog > article { width: 100%; max-width: 24rem; margin: 0 auto; }
+.reminder-choices { list-style: none; margin: 0; padding: 0; }
+.reminder-choices li { margin: 0; }
+.reminder-choices a {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 0;
+  border-top: 1px solid var(--pico-muted-border-color);
+  color: inherit;
+  text-decoration: none;
 }
-.reminder-choices a[role=button] {
-  width: 100%;
-  margin: 0;
+.reminder-choices a:hover { color: var(--pico-primary); }
+.reminder-choices [data-role=when] {
+  font-size: 0.8em;
+  color: var(--pico-muted-color);
+  white-space: nowrap;
 }
 
 /* Browser (not installed) mode: corner ribbon warning that progress is not kept,
