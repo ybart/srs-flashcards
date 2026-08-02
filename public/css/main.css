@@ -173,14 +173,14 @@ article:last-child {
   border-bottom: none;
 }
 
-article > a {
+article > a.category-content {
   display: block;
   height: 100%;
   width: 100%;
   text-decoration: none;
   padding: var(--pico-block-spacing-vertical) var(--pico-block-spacing-horizontal);
 }
-article a:hover {
+article a.category-content:hover {
   --pico-background-color: var(--pico-form-element-selected-background-color);
 }
 
