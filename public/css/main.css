@@ -79,16 +79,20 @@ a.category-head {
 }
 a.category-head > h3 { flex: 1 1 auto; margin: 0; }
 
-/* Everything under the title: progress bar, card count and last study on one
-   row, with the side column of buttons beside them. */
+/* Everything under the title: card count and last study side by side, with the
+   progress bar spanning underneath. The side column of buttons sits beside it. */
 a.category-body {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: grid;
+  grid: "c l" auto
+        "p p" auto / 1fr 1fr;
+  align-content: center;
+  gap: 6px 10px;
   padding: 8px var(--pico-block-spacing-horizontal) var(--pico-block-spacing-vertical);
 }
-a.category-body div[data-role=progress] { flex: 1 1 auto; min-width: 60px; }
-a.category-body > p { flex: 0 1 auto; margin: 0; font-size: 0.9em; }
+a.category-body > p.count { grid-area: c; }
+a.category-body > p.last-studied { grid-area: l; }
+a.category-body div[data-role=progress] { grid-area: p; }
+a.category-body > p { margin: 0; font-size: 0.9em; }
 
 a.category-head > h3, a.category-body > p {
   min-width: 0;
