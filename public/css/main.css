@@ -301,14 +301,21 @@ main.demo .demo-ribbon span {
 
 /* Progress view: condensed stacked colour bars, one per time bucket, grouped
    under year / month headers. Newest first. */
-.progress-history { padding: 10px 16px; }
+/* Capped so the 9px bars stay readable instead of stretching the full width of
+   a desktop window; below that the cap is inert and they fill the screen. */
+.progress-history { padding: 10px 16px; max-width: 640px; }
 .ph-header { font-size: 0.72rem; font-weight: 600; color: #777; margin: 8px 0 2px; }
 .ph-header.ph-lvl-1 { padding-left: 12px; }
 /* All bars share one fixed label column so their widths line up exactly;
    hierarchy is conveyed by the year/month headers, not by indenting bars. */
 .ph-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
 .ph-label {
-  flex: 0 0 3.6em; /* fits the widest label, e.g. "Jul-Sep" */
+  flex: 0 0 4.2em; /* fits the widest label, e.g. "Jul-Sep" */
+  /* A flex item's automatic minimum size is its content, so a label wider than
+     the basis pushes the column open and knocks that row's bar out of line.
+     min-width: 0 makes the basis a real cap. */
+  min-width: 0;
+  overflow: hidden;
   font-size: 0.66rem;
   color: #999;
   text-align: right;
@@ -370,6 +377,13 @@ main.demo .demo-ribbon span {
     /* justify-content: space-between; */
     padding: 12px 20px;
     align-content: start;
+  }
+  /* Pages whose content is not the category grid: the flex row above turns
+     them into a shrink-to-fit item, which collapses anything sized in % (the
+     progress bars have no intrinsic width, so they vanish). */
+  section[role=content].plain {
+    display: block;
+    background-color: transparent;
   }
   section[role=content] > .spinner {
     margin: auto;
