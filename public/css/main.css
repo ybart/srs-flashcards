@@ -63,8 +63,7 @@ a.category-content {
   display: grid;
 
   grid: "n n"
-        "c l"
-        "p p" / 1fr 1fr;
+        "c l" / 1fr 1fr;
 }
 
 a.category-content > h3 { grid-area: n; text-align: left; vertical-align: center; }
@@ -82,8 +81,7 @@ a.category-content > h3, a.category-content > p {
   a.category-content {
     grid: "n n" max-content
           "c c" max-content
-          "l l" max-content
-          "p p" max-content / 1fr 1fr;
+          "l l" max-content / 1fr 1fr;
   }
 }
 
@@ -174,15 +172,22 @@ article:last-child {
 }
 
 article > a.category-content {
-  display: block;
-  height: 100%;
   width: 100%;
   text-decoration: none;
-  padding: var(--pico-block-spacing-vertical) var(--pico-block-spacing-horizontal);
+  padding: var(--pico-block-spacing-vertical) var(--pico-block-spacing-horizontal) 4px;
 }
 article a.category-content:hover {
   --pico-background-color: var(--pico-form-element-selected-background-color);
 }
+
+/* Footer row under the study link: progress bar + histogram button. */
+.category-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 var(--pico-block-spacing-horizontal) var(--pico-block-spacing-vertical);
+}
+.category-footer .progress { flex: 1 1 auto; margin: 0; }
 
 .spinner:not(:only-child) {
   display: none;
@@ -248,16 +253,14 @@ main.update-available details.dropdown summary + ul .update-dot {
 }
 .availability-dot.show { display: block; }
 
-/* Category with nothing available to study: dimmed and not clickable. */
+/* Category with nothing available to study: dim it, but the progress icon
+   in the footer stays usable (viewing history is still relevant). */
 article.unavailable { opacity: 0.55; }
-article.unavailable a { cursor: default; }
+article.unavailable a.category-content { cursor: default; }
 
-/* Per-category histogram icon (top-left of a card) → that category's progress. */
+/* Per-category histogram button in the card footer → that category's progress. */
 .category-progress-icon {
-  position: absolute;
-  top: 6px;
-  left: 8px;
-  z-index: 2;
+  flex: 0 0 auto;
   line-height: 0;
   opacity: 0.5;
 }
