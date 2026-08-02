@@ -101,13 +101,13 @@
 - [ ] Make question font smaller when more than 4 chars
 - [ ] Add links to related cards with a back button (or maybe using a modal UI).
 - [ ] Store deck status in the session and in the category
-- [ ] Category availability dot at the top-right of a category: red when it has available
-      studied cards (due); gray when the only available cards are unstudied; no dot when
-      nothing is available.
-- [ ] Study mode: thin red availability bar per colored deck counter, directly under the
-      color strip (no gap, overlaid on the count, no layout change). Width is the deck's
-      available cards (next study time past) over deck size; full when all are due, hidden
-      when none are.
+- [x] Category availability dot at the top-right of a category: coloured to the reddest
+      available studied card (due); gray when the only available cards are unstudied; no dot
+      when nothing is available.
+- [x] Study mode: thin softened-red availability bar per colored deck counter, directly
+      under the color strip (no gap, overlaid on the count, no layout change). Width is the
+      deck's available cards (next study time past) over deck size; full when all are due,
+      hidden when none are.
 - [ ] Medal button moves the card to the last (green) deck instead of one deck up.
 - [ ] Block entering study mode for a category with no available cards.
         1. The "insert cards of wrong color" finish screen (studying ahead of schedule) is a
