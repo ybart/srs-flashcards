@@ -60,15 +60,17 @@ export default class Session extends ApplicationRecord {
     return ApplicationRecord.execute(this.STUDY_TIMES_QUERY)
   }
 
-  // Every snapshot recorded for a category, oldest first. Sessions where nothing
-  // was ever answered carry no snapshot and are left out.
-  static history(category_id) {
+  // Every snapshot ever recorded, oldest first, for the progress view to group
+  // by category. Sessions where nothing was answered carry no snapshot and are
+  // left out. One query for the whole page: a category's history is a few
+  // hundred rows at most, and the alternative is a round trip per category.
+  static history() {
     return ApplicationRecord.execute(`
-      SELECT started_at, json(progress) as progress
+      SELECT category_id, started_at, json(progress) as progress
       FROM sessions
-      WHERE category_id = :category_id AND progress IS NOT NULL
+      WHERE progress IS NOT NULL
       ORDER BY started_at
-    `, { category_id: category_id })
+    `)
   }
 
   // Cards for all sessions of the session category

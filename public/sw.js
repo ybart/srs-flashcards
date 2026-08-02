@@ -48,6 +48,7 @@ const PRECACHE_ASSETS = [
   '/js/db.js',
   '/js/worker.js',
   '/js/migrations.js',
+  '/js/progress_chart.js',
   '/sw.js',
   
   // CSS

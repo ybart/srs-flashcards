@@ -289,20 +289,19 @@ main.update-available details.dropdown summary + ul .update-dot {
    the dimming stays a contrast between live and idle rather than a flat wash. */
 article.category.unavailable a.category-content { opacity: 0.5; cursor: default; }
 
-/* Reminder above history, in the card's side column. The padding is the tap
-   target: the glyphs themselves are only 24px. They draw in the text colour
-   rather than a fixed grey — grey is what made them read as disabled next to a
-   dimmed card, when they are the parts that stay usable. */
-.category-reminder-icon,
-.category-progress-icon {
+/* The reminder button, in the card's side column and only on categories with
+   nothing to study. The padding is the tap target: the glyph is only 24px. It
+   draws in the text colour rather than a fixed grey — grey is what made it read
+   as disabled next to a dimmed card, when it is the part that stays usable. */
+.category-reminder-icon {
   display: block;
   padding: 5px;
   line-height: 0;
   color: var(--pico-color);
 }
-.category-progress-icon svg rect { fill: currentColor; }
-.category-reminder-icon:hover,
-.category-progress-icon:hover { color: var(--pico-primary); }
+.category-reminder-icon:hover { color: var(--pico-primary); }
+/* With no buttons left there, the column should not hold a gap open. */
+.category-side:empty { display: none; }
 
 /* Reminder dialog: choices stacked full width so they stay thumb-sized on a
    phone. Daily is the filled one — a study reminder that is not daily is the
@@ -379,35 +378,54 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
 
 /* Progress view: condensed stacked colour bars, one per time bucket, grouped
    under year / month headers. Newest first. */
-/* Capped so the 9px bars stay readable instead of stretching the full width of
-   a desktop window; below that the cap is inert and they fill the screen. */
-.progress-history { padding: 10px 16px; max-width: 640px; }
-.ph-header { font-size: 0.72rem; font-weight: 600; color: #777; margin: 8px 0 2px; }
-.ph-header.ph-lvl-1 { padding-left: 12px; }
-/* All bars share one fixed label column so their widths line up exactly;
-   hierarchy is conveyed by the year/month headers, not by indenting bars. */
-.ph-row { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
-.ph-label {
-  flex: 0 0 4.2em; /* fits the widest label, e.g. "Jul-Sep" */
-  /* A flex item's automatic minimum size is its content, so a label wider than
-     the basis pushes the column open and knocks that row's bar out of line.
-     min-width: 0 makes the basis a real cap. */
-  min-width: 0;
-  overflow: hidden;
-  font-size: 0.66rem;
-  color: #999;
-  text-align: right;
-  white-space: nowrap;
+/* Progress view: one stacked-area chart per category, tapped to expand. The
+   charts are stretched to their box, so the completion line opts out of that
+   scaling in the SVG rather than here. */
+.progress-list { max-width: 640px; }
+.progress-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #333;
 }
-.ph-label.ph-strong { font-weight: 600; color: #777; } /* month/quarter titles */
-.ph-bar {
-  flex: 1 1 auto;
+.progress-item:last-child { border-bottom: none; }
+.progress-head {
   display: flex;
-  height: 9px;
-  overflow: hidden;
-  /* deliberately no border, no radius, no interaction */
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  color: inherit;
+  text-decoration: none;
 }
-.ph-seg { height: 100%; }
+.progress-percent { font-size: 0.85em; color: var(--pico-muted-color); }
+.progress-chart { line-height: 0; }
+.progress-svg {
+  display: block;
+  width: 100%;
+  height: 54px;
+  border-radius: 3px;
+}
+.progress-item.expanded .progress-svg { height: 170px; }
+.progress-line { stroke: #fff; stroke-width: 2; stroke-linejoin: round; }
+.progress-dates {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 5px;
+  font-size: 0.7rem;
+  color: var(--pico-muted-color);
+}
+.progress-ranges { display: flex; gap: 6px; margin-top: 10px; }
+.progress-range {
+  padding: 3px 10px;
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 10px;
+  font-size: 0.7rem;
+  color: var(--pico-muted-color);
+  text-decoration: none;
+}
+.progress-range.selected {
+  border-color: var(--pico-primary);
+  color: var(--pico-primary);
+}
 
 /* Study-mode per-deck availability bar: red, flush under the colour strip,
    over the count. Width = available cards / deck size; never shifts layout. */

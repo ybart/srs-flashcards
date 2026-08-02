@@ -56,18 +56,30 @@ export default class Card extends ApplicationRecord {
     `, { category_id: category_id })
   }
 
-  // When the next card of a category comes back up, for the empty-deck screen.
-  static async nextAvailable(category_id) {
+  // A deck is what a session picks, so it is also what a reminder is worth: one
+  // card coming back up is not a reason to open the app.
+  static DECK_SIZE = 10
+
+  // When the `count`-th waiting card comes back up — the moment that many are
+  // available at once. Taking the newest of the first `count` means a category
+  // with fewer than that waiting answers with when all of them are up.
+  static async nextAvailable(category_id, count = 1) {
     const rows = await ApplicationRecord.execute(`
-      SELECT ${this.NEXT_AVAILABLE_AT} as next_available
-      FROM cards
-      LEFT JOIN (
-        ${this.MOST_RECENT_STUDIES}
-        WHERE sessions.category_id = :category_id
-        GROUP BY session_cards.card_id
-      ) most_recent ON cards.id = most_recent.card_id
-      WHERE cards.category_id = :category_id
-    `, { category_id: category_id })
+      SELECT MAX(next_available) as next_available FROM (
+        SELECT ${this.NEXT_AVAILABLE} as next_available
+        FROM cards
+        LEFT JOIN (
+          ${this.MOST_RECENT_STUDIES}
+          WHERE sessions.category_id = :category_id
+          GROUP BY session_cards.card_id
+        ) most_recent ON cards.id = most_recent.card_id
+        WHERE cards.category_id = :category_id
+          AND cards.label IS NOT NULL
+          AND NOT (${this.AVAILABILITY})
+        ORDER BY next_available
+        LIMIT :count
+      )
+    `, { category_id: category_id, count: count })
 
     return rows[0] ? rows[0].next_available : null
   }

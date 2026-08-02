@@ -4,172 +4,132 @@ import Category from '../models/category.js'
 import Session from '../models/session.js'
 import RelativeDate from '../models/relative_date.js'
 import { LABELS } from '../migrations.js'
+import { chart, completion } from '../progress_chart.js'
 
 export default class extends Controller {
-  static targets = ['history', 'title']
+  static targets = ['list']
 
-  // Stacked-bar colours, in the order of `LABELS`.
-  static COLORS = ['#778787', '#ed3b3b', '#f29132', '#c2bb3b', '#7fe851', '#0a8f45']
-  static DAY = 24 * 60 * 60 * 1000
-  static MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  // Zooming in is a range, not a change of scale along the axis: an axis whose
+  // units change as it goes cannot be read as a shape.
+  static RANGES = [
+    { label: 'All', months: null },
+    { label: '1 year', months: 12 },
+    { label: '3 months', months: 3 },
+    { label: '1 month', months: 1 }
+  ]
+  static MONTH = 30 * 24 * 60 * 60 * 1000
+  static PREVIEW_COLUMNS = 90
+  static DETAIL_COLUMNS = 160
 
   async connect() {
-    const fragment = document.location.hash.substring(1)
-    const params = Object.fromEntries(new URLSearchParams(fragment))
-    this.category = params.category
+    const [categories, snapshots] = await Promise.all([Category.all(), Session.history()])
 
-    const category = this.category ? await Category.find(this.category) : null
-    if (category) { this.titleTarget.innerText = category.name }
-
-    const sessions = await this.sessions()
-    if (sessions.length === 0) { return this.renderEmpty() }
-
-    this.render(this.bucketize(sessions))
-  }
-
-  // One entry per recorded snapshot: { time, dist }, where dist counts
-  // [gray, red, orange, yellow, lightgreen, green].
-  async sessions() {
-    if (!this.category) { return [] }
-
-    const rows = await Session.history(this.category)
-
-    return rows.map((row) => {
+    this.series = new Map()
+    for (const row of snapshots) {
       const progress = JSON.parse(row.progress)
-
-      return {
+      const point = {
         time: RelativeDate.dateFromSqliteTimestamp(row.started_at).getTime(),
         dist: LABELS.map((label) => progress[label] || 0)
       }
-    })
+      if (!this.series.has(row.category_id)) { this.series.set(row.category_id, []) }
+      this.series.get(row.category_id).push(point)
+    }
+
+    this.listTarget.innerHTML = ''
+    for (const category of categories) { this.append(category) }
+    if (!this.listTarget.children.length) { this.renderEmpty() }
+  }
+
+  append(category) {
+    // A single snapshot is a point, not a trajectory; nothing to draw yet.
+    const series = this.series.get(category.id)
+    if (!series || series.length < 2) { return }
+
+    const item = document.querySelector('#progress-item').cloneNode(true)
+    item.removeAttribute('style')
+    item.id = `progress-${category.id}`
+    item.dataset.category = category.id
+    item.querySelector('[data-role=name]').innerText = category.name
+    item.querySelector('[data-role=percent]').innerText =
+      `${completion(series.at(-1).dist).toFixed(0)} %`
+
+    this.listTarget.appendChild(item)
+    this.draw(item, null)
+  }
+
+  // Redraws in place; `months` null means the whole history.
+  draw(item, months) {
+    const series = this.series.get(Number(item.dataset.category))
+    const expanded = item.classList.contains('expanded')
+    const to = series.at(-1).time
+    const from = months ? to - months * this.constructor.MONTH : series[0].time
+
+    const container = item.querySelector('[data-role=chart]')
+    container.innerHTML = ''
+    container.appendChild(chart(series, {
+      from: from,
+      to: to,
+      columns: expanded ? this.constructor.DETAIL_COLUMNS : this.constructor.PREVIEW_COLUMNS
+    }))
+
+    if (!expanded) { return }
+
+    item.querySelector('[data-role=from]').innerText = this.monthLabel(from)
+    item.querySelector('[data-role=to]').innerText = this.monthLabel(to)
+    this.appendRanges(item, months, series[0].time, to)
+  }
+
+  monthLabel(time) {
+    return new Date(time).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
+  }
+
+  // Ranges longer than the history itself would all draw the same chart.
+  appendRanges(item, current, first, last) {
+    const ranges = item.querySelector('[data-role=ranges]')
+    ranges.innerHTML = ''
+
+    for (const range of this.constructor.RANGES) {
+      if (range.months && last - range.months * this.constructor.MONTH < first) { continue }
+
+      const button = document.createElement('a')
+      button.href = '#'
+      button.innerText = range.label
+      button.className = range.months === current ? 'progress-range selected' : 'progress-range'
+      button.dataset.action = 'click->progress#selectRange'
+      button.dataset.months = range.months || ''
+      ranges.appendChild(button)
+    }
+  }
+
+  toggle(event) {
+    event.preventDefault()
+
+    const item = event.currentTarget.closest('.progress-item')
+    const opening = !item.classList.contains('expanded')
+
+    for (const other of this.listTarget.children) {
+      if (other === item || !other.classList.contains('expanded')) { continue }
+      other.classList.remove('expanded')
+      other.querySelector('[data-role=detail]').style.display = 'none'
+      this.draw(other, null)
+    }
+
+    item.classList.toggle('expanded', opening)
+    item.querySelector('[data-role=detail]').style.display = opening ? '' : 'none'
+    this.draw(item, null)
+  }
+
+  selectRange(event) {
+    event.preventDefault()
+
+    const item = event.currentTarget.closest('.progress-item')
+    this.draw(item, Number(event.currentTarget.dataset.months) || null)
   }
 
   renderEmpty() {
     const message = document.createElement('p')
     message.classList.add('message')
     message.append('No study history yet')
-    this.historyTarget.appendChild(message)
-  }
-
-  granularity(age) {
-    const DAY = this.constructor.DAY
-    if (age > 365 * DAY) return 'quarter'
-    if (age > 30 * DAY) return 'month'
-    if (age > 7 * DAY) return 'week'
-    return 'day'
-  }
-
-  bucketKey(d, gran) {
-    const y = d.getFullYear()
-    if (gran === 'quarter') return `${y}-Q${Math.floor(d.getMonth() / 3)}`
-    if (gran === 'month') return `${y}-M${d.getMonth()}`
-    if (gran === 'week') return `${y}-W${this.isoWeek(d)}`
-    return d.toISOString().slice(0, 10)
-  }
-
-  isoWeek(d) {
-    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()))
-    const dayNum = (date.getUTCDay() + 6) % 7
-    date.setUTCDate(date.getUTCDate() - dayNum + 3)
-    const firstThursday = new Date(Date.UTC(date.getUTCFullYear(), 0, 4))
-    return 1 + Math.round((date - firstThursday) / (7 * this.constructor.DAY))
-  }
-
-  // Keep the last session in each bucket, newest first. Empty buckets are absent.
-  bucketize(sessions) {
-    const now = Date.now()
-    const buckets = new Map()
-    for (const session of sessions) {
-      const time = session.time
-      const gran = this.granularity(now - time)
-      const key = this.bucketKey(new Date(time), gran)
-      const current = buckets.get(key)
-      if (!current || time > current.time) buckets.set(key, { time, dist: session.dist, gran })
-    }
-    return [...buckets.values()].sort((a, b) => b.time - a.time)
-  }
-
-  render(buckets) {
-    const el = this.historyTarget
-    el.innerHTML = ''
-    let lastYear = null
-    let lastMonth = null
-
-    for (const bucket of buckets) {
-      const d = new Date(bucket.time)
-      const year = d.getFullYear()
-      const month = d.getMonth()
-      const fine = bucket.gran === 'week' || bucket.gran === 'day'
-
-      if (year !== lastYear) {
-        this.appendHeader(el, `${year}`, 0)
-        lastYear = year
-        lastMonth = null
-      }
-      if (fine) {
-        if (month !== lastMonth) {
-          this.appendHeader(el, this.constructor.MONTHS[month], 1)
-          lastMonth = month
-        }
-      } else {
-        lastMonth = null // a later week/day re-emits its month header
-      }
-
-      // Coarse buckets (month/quarter) have no sub-bars, so bold their label as
-      // its own title; fine buckets (week/day) sit under a month header.
-      this.appendBar(el, this.subLabel(bucket.gran, d), bucket.dist, !fine)
-    }
-  }
-
-  subLabel(gran, d) {
-    if (gran === 'quarter') {
-      const q = Math.floor(d.getMonth() / 3)
-      return `${this.constructor.MONTHS[q * 3]}-${this.constructor.MONTHS[q * 3 + 2]}`
-    }
-    if (gran === 'month') return this.constructor.MONTHS[d.getMonth()]
-    if (gran === 'week') return this.weekRange(d)
-    return String(d.getDate()).padStart(2, '0')
-  }
-
-  // Day-of-month range (Mon..Sun) of the bucket's week, e.g. "01-07".
-  weekRange(d) {
-    const pad = (n) => String(n).padStart(2, '0')
-    const monday = new Date(d)
-    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7))
-    const sunday = new Date(monday)
-    sunday.setDate(monday.getDate() + 6)
-    return `${pad(monday.getDate())}-${pad(sunday.getDate())}`
-  }
-
-  appendHeader(el, text, level) {
-    const h = document.createElement('div')
-    h.className = `ph-header ph-lvl-${level}`
-    h.textContent = text
-    el.appendChild(h)
-  }
-
-  appendBar(el, label, dist, strong = false) {
-    const total = dist.reduce((a, b) => a + b, 0) || 1
-
-    const bar = document.createElement('div')
-    bar.className = 'ph-bar'
-    // Green first (left), gray last, so progress grows leftward.
-    for (let i = dist.length - 1; i >= 0; i--) {
-      if (dist[i] <= 0) continue
-      const seg = document.createElement('span')
-      seg.className = 'ph-seg'
-      seg.style.width = `${100 * dist[i] / total}%`
-      seg.style.background = this.constructor.COLORS[i]
-      bar.appendChild(seg)
-    }
-
-    const lab = document.createElement('span')
-    lab.className = strong ? 'ph-label ph-strong' : 'ph-label'
-    lab.textContent = label
-
-    const row = document.createElement('div')
-    row.className = 'ph-row'
-    row.append(lab, bar)
-    el.appendChild(row)
+    this.listTarget.appendChild(message)
   }
 }

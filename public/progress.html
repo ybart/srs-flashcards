@@ -24,13 +24,28 @@
       <header>
         <nav>
           <ul><li><a href="/categories.html">« Categories</a></li></ul>
-          <ul><li class="title"><strong data-progress-target="title">Progress</strong></li></ul>
+          <ul><li class="title"><strong>Progress</strong></li></ul>
           <ul></ul>
         </nav>
       </header>
       <section role="content" class="plain">
-        <div class="progress-history" data-progress-target="history"></div>
+        <div class="progress-list" data-progress-target="list"></div>
       </section>
     </main>
+
+    <div id="progress-item" class="progress-item" style="display: none;">
+      <a href="#" class="progress-head" data-action="click->progress#toggle">
+        <span data-role="name">{Category}</span>
+        <span data-role="percent" class="progress-percent">{0 %}</span>
+      </a>
+      <div data-role="chart" class="progress-chart"></div>
+      <div data-role="detail" class="progress-detail" style="display: none;">
+        <div class="progress-dates">
+          <span data-role="from"></span>
+          <span data-role="to"></span>
+        </div>
+        <div data-role="ranges" class="progress-ranges"></div>
+      </div>
+    </div>
   </body>
 </html>

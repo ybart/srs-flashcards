@@ -173,16 +173,14 @@ export default class extends Controller {
       }
     }
 
-    card.querySelector('[data-role=progress-link]')
-      .setAttribute('href', `progress.html#category=${category.id}`)
-
-    // The reminder needs the name for the event and the refill time to decide
-    // between a one-off and a recurring series.
+    // Only a category with nothing to study has a moment worth reminding about;
+    // for the rest, studying now is the answer and the menu carries the nudge.
     const reminderLink = card.querySelector('[data-role=reminder-link]')
-    reminderLink.dataset.categoryId = category.id
-    reminderLink.dataset.categoryName = category.name
     if (!hasStudied && !hasUnstudied && avail?.next_available) {
-      reminderLink.dataset.nextAvailable = avail.next_available
+      reminderLink.dataset.categoryId = category.id
+      reminderLink.dataset.categoryName = category.name
+    } else {
+      reminderLink.remove()
     }
 
     // A category with nothing to study is a dead end unless we say when it
@@ -216,39 +214,46 @@ export default class extends Controller {
   }
 
   // A calendar event rather than a notification: the OS fires the alert, so
-  // this needs no server and no permission prompt. A category that is waiting
-  // gets a one-off event on its refill time; one that is ready now has no
-  // natural date, so we ask how often to be nudged instead.
+  // this needs no server and no permission prompt.
+  //
+  // Only categories with nothing to study carry a reminder of their own, and it
+  // targets the moment a whole deck is back rather than a single card — being
+  // called back for one card is not worth opening the app for. A recurring
+  // nudge is the same event whatever the category, so it lives in the menu.
   async addReminder(event) {
     event.preventDefault()
 
-    const { categoryId, categoryName, nextAvailable } = event.currentTarget.dataset
-    let at = null
-    let repeat = null
-
-    if (nextAvailable) {
-      // Rounded up, so the reminder still falls after the card comes back up.
-      at = Reminder.ceilToQuarter(RelativeDate.dateFromSqliteTimestamp(nextAvailable))
-    } else {
-      repeat = await this.askRepeat(categoryName)
-      if (!repeat) { return }
-      at = Reminder.nextOccurrence(repeat, Reminder.habitualTime(await Session.studyTimes()))
-    }
+    const { categoryId, categoryName } = event.currentTarget.dataset
+    const refill = await Card.nextAvailable(categoryId, Card.DECK_SIZE)
+    if (!refill) { return }
 
     Reminder.download({
-      at: at,
-      repeat: repeat,
+      // Rounded up, so the reminder still falls after the cards come back up.
+      at: Reminder.ceilToQuarter(RelativeDate.dateFromSqliteTimestamp(refill)),
       summary: `Study ${categoryName}`,
-      description: `Cards are ready to review in ${categoryName}.`,
-      // The app itself rather than the deck: the reminder names the category, and
-      // opening on the category list leaves room to study something else.
+      description: `A deck is ready to review in ${categoryName}.`,
+      url: `${location.origin}/`
+    })
+  }
+
+  async remindMe(event) {
+    event.preventDefault()
+
+    const repeat = await this.askRepeat()
+    if (!repeat) { return }
+
+    Reminder.download({
+      at: Reminder.nextOccurrence(repeat, Reminder.habitualTime(await Session.studyTimes())),
+      repeat: repeat,
+      summary: 'Study your flashcards',
+      description: 'Open SRS Flashcards and review what is due.',
       url: `${location.origin}/`
     })
   }
 
   // Resolves with 'daily' / 'weekly' / 'monthly', or null when dismissed.
-  askRepeat(categoryName) {
-    this.reminderTitleTarget.innerText = `Remind me to study ${categoryName}`
+  askRepeat() {
+    this.reminderTitleTarget.innerText = 'Remind me to study'
     this.chosenRepeat = null
     this.reminderDialogTarget.showModal()
 

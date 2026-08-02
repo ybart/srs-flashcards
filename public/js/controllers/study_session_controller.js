@@ -75,15 +75,18 @@ export default class extends Controller {
   // needs no server and no permission prompt. The event links back to this
   // category — on iOS that opens the browser rather than the installed app.
   async addReminder() {
-    if (!this.nextAvailable) { return }
+    // The line above says when the first card is back; the reminder waits for a
+    // whole deck, since one card is not worth a trip.
+    const refill = await Card.nextAvailable(this.session.category, Card.DECK_SIZE)
+    if (!refill) { return }
 
     const category = await Category.find(this.session.category)
     const name = category ? category.name : 'SRS Flashcards'
 
     Reminder.download({
-      at: Reminder.ceilToQuarter(this.nextAvailable),
+      at: Reminder.ceilToQuarter(RelativeDate.dateFromSqliteTimestamp(refill)),
       summary: `Study ${name}`,
-      description: `Cards are ready to review in ${name}.`,
+      description: `A deck is ready to review in ${name}.`,
       // The app itself rather than the deck: the reminder names the category, and
       // opening on the category list leaves room to study something else.
       url: `${location.origin}/`
@@ -126,12 +129,13 @@ export default class extends Controller {
       message.append("The deck is now empty")
 
       // Say when it refills, so the screen is not a dead end, and offer to put
-      // that moment in the calendar.
+      // that moment in the calendar. The line is about the first card back; the
+      // reminder waits for a whole deck and looks that up for itself.
       const nextAvailable = await Card.nextAvailable(this.session.category)
       if (nextAvailable) {
-        this.nextAvailable = RelativeDate.dateFromSqliteTimestamp(nextAvailable)
+        const next = RelativeDate.dateFromSqliteTimestamp(nextAvailable)
         message.append(document.createElement("br"))
-        message.append(`Next card ${new RelativeDate(this.nextAvailable).format()}`)
+        message.append(`Next card ${new RelativeDate(next).format()}`)
 
         const reminder = document.createElement("a")
         reminder.setAttribute("role", "button")
