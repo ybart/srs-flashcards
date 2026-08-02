@@ -56,13 +56,11 @@
         <div data-role="canvas" class="progress-canvas">
           <div data-role="chart" class="progress-chart"></div>
           <div data-role="effort" class="progress-chart"></div>
+          <!-- Inside the canvas so the dates pan with the charts. -->
+          <div data-role="axis" class="progress-axis"></div>
         </div>
       </div>
       <div data-role="detail" class="progress-detail" style="display: none;">
-        <div class="progress-dates">
-          <span data-role="from"></span>
-          <span data-role="to"></span>
-        </div>
         <div class="progress-footer">
           <span data-role="total" class="progress-total"></span>
           <div data-role="metrics" class="progress-ranges"></div>

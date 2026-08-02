@@ -86,14 +86,50 @@ export default class extends Controller {
     this.draw(item)
   }
 
-  // Redraws in place from the range and metric held on the item. The whole
-  // history is always drawn; the range decides how much of it fits on screen,
-  // and the rest is reachable by scrolling.
+  // One point per day studied, with the empty stretches between them dropped.
+  // On a calendar axis those gaps are the honest answer and usually most of the
+  // width; on this one the question is what happened when you did turn up.
+  studyDays(series, events) {
+    const dayOf = (time) => new Date(time).toDateString()
+
+    const snapshots = new Map()
+    for (const point of series) { snapshots.set(dayOf(point.time), point) }
+
+    const worked = new Map()
+    for (const event of events) {
+      const current = worked.get(dayOf(event.time)) || { cards: 0, seconds: 0 }
+      current.cards += event.cards
+      current.seconds += event.seconds
+      worked.set(dayOf(event.time), current)
+    }
+
+    const days = [...snapshots.keys()]
+
+    return {
+      series: days.map((day, index) => ({ time: index, dist: snapshots.get(day).dist })),
+      events: days.map((day, index) => ({
+        time: index, ...(worked.get(day) || { cards: 0, seconds: 0 })
+      })),
+      dates: days.map((day) => snapshots.get(day).time),
+      first: snapshots.get(days[0]).time,
+      last: snapshots.get(days.at(-1)).time
+    }
+  }
+
+  // Redraws in place from the axis, range and metric held on the item. On the
+  // calendar axis the whole history is always drawn and the range decides how
+  // much of it fits on screen, the rest being a scroll away.
   draw(item) {
     const category = Number(item.dataset.category)
-    const series = this.series.get(category)
-    const months = Number(item.dataset.months) || null
     const expanded = item.classList.contains('expanded')
+    const byDay = item.dataset.axis === 'days'
+    const all = this.series.get(category)
+    const allEvents = this.effort.get(category) || []
+
+    const compressed = byDay ? this.studyDays(all, allEvents) : null
+    const series = compressed ? compressed.series : all
+    const events = compressed ? compressed.events : allEvents
+    const months = compressed ? null : (Number(item.dataset.months) || null)
 
     const from = series[0].time
     const to = series.at(-1).time
@@ -108,28 +144,44 @@ export default class extends Controller {
     this.replace(item, 'chart', chart(series, { from: from, to: to, columns: columns }))
 
     const effort = item.querySelector('[data-role=effort]')
+    const axis = item.querySelector('[data-role=axis]')
     effort.innerHTML = ''
+    axis.innerHTML = ''
     if (!expanded) { return this.scrollToLatest(item) }
 
-    item.querySelector('[data-role=from]').innerText = this.monthLabel(from)
-    item.querySelector('[data-role=to]').innerText = this.monthLabel(to)
-
     const metric = this.constructor.METRICS.find((m) => m.key === item.dataset.metric)
-    const events = this.effort.get(category) || []
     effort.appendChild(bars(events, {
       from: from, to: to, columns: columns, value: metric.value
     }))
+    this.appendAxis(axis, zoom, (position) => {
+      // On the day axis the positions are indices, so the date comes from the
+      // day they stand for rather than from the position itself.
+      const dates = compressed && compressed.dates
+      return dates
+        ? dates[Math.min(dates.length - 1, Math.round(position * (dates.length - 1)))]
+        : from + span * position
+    }, compressed ? compressed.last - compressed.first : span)
 
-    const total = events.reduce((sum, event) => sum + metric.value(event), 0)
+    const total = allEvents.reduce((sum, event) => sum + metric.value(event), 0)
     item.querySelector('[data-role=total]').innerText = this.formatTotal(metric.key, total)
 
-    this.appendChoices(item, 'ranges', this.constructor.RANGES.filter((range) => {
-      // A window wider than the history would draw the same chart as All.
-      return !range.months || range.months * this.constructor.MONTH < span
-    }).map((range) => ({
-      label: range.label, selected: (range.months || null) === months,
-      action: 'click->progress#selectRange', data: { months: range.months || '' }
-    })))
+    // On the day axis the zoom levels mean nothing — every day is one column —
+    // so the row becomes the pair of axes and shows the way back.
+    const zooms = compressed
+      ? [{ label: 'Calendar', selected: false, action: 'click->progress#selectAxis',
+           data: { axis: 'calendar' } }]
+      : this.constructor.RANGES.filter((range) => {
+        // A window wider than the history would draw the same chart as All.
+        return !range.months || range.months * this.constructor.MONTH < span
+      }).map((range) => ({
+        label: range.label, selected: (range.months || null) === months,
+        action: 'click->progress#selectRange', data: { months: range.months || '' }
+      }))
+
+    this.appendChoices(item, 'ranges', zooms.concat({
+      label: 'Study days', selected: !!compressed,
+      action: 'click->progress#selectAxis', data: { axis: 'days' }
+    }))
 
     this.appendChoices(item, 'metrics', this.constructor.METRICS.map((option) => ({
       label: option.label, selected: option.key === metric.key,
@@ -137,6 +189,30 @@ export default class extends Controller {
     })))
 
     this.scrollToLatest(item)
+  }
+
+  // Labels ride inside the scrolling canvas, roughly two per screenful, so
+  // panning never leaves you without a date in view.
+  appendAxis(axis, zoom, timeAt, span) {
+    const count = Math.max(2, Math.round(zoom * 2))
+
+    for (let i = 0; i < count; i++) {
+      const position = i / (count - 1)
+      const label = document.createElement('span')
+      label.innerText = this.tickLabel(timeAt(position), span)
+      label.style.left = `${(position * 100).toFixed(3)}%`
+      // The outermost labels would hang off the ends of the canvas.
+      if (position < 0.02) { label.style.transform = 'none' }
+      if (position > 0.98) { label.style.transform = 'translateX(-100%)' }
+      axis.appendChild(label)
+    }
+  }
+
+  tickLabel(time, span) {
+    const options = span > 400 * 24 * 60 * 60 * 1000
+      ? { month: 'short', year: 'numeric' } : { day: 'numeric', month: 'short' }
+
+    return new Date(time).toLocaleDateString(undefined, options)
   }
 
   // Zooming in should land on the most recent stretch, which is the one worth
@@ -165,10 +241,6 @@ export default class extends Controller {
       for (const [key, value] of Object.entries(choice.data)) { button.dataset[key] = value }
       container.appendChild(button)
     }
-  }
-
-  monthLabel(time) {
-    return new Date(time).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
   }
 
   formatTotal(metric, total) {
@@ -206,6 +278,7 @@ export default class extends Controller {
     item.classList.remove('expanded')
     item.querySelector('[data-role=detail]').style.display = 'none'
     delete item.dataset.months
+    delete item.dataset.axis
   }
 
   selectRange(event) {
@@ -214,6 +287,16 @@ export default class extends Controller {
 
     const item = event.currentTarget.closest('.progress-item')
     item.dataset.months = event.currentTarget.dataset.months
+    this.draw(item)
+  }
+
+  selectAxis(event) {
+    event.preventDefault()
+    event.stopPropagation()
+
+    const item = event.currentTarget.closest('.progress-item')
+    item.dataset.axis = event.currentTarget.dataset.axis
+    delete item.dataset.months
     this.draw(item)
   }
 

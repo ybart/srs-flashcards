@@ -470,14 +470,15 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   margin-top: 6px;
 }
 .progress-total { font-size: 0.72rem; color: var(--pico-muted-color); }
-.progress-dates {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 5px;
+.progress-axis { position: relative; height: 1.1rem; margin-top: 4px; }
+.progress-axis span {
+  position: absolute;
+  transform: translateX(-50%);
   font-size: 0.7rem;
   color: var(--pico-muted-color);
+  white-space: nowrap;
 }
-.progress-ranges { display: flex; gap: 6px; margin-top: 10px; }
+.progress-ranges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .progress-range {
   padding: 3px 10px;
   border: 1px solid var(--pico-muted-border-color);
