@@ -267,37 +267,49 @@ article.unavailable a.category-content { cursor: default; }
 .category-progress-icon svg rect { fill: #888; }
 
 /* Browser (not installed) mode: corner ribbon warning that progress is not kept,
-   linking to the install instructions. Bottom-left is the only free corner — the
-   header menu sits top-right, the donate toast bottom-right. Only the band takes
-   the tap, so the rest of the corner stays usable. */
+   linking to the install instructions. The band runs across the top-left corner
+   and is clipped by the box; only the band takes the tap, so the rest of the
+   corner stays usable. */
 .demo-ribbon { display: none; }
 main.demo .demo-ribbon {
   display: block;
   position: fixed;
-  bottom: 0;
+  top: 0;
   left: 0;
-  width: 130px;
-  height: 130px;
+  width: 150px;
+  height: 150px;
   overflow: hidden;
   pointer-events: none;
   z-index: 900;
 }
-main.demo .demo-ribbon span {
+main.demo .demo-band {
   position: absolute;
-  left: -50px;
-  bottom: 45px;
-  width: 220px;
-  padding: 4px 0;
-  transform: rotate(45deg);
+  top: 36px;
+  left: -68px;
+  width: 240px;
+  padding: 3px 0;
+  transform: rotate(-45deg);
   pointer-events: auto;
   background: #ed3b3b;
   color: #fff;
-  font-size: 0.6rem;
-  font-weight: 600;
   text-align: center;
-  white-space: nowrap;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  /* Thin white rules along the band instead of a shadowed edge. */
+  border-top: 1px solid #fff;
+  border-bottom: 1px solid #fff;
 }
+main.demo .demo-title,
+main.demo .demo-sub {
+  display: block;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+main.demo .demo-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+main.demo .demo-sub { font-size: 0.55rem; }
 
 /* Progress view: condensed stacked colour bars, one per time bucket, grouped
    under year / month headers. Newest first. */
