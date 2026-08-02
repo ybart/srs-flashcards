@@ -84,7 +84,9 @@ export default class extends Controller {
       at: Reminder.ceilToQuarter(this.nextAvailable),
       summary: `Study ${name}`,
       description: `Cards are ready to review in ${name}.`,
-      url: `${location.origin}/study.html#category=${this.session.category}`
+      // The app itself rather than the deck: the reminder names the category, and
+      // opening on the category list leaves room to study something else.
+      url: `${location.origin}/`
     })
   }
 

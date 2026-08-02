@@ -61,22 +61,53 @@ export default class Reminder {
     return new Date(Math.round(date.getTime() / this.QUARTER) * this.QUARTER)
   }
 
+  // A short memory, so a change of habit is picked up within a couple of weeks.
+  // Measured on a 25k-event database the answer is the same at every window from
+  // 3 to 30 study days, so there is nothing to gain by remembering longer.
+  static WINDOW_DAYS = 15
+  static MINIMUM_SESSIONS = 3
+
   // The time of day someone actually studies, from their recent real sessions.
-  // Every hour scores its neighbours as well as itself, so a single long session
-  // at an odd hour cannot decide the answer: on a 25k-event database this lands
-  // on the same hour from five sessions up to 551, where picking the longest
-  // recent session instead swings across nine hours depending on the window.
+  //
+  // The vote is by the hour, and every hour scores its neighbours as well as
+  // itself, so a single long session at an odd hour cannot decide it. Finer
+  // buckets look more precise and are not: on that same database, half-hour and
+  // quarter-hour buckets wander by up to two hours as the window moves, and at
+  // one window they hand the answer to a tight late-night cluster over a morning
+  // habit spread across a wider band. The precision comes back from the median
+  // start minute inside the winning hour, which is stable because the hour is.
+  //
   // Returns null when there is too little history to say anything.
   static habitualTime(sessions) {
-    if (!sessions || sessions.length < 3) { return null }
+    if (!sessions || sessions.length < this.MINIMUM_SESSIONS) { return null }
+
+    const dated = sessions.map((session) => ({
+      at: RelativeDate.dateFromSqliteTimestamp(session.started_at), cards: session.cards
+    }))
+
+    // The query hands them over newest first, so counting days as we go keeps
+    // the most recent ones. Days studied, not days elapsed: a fortnight away
+    // from the app should not empty the window.
+    const recent = []
+    const days = new Set()
+    for (const session of dated) {
+      const day = session.at.toDateString()
+      if (!days.has(day)) {
+        if (days.size >= this.WINDOW_DAYS) { break }
+        days.add(day)
+      }
+      recent.push(session)
+    }
+
+    // Someone who studies rarely still gets an answer, just a longer-baselined one.
+    const pool = recent.length >= this.MINIMUM_SESSIONS ? recent : dated
 
     const cards = new Array(24).fill(0)
     const minutes = Array.from({ length: 24 }, () => [])
 
-    for (const session of sessions) {
-      const at = RelativeDate.dateFromSqliteTimestamp(session.started_at)
-      cards[at.getHours()] += session.cards
-      minutes[at.getHours()].push(at.getMinutes())
+    for (const session of pool) {
+      cards[session.at.getHours()] += session.cards
+      minutes[session.at.getHours()].push(session.at.getMinutes())
     }
 
     let hour = 0

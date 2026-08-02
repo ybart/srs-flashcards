@@ -240,7 +240,9 @@ export default class extends Controller {
       repeat: repeat,
       summary: `Study ${categoryName}`,
       description: `Cards are ready to review in ${categoryName}.`,
-      url: `${location.origin}/study.html#category=${categoryId}`
+      // The app itself rather than the deck: the reminder names the category, and
+      // opening on the category list leaves room to study something else.
+      url: `${location.origin}/`
     })
   }
 
