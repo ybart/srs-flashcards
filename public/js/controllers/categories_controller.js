@@ -160,12 +160,16 @@ export default class extends Controller {
       }
     }
 
-    const link = card.querySelector('a.category-content')
-    if (hasStudied || hasUnstudied) {
-      link.setAttribute('href', `study.html#category=${category.id}`)
-    } else {
-      link.removeAttribute('href')
-      card.classList.add('unavailable')
+    // Title row and body row are two links to the same place, so both parts of
+    // the card start a study session.
+    const links = card.querySelectorAll('a.category-content')
+    for (const link of links) {
+      if (hasStudied || hasUnstudied) {
+        link.setAttribute('href', `study.html#category=${category.id}`)
+      } else {
+        link.removeAttribute('href')
+        card.classList.add('unavailable')
+      }
     }
 
     card.querySelector('[data-role=progress-link]')

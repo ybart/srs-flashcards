@@ -69,30 +69,31 @@ a.success[role=button]:hover:not(:first-child) { background-color: #037201 }
 a[role=button]:hover,
 a[role=button]:hover:not(:first-child) { background-color: #015480 }
 
-a.category-content {
-  display: grid;
-
-  grid: "n n"
-        "c l" / 1fr 1fr;
+/* Title row: spans the whole card so the availability dot lands on the title's
+   line, at the right edge. */
+a.category-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--pico-block-spacing-vertical) var(--pico-block-spacing-horizontal) 0;
 }
+a.category-head > h3 { flex: 1 1 auto; margin: 0; }
 
-a.category-content > h3 { grid-area: n; text-align: left; vertical-align: center; }
-a.category-content > p.count { grid-area: c; text-align: left; }
-a.category-content > p.last-studied { grid-area: l; text-align: left; }
-a.category-content div[data-role=progress] { grid-area: p; text-align: center; }
-a.category-content > p { margin-bottom: 8px; font-size: 0.9em; }
-a.category-content > h3, a.category-content > p {
+/* Everything under the title: progress bar, card count and last study on one
+   row, with the side column of buttons beside them. */
+a.category-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px var(--pico-block-spacing-horizontal) var(--pico-block-spacing-vertical);
+}
+a.category-body div[data-role=progress] { flex: 1 1 auto; min-width: 60px; }
+a.category-body > p { flex: 0 1 auto; margin: 0; font-size: 0.9em; }
+
+a.category-head > h3, a.category-body > p {
   min-width: 0;
   overflow: hidden;
   text-wrap: nowrap; text-overflow: ellipsis;
-}
-
-@media only screen and (min-width: 641px) {
-  a.category-content {
-    grid: "n n" max-content
-          "c c" max-content
-          "l l" max-content / 1fr 1fr;
-  }
 }
 
 section[data-role=card] {
@@ -171,8 +172,11 @@ section[data-role=card] {
 nav { padding-left: 20px; padding-right: 20px; }
 nav a:hover:not([role=button]) { text-decoration: none; }
 
+/* Title row spans both columns; the buttons sit beside everything under it. */
 article {
   position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
   padding: 0; margin-bottom: 0;
   border-bottom: 1px solid #555;
   border-radius: 0;
@@ -181,23 +185,27 @@ article:last-child {
   border-bottom: none;
 }
 
-article > a.category-content {
-  width: 100%;
-  text-decoration: none;
-  padding: var(--pico-block-spacing-vertical) var(--pico-block-spacing-horizontal) 4px;
-}
-article a.category-content:hover {
-  --pico-background-color: var(--pico-form-element-selected-background-color);
+a.category-head { grid-column: 1 / -1; }
+a.category-body { grid-column: 1; }
+article a.category-content { text-decoration: none; }
+
+.category-side {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 var(--pico-block-spacing-horizontal) var(--pico-block-spacing-vertical) 0;
 }
 
-/* Footer row under the study link: progress bar + histogram button. */
-.category-footer {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 var(--pico-block-spacing-horizontal) var(--pico-block-spacing-vertical);
+/* Feedback belongs to the whole card, not just the part a link covers — the
+   side column keeps its own buttons, so only the study links trigger it. */
+article:not(.unavailable):has(a.category-content:hover),
+article:not(.unavailable):has(a.category-content:active) {
+  background-color: var(--pico-form-element-selected-background-color);
 }
-.category-footer .progress { flex: 1 1 auto; margin: 0; }
+
 
 .spinner:not(:only-child) {
   display: none;
@@ -251,41 +259,52 @@ main.update-available details.dropdown summary + ul .update-dot {
   vertical-align: middle;
 }
 
-/* Category availability dot (top-right of a category card). Its colour is set
-   from JS to the reddest available deck (or gray for unstudied-only). */
+/* Category availability dot, at the end of the title row. Its colour is set from
+   JS to the reddest available deck (or gray for unstudied-only). Hidden with
+   visibility so the title never reflows. */
 .availability-dot {
-  display: none;
-  position: absolute;
-  /* Align with the content box: right edge of the progress bar (which spans the
-     full width) and the title's line. */
-  top: calc(var(--pico-block-spacing-vertical, 1rem) + 0.4rem);
-  right: var(--pico-block-spacing-horizontal, 1rem);
+  visibility: hidden;
+  flex: 0 0 auto;
   width: 10px;
   height: 10px;
   border-radius: 50%;
   pointer-events: none;
-  z-index: 1;
 }
-.availability-dot.show { display: block; }
+.availability-dot.show { visibility: visible; }
 
 /* Category with nothing available to study. Only the study affordance is muted:
    the footer actions (history, reminder) stay live, so the card must not read as
    disabled — the clock line says when it refills. */
 article.unavailable a.category-content { opacity: 0.5; cursor: default; }
 
-/* Per-category buttons in the card footer: reminder above history. */
-.category-actions {
-  display: flex;
-  flex: 0 0 auto;
-  flex-direction: column;
-  gap: 4px;
-}
+/* Reminder above history, in the card's side column. The padding is the tap
+   target: the glyphs themselves are only 24px. */
 .category-reminder-icon,
 .category-progress-icon {
+  display: block;
+  padding: 5px;
   line-height: 0;
-  opacity: 0.5;
+  opacity: 0.6;
 }
 .category-progress-icon svg rect { fill: #888; }
+
+/* Reminder dialog: Pico lays the footer out as a row, which four buttons overflow
+   on a phone and turn into scroll in both directions. Stack them instead. */
+dialog > article {
+  width: 100%;
+  max-width: 24rem;
+  margin: 0 auto;
+}
+dialog > article > footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+dialog > article > footer a[role=button] {
+  width: 100%;
+  margin: 0;
+}
 
 /* Browser (not installed) mode: corner ribbon warning that progress is not kept,
    linking to the install instructions. The band runs across the top-left corner
@@ -430,7 +449,6 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
     border-bottom: none;
     min-height: 0;
   }
-  div[data-role=progress] { margin-top: 10px; margin-bottom: 10px; }
 }
 
 @media only screen and (min-width: 971px) {
