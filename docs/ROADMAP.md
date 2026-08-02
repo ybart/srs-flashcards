@@ -13,8 +13,8 @@
     - Provide an UI to check the current version and the update status (up to date, update in progress, restart required)
     - Create a manifest file listing all files in public necessary to run the app (including external dependencies).
   - [ ] In Chrome PWA, refreshing using Cmd-R bust the cache, it should fetch from cache instead.
-  - [ ] At first install, the version is 'unknown'
-  - [ ] When offline, refreshing cause the app to be unavailable
+  - [x] At first install, the version is 'unknown'
+  - [x] When offline, refreshing cause the app to be unavailable
   - [ ] Automatic update strategy:
     - On activation, if we did not check for updates for at least 24h, do an automatic check.
     - If an update is available, download the files in the background, but do not apply update
@@ -24,7 +24,7 @@
   - The service worker should hijack fetch to only use the cache and error when requesting a file not in the cache (except version)
   - When opening the PWA, once a day at most, try to check the version number on the server
   - If we were able to check the version number, compare to the current version and update the files
-- [ ] Add an option to upload
+- [x] Add an option to upload
 - [ ] Fix Install page screenshots positioning on mobile (make the containers full-width so we do not have a double-padding).
 - [ ] Release script
   - We we update our upload script to be purely based on git
@@ -45,9 +45,9 @@
   - Rationale + strategy in `docs/MARKETING.md` (Bluesky community section)
 - [ ] Notifications (after 1 day (morning, midday, evening), after 2 day, after 1 week, after 1 month)
 - [ ] Progress UI
-- [ ] Offline Mode and PWA
+- [x] Offline Mode and PWA
 - [ ] Settings
-- [ ] Restore progress from local file (upload) or Google Drive
+- [x] Restore progress from local file (upload) or Google Drive
 - [ ] Support cards to be assigned to many categories
 - [ ] Import School Grades sets from Wikipedia
 - [ ] Import from iCloud Sticky Study data
@@ -90,7 +90,7 @@
      (which should be stored in that session).
   3. If the session is created when validating an answer, the result goes in the new session.
   4. Progress is saved in the session in relative form, absolute form, points and percentage.
-- [ ] Database upload UI
+- [x] Database upload UI
 - [ ] When deck is empty (and in category list) show when the next card will be available for study.
 - [ ] Show category name in title bar (with current study deck count)
 - [ ] Show current day progress in points
@@ -121,6 +121,6 @@
   To check COOP/COEP headers, we can use `resp = await fetch(document.location.href, {method: 'HEAD'})`
   then `Object.fromEntries(resp.headers.entries())`, then check if the headers exists and have
   the expected values.
-- [ ] When server is not available (Airplane Mode, Server down), ensure we have a cache of all HTML pages
+- [x] When server is not available (Airplane Mode, Server down), ensure we have a cache of all HTML pages
   and use that instead
 - [ ] About modal with version check and update button.
