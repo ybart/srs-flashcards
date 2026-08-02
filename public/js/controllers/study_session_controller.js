@@ -2,6 +2,8 @@ import { Controller } from 'https://cdn.jsdelivr.net/npm/@hotwired/stimulus@3.2.
 
 import Session from '../models/session.js'
 import Card from '../models/card.js'
+import Category from '../models/category.js'
+import Reminder from '../models/reminder.js'
 import RelativeDate from '../models/relative_date.js'
 
 
@@ -69,6 +71,23 @@ export default class extends Controller {
     await this.showQuestionPanel()
   }
 
+  // A calendar event beats a notification here: the OS fires the alert, so it
+  // needs no server and no permission prompt. The event links back to this
+  // category — on iOS that opens the browser rather than the installed app.
+  async addReminder() {
+    if (!this.nextAvailable) { return }
+
+    const category = await Category.find(this.session.category)
+    const name = category ? category.name : 'SRS Flashcards'
+
+    Reminder.download({
+      at: this.nextAvailable,
+      summary: `Study ${name}`,
+      description: `Cards are ready to review in ${name}.`,
+      url: `${location.origin}/study.html#category=${this.session.category}`
+    })
+  }
+
   showAnswer() {
     this.speak('question')
     this.element.querySelector('[data-role=answer]').removeAttribute('style')
@@ -104,12 +123,20 @@ export default class extends Controller {
       message.classList.add("message")
       message.append("The deck is now empty")
 
-      // Say when it refills, so the screen is not a dead end.
+      // Say when it refills, so the screen is not a dead end, and offer to put
+      // that moment in the calendar.
       const nextAvailable = await Card.nextAvailable(this.session.category)
       if (nextAvailable) {
-        const next = RelativeDate.dateFromSqliteTimestamp(nextAvailable)
+        this.nextAvailable = RelativeDate.dateFromSqliteTimestamp(nextAvailable)
         message.append(document.createElement("br"))
-        message.append(`Next card ${new RelativeDate(next).format()}`)
+        message.append(`Next card ${new RelativeDate(this.nextAvailable).format()}`)
+
+        const reminder = document.createElement("a")
+        reminder.setAttribute("role", "button")
+        reminder.classList.add("reminder")
+        reminder.setAttribute("data-action", "click->study-session#addReminder")
+        reminder.append("Remind me")
+        message.append(document.createElement("br"), reminder)
       }
 
       if (oldElement) { oldElement.remove(); }

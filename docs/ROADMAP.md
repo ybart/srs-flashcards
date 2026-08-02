@@ -5,43 +5,46 @@ and within each section the order is the intended order of work.
 
 ## 1.0
 
-1. **Browser-mode demo banner** — outside an installed PWA, show a diagonal
+1. [x] **Browser-mode demo banner** — outside an installed PWA, show a diagonal
    ribbon in a corner linking to the install instructions and explaining the
    caveats (browser storage can be evicted, so progress is not safe until the
    app is installed). Persistent storage behaves in the installed PWA, so this
    replaces asking for `navigator.storage.persist()` for now.
-2. **Next available card** — when the deck is empty (and in the category list)
+2. [x] **Next available card** — when the deck is empty (and in the category list)
    show when the next card will be available for study. Closes the dead end left
    by blocking study on categories with nothing available.
-3. **Calendar reminders** — generate an `.ics` the user adds to their calendar
+3. [x] **Calendar reminders** — generate an `.ics` the user adds to their calendar
    instead of chasing web push: the OS fires the alert, so there is no server,
    no permission prompt and no platform gap. Offer it when a deck runs dry, at
    the moment we already know when the next card is due.
-   - One event per reminder (1 day — morning, midday, evening — 2 days, 1 week,
-     1 month), or a single event carrying an `RRULE`, with a `VALARM` for the
-     alert and a `URL` back to the app.
-   - Caveat to design around: on iOS a link tapped in Calendar opens Safari, not
-     the installed PWA, and Safari is a different storage context — the user
-     would land on the demo build with none of their progress. Either point the
-     event at a short "open the app" page, or drop the link and let the alert
-     text do the work.
+   - Shipped: a "Remind me" button on the empty-deck screen hands over one
+     `VEVENT` at the moment the next card comes back up, with a `VALARM` on the
+     start and a `URL` deep-linking to that category.
+   - Still open: the fixed ladder (1 day — morning, midday, evening — 2 days,
+     1 week, 1 month), which would be several events or one `RRULE`. The
+     next-due event is more accurate, so the ladder only makes sense as a
+     "come back regularly" nudge.
+   - Known caveat: on iOS a link tapped in Calendar opens Safari, not the
+     installed PWA, and Safari is a different storage context — the user lands
+     on the demo build with none of their progress. The demo ribbon at least
+     explains what they are looking at.
    - The events are static once added: changing the schedule means issuing a new
      file, and there is no way to withdraw one we already handed out.
-4. **About modal** with version check and update button. The pieces already
+4. [ ] **About modal** with version check and update button. The pieces already
    exist (version line, update dot, "Check for Updates", auto-apply on launch,
    reactivation and reconnect); this only moves them out of the dropdown.
-5. **Public-facing sweep** — the README badge pins Ruby 3.1.0 while
+5. [ ] **Public-facing sweep** — the README badge pins Ruby 3.1.0 while
    `.ruby-version` is 3.4.5, and it reads as if Ruby were the runtime: it is the
    import/build toolchain (`lib/`, `Rakefile`, `bin/`), the app itself is a
    static JS PWA. Flip the `in_development` badge at release.
-6. **Kanji-of-the-Day (KOAD) generator** for growth/marketing — independent of
+6. [ ] **Kanji-of-the-Day (KOAD) generator** for growth/marketing — independent of
    the app, but wanted at the same time as 1.0.
    - Read `flashcards.db` and generate daily social posts (kanji + reading +
      meaning + example)
    - Level 1: output a batch of ready-to-paste posts (no API keys)
    - Level 2: auto-post to Bluesky via the API on a schedule (app password)
    - Rationale + strategy in `docs/MARKETING.md` (Bluesky community section)
-7. **Single-archive distribution** — ship the app as one zip instead of ~150
+7. [ ] **Single-archive distribution** — ship the app as one zip instead of ~150
    files: atomic install, one download, and no partial-update tears where the
    version label and the loaded code disagree.
 

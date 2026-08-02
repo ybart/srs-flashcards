@@ -24,6 +24,14 @@ section p.message {
   background: #222;
   padding: 20px;
 }
+/* Empty-deck screen: offer to put the next study date in the calendar. */
+section p.message a.reminder {
+  display: inline-block;
+  width: auto;
+  margin-top: 14px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+}
 
 details[open] summary:before {
   content: "";
@@ -283,20 +291,22 @@ main.demo .demo-ribbon {
   position: fixed;
   top: 0;
   left: 0;
-  width: 160px;
-  height: 160px;
+  width: 190px;
+  height: 190px;
   overflow: hidden;
   pointer-events: none;
   text-decoration: none;
   z-index: 900;
 }
 main.demo .demo-band {
+  /* Centred on the 30° chord of the box, so the band runs from the left edge to
+     the top edge and both ends are clipped by it. */
   position: absolute;
-  top: 39px;
-  left: -64px;
+  top: 26px;
+  left: -44px;
   width: 240px;
   padding: 6px 0;
-  transform: rotate(-45deg);
+  transform: rotate(-30deg);
   pointer-events: auto;
   /* Stitched look: the two white rules sit inside the band, so red still shows
      along both edges ("couture de fil blanc"). */

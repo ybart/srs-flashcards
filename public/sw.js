@@ -76,6 +76,7 @@ const PRECACHE_ASSETS = [
   '/js/models/category.js',
   '/js/models/card.js',
   '/js/models/relative_date.js',
+  '/js/models/reminder.js',
   '/js/models/session.js',
 
 
