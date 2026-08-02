@@ -41,6 +41,7 @@ const PRECACHE_ASSETS = [
   // Pages
   '/categories.html',
   '/study.html',
+  '/progress.html',
 
   // JS
   '/js/app.js',
@@ -69,6 +70,7 @@ const PRECACHE_ASSETS = [
   '/js/controllers/categories_controller.js',
   '/js/controllers/study_session_controller.js',
   '/js/controllers/donate_controller.js',
+  '/js/controllers/progress_controller.js',
   '/js/models/application_record.js',
   '/js/models/category.js',
   '/js/models/card.js',
