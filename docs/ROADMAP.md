@@ -44,6 +44,23 @@
   - Rationale + strategy in `docs/MARKETING.md` (Bluesky community section)
 - [ ] Notifications (after 1 day (morning, midday, evening), after 2 day, after 1 week, after 1 month)
 - [ ] Progress UI
+  - [ ] Dedicated view, navigated to like study, opened from a histogram icon left of the settings cog.
+  - [ ] Stacked horizontal colour bars (gray included), smaller than the category bars, with
+    no border, no rounded corners, and no interaction.
+  - [ ] One bar per time bucket, showing the overall state after the last session in the
+    bucket (concatenate all sessions up to it):
+    - `> 1 year`: one bar per 3 months
+    - `1 month .. 1 year`: one bar per month
+    - `1 week .. 1 month`: one bar per week
+    - `< 1 week`: one bar per day
+  - [ ] Skip buckets with no session. Short, width-capped labels for years / months / weeks.
+  - [ ] Persist a per-session state snapshot going forward (fix the `// TODO: Update the
+    session progress` in the study controller).
+  - [ ] Reconstruct history during a DB migration by replaying `session_cards` (approximate,
+    since only per-session correct/wrong counts are stored, not per-event order or the
+    resulting label); validate the final frame against the current card-label distribution.
+  - [ ] Needs a DB migration mechanism (schema/data versioning run on app load) — shared with
+    "Migrate session_cards and sessions tables".
 - [x] Offline Mode and PWA
 - [ ] Settings
 - [x] Restore progress from local file (upload) or Google Drive
