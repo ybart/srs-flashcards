@@ -237,8 +237,10 @@ main.update-available details.dropdown summary + ul .update-dot {
 .availability-dot.gray {
   display: block;
   position: absolute;
-  top: 8px;
-  right: 8px;
+  /* Align with the content box: right edge of the progress bar (which spans the
+     full width) and the title's line. */
+  top: calc(var(--pico-block-spacing-vertical, 1rem) + 0.4rem);
+  right: var(--pico-block-spacing-horizontal, 1rem);
   width: 10px;
   height: 10px;
   border-radius: 50%;
