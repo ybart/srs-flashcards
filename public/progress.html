@@ -33,18 +33,36 @@
       </section>
     </main>
 
-    <div id="progress-item" class="progress-item" style="display: none;">
-      <a href="#" class="progress-head" data-action="click->progress#toggle">
-        <span data-role="name">{Category}</span>
+    <!-- The whole row toggles, not just its heading: the chart is the biggest
+         thing on the row, and a chart that ignores a tap reads as broken. The
+         range and metric buttons stop the click before it gets here. -->
+    <div id="progress-item" class="progress-item" style="display: none;"
+         data-action="click->progress#toggle">
+      <a href="#" class="progress-head">
+        <span class="progress-labels">
+          <span data-role="name">{Category}</span>
+          <span data-role="summary" class="progress-summary">{totals}</span>
+        </span>
         <span data-role="percent" class="progress-percent">{0 %}</span>
+        <svg class="progress-caret" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"
+             fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <path d="M8 5l7 7-7 7"></path>
+        </svg>
       </a>
-      <div data-role="chart" class="progress-chart"></div>
+      <!-- Zooming widens the canvas inside this scroller rather than moving a
+           window over the data, so the chart can be panned back through the
+           history instead of only ever showing the most recent stretch. -->
+      <div data-role="scroll" class="progress-scroll">
+        <div data-role="canvas" class="progress-canvas">
+          <div data-role="chart" class="progress-chart"></div>
+          <div data-role="effort" class="progress-chart"></div>
+        </div>
+      </div>
       <div data-role="detail" class="progress-detail" style="display: none;">
         <div class="progress-dates">
           <span data-role="from"></span>
           <span data-role="to"></span>
         </div>
-        <div data-role="effort" class="progress-chart"></div>
         <div class="progress-footer">
           <span data-role="total" class="progress-total"></span>
           <div data-role="metrics" class="progress-ranges"></div>

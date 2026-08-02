@@ -24,6 +24,8 @@ export default class extends Controller {
   static MONTH = 30 * 24 * 60 * 60 * 1000
   static PREVIEW_COLUMNS = 90
   static DETAIL_COLUMNS = 160
+  // Zooming multiplies the column count, so it needs a ceiling.
+  static MAX_COLUMNS = 1200
 
   async connect() {
     const [categories, snapshots, effort] = await Promise.all([
@@ -72,41 +74,58 @@ export default class extends Controller {
     item.querySelector('[data-role=percent]').innerText =
       `${completion(series.at(-1).dist).toFixed(0)} %`
 
+    // Totals on the collapsed row: the list should be worth reading without
+    // opening anything, and expanding is for the shape over time.
+    const events = this.effort.get(category.id) || []
+    const cards = events.reduce((sum, event) => sum + event.cards, 0)
+    const seconds = events.reduce((sum, event) => sum + event.seconds, 0)
+    item.querySelector('[data-role=summary]').innerText =
+      `${this.formatTotal('cards', cards)} · ${this.formatTotal('time', seconds)}`
+
     this.listTarget.appendChild(item)
     this.draw(item)
   }
 
-  // Redraws in place from the range and metric held on the item.
+  // Redraws in place from the range and metric held on the item. The whole
+  // history is always drawn; the range decides how much of it fits on screen,
+  // and the rest is reachable by scrolling.
   draw(item) {
     const category = Number(item.dataset.category)
     const series = this.series.get(category)
     const months = Number(item.dataset.months) || null
     const expanded = item.classList.contains('expanded')
 
+    const from = series[0].time
     const to = series.at(-1).time
-    const from = months ? to - months * this.constructor.MONTH : series[0].time
-    const columns = expanded ? this.constructor.DETAIL_COLUMNS : this.constructor.PREVIEW_COLUMNS
+    const span = Math.max(to - from, 1)
+    const zoom = expanded && months
+      ? Math.max(1, span / (months * this.constructor.MONTH)) : 1
+    const columns = Math.min(this.constructor.MAX_COLUMNS, Math.round(
+      (expanded ? this.constructor.DETAIL_COLUMNS : this.constructor.PREVIEW_COLUMNS) * zoom
+    ))
 
+    item.querySelector('[data-role=canvas]').style.width = `${(zoom * 100).toFixed(2)}%`
     this.replace(item, 'chart', chart(series, { from: from, to: to, columns: columns }))
-    if (!expanded) { return }
+
+    const effort = item.querySelector('[data-role=effort]')
+    effort.innerHTML = ''
+    if (!expanded) { return this.scrollToLatest(item) }
 
     item.querySelector('[data-role=from]').innerText = this.monthLabel(from)
     item.querySelector('[data-role=to]').innerText = this.monthLabel(to)
 
     const metric = this.constructor.METRICS.find((m) => m.key === item.dataset.metric)
     const events = this.effort.get(category) || []
-    this.replace(item, 'effort', bars(events, {
+    effort.appendChild(bars(events, {
       from: from, to: to, columns: columns, value: metric.value
     }))
 
-    const total = events
-      .filter((event) => event.time >= from && event.time <= to)
-      .reduce((sum, event) => sum + metric.value(event), 0)
+    const total = events.reduce((sum, event) => sum + metric.value(event), 0)
     item.querySelector('[data-role=total]').innerText = this.formatTotal(metric.key, total)
 
     this.appendChoices(item, 'ranges', this.constructor.RANGES.filter((range) => {
-      // A range longer than the history draws the same chart as All.
-      return !range.months || to - range.months * this.constructor.MONTH >= series[0].time
+      // A window wider than the history would draw the same chart as All.
+      return !range.months || range.months * this.constructor.MONTH < span
     }).map((range) => ({
       label: range.label, selected: (range.months || null) === months,
       action: 'click->progress#selectRange', data: { months: range.months || '' }
@@ -116,6 +135,15 @@ export default class extends Controller {
       label: option.label, selected: option.key === metric.key,
       action: 'click->progress#selectMetric', data: { metric: option.key }
     })))
+
+    this.scrollToLatest(item)
+  }
+
+  // Zooming in should land on the most recent stretch, which is the one worth
+  // looking at; earlier history is a scroll away.
+  scrollToLatest(item) {
+    const scroll = item.querySelector('[data-role=scroll]')
+    scroll.scrollLeft = scroll.scrollWidth
   }
 
   replace(item, role, node) {
@@ -182,6 +210,7 @@ export default class extends Controller {
 
   selectRange(event) {
     event.preventDefault()
+    event.stopPropagation()
 
     const item = event.currentTarget.closest('.progress-item')
     item.dataset.months = event.currentTarget.dataset.months
@@ -190,6 +219,7 @@ export default class extends Controller {
 
   selectMetric(event) {
     event.preventDefault()
+    event.stopPropagation()
 
     const item = event.currentTarget.closest('.progress-item')
     item.dataset.metric = event.currentTarget.dataset.metric
