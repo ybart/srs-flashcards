@@ -9,7 +9,9 @@ header > nav { min-height: 60px; }
 header > nav ul { flex: 1 0 0; }
 header > nav li { width: 100%; text-wrap: nowrap; }
 header > nav li.title { text-align: center; }
-header > nav ul:last-child li { width: max-content; margin-left: auto; }
+/* Right-hand group: only the first item pushes, so several stay side by side. */
+header > nav ul:last-child li { width: max-content; }
+header > nav ul:last-child li:first-child { margin-left: auto; }
 main { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
 body > main { padding: 0; }
 section[role=content] {
@@ -204,9 +206,8 @@ main.offline [data-online-only] {
 }
 
 /* Visible offline indicator (shown when navigator reports offline). */
-.offline-indicator { display: none; }
-main.offline .offline-indicator {
-  display: inline-block;
+.offline-indicator {
+  display: none;
   padding: 2px 10px;
   border-radius: 10px;
   background: #777;
@@ -215,6 +216,12 @@ main.offline .offline-indicator {
   font-weight: 600;
   letter-spacing: 0.03em;
 }
+/* Normally on the left of the nav; in demo mode the ribbon covers that corner,
+   so the copy sitting on the right of the nav is shown instead. */
+main.offline .offline-indicator { display: inline-block; }
+main.offline .offline-indicator.offline-alt { display: none; }
+main.offline.demo .offline-indicator { display: none; }
+main.offline.demo .offline-indicator.offline-alt { display: inline-block; }
 
 /* Red badge shown when an app update is available. */
 .update-dot { display: none; }
@@ -276,40 +283,43 @@ main.demo .demo-ribbon {
   position: fixed;
   top: 0;
   left: 0;
-  width: 150px;
-  height: 150px;
+  width: 160px;
+  height: 160px;
   overflow: hidden;
   pointer-events: none;
+  text-decoration: none;
   z-index: 900;
 }
 main.demo .demo-band {
   position: absolute;
-  top: 36px;
-  left: -68px;
+  top: 39px;
+  left: -64px;
   width: 240px;
-  padding: 3px 0;
+  padding: 6px 0;
   transform: rotate(-45deg);
   pointer-events: auto;
-  background: #ed3b3b;
+  /* Stitched look: the two white rules sit inside the band, so red still shows
+     along both edges ("couture de fil blanc"). */
+  background-color: #ed3b3b;
+  background-image: linear-gradient(#fff, #fff), linear-gradient(#fff, #fff);
+  background-size: 100% 1px, 100% 1px;
+  background-position: 0 3px, 0 calc(100% - 3px);
+  background-repeat: no-repeat;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
   color: #fff;
   text-align: center;
-  /* Thin white rules along the band instead of a shadowed edge. */
-  border-top: 1px solid #fff;
-  border-bottom: 1px solid #fff;
 }
 main.demo .demo-title,
 main.demo .demo-sub {
   display: block;
-  line-height: 1.25;
+  line-height: 1.2;
   white-space: nowrap;
-}
-main.demo .demo-title {
-  font-size: 0.68rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
-main.demo .demo-sub { font-size: 0.55rem; }
+main.demo .demo-title { font-size: 0.8rem; }
+main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05em; }
 
 /* Progress view: condensed stacked colour bars, one per time bucket, grouped
    under year / month headers. Newest first. */
