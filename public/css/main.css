@@ -278,6 +278,7 @@ article.unavailable a { cursor: default; }
   text-align: right;
   white-space: nowrap;
 }
+.ph-label.ph-strong { font-weight: 600; color: #777; } /* month/quarter titles */
 .ph-bar {
   flex: 1 1 auto;
   display: flex;

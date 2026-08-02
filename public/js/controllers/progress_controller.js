@@ -78,7 +78,9 @@ export default class extends Controller {
         lastMonth = null // a later week/day re-emits its month header
       }
 
-      this.appendBar(el, this.subLabel(bucket.gran, d), bucket.dist)
+      // Coarse buckets (month/quarter) have no sub-bars, so bold their label as
+      // its own title; fine buckets (week/day) sit under a month header.
+      this.appendBar(el, this.subLabel(bucket.gran, d), bucket.dist, !fine)
     }
   }
 
@@ -109,22 +111,23 @@ export default class extends Controller {
     el.appendChild(h)
   }
 
-  appendBar(el, label, dist) {
+  appendBar(el, label, dist, strong = false) {
     const total = dist.reduce((a, b) => a + b, 0) || 1
 
     const bar = document.createElement('div')
     bar.className = 'ph-bar'
-    dist.forEach((count, i) => {
-      if (count <= 0) return
+    // Green first (left), gray last, so progress grows leftward.
+    for (let i = dist.length - 1; i >= 0; i--) {
+      if (dist[i] <= 0) continue
       const seg = document.createElement('span')
       seg.className = 'ph-seg'
-      seg.style.width = `${100 * count / total}%`
+      seg.style.width = `${100 * dist[i] / total}%`
       seg.style.background = this.constructor.COLORS[i]
       bar.appendChild(seg)
-    })
+    }
 
     const lab = document.createElement('span')
-    lab.className = 'ph-label'
+    lab.className = strong ? 'ph-label ph-strong' : 'ph-label'
     lab.textContent = label
 
     const row = document.createElement('div')
