@@ -66,6 +66,9 @@ export default class Reminder {
   // 3 to 30 study days, so there is nothing to gain by remembering longer.
   static WINDOW_DAYS = 15
   static MINIMUM_SESSIONS = 3
+  // A habit is something done on more than one day. Three sessions in a single
+  // afternoon would otherwise fix a daily reminder to that afternoon.
+  static MINIMUM_DAYS = 2
 
   // The time of day someone actually studies, from their recent real sessions.
   //
@@ -101,6 +104,8 @@ export default class Reminder {
 
     // Someone who studies rarely still gets an answer, just a longer-baselined one.
     const pool = recent.length >= this.MINIMUM_SESSIONS ? recent : dated
+    const spread = new Set(pool.map((session) => session.at.toDateString()))
+    if (pool.length < this.MINIMUM_SESSIONS || spread.size < this.MINIMUM_DAYS) { return null }
 
     const cards = new Array(24).fill(0)
     const minutes = Array.from({ length: 24 }, () => [])
