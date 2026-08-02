@@ -13,21 +13,35 @@ and within each section the order is the intended order of work.
 2. **Next available card** — when the deck is empty (and in the category list)
    show when the next card will be available for study. Closes the dead end left
    by blocking study on categories with nothing available.
-3. **About modal** with version check and update button. The pieces already
+3. **Calendar reminders** — generate an `.ics` the user adds to their calendar
+   instead of chasing web push: the OS fires the alert, so there is no server,
+   no permission prompt and no platform gap. Offer it when a deck runs dry, at
+   the moment we already know when the next card is due.
+   - One event per reminder (1 day — morning, midday, evening — 2 days, 1 week,
+     1 month), or a single event carrying an `RRULE`, with a `VALARM` for the
+     alert and a `URL` back to the app.
+   - Caveat to design around: on iOS a link tapped in Calendar opens Safari, not
+     the installed PWA, and Safari is a different storage context — the user
+     would land on the demo build with none of their progress. Either point the
+     event at a short "open the app" page, or drop the link and let the alert
+     text do the work.
+   - The events are static once added: changing the schedule means issuing a new
+     file, and there is no way to withdraw one we already handed out.
+4. **About modal** with version check and update button. The pieces already
    exist (version line, update dot, "Check for Updates", auto-apply on launch,
    reactivation and reconnect); this only moves them out of the dropdown.
-4. **Public-facing sweep** — the README badge pins Ruby 3.1.0 while
+5. **Public-facing sweep** — the README badge pins Ruby 3.1.0 while
    `.ruby-version` is 3.4.5, and it reads as if Ruby were the runtime: it is the
    import/build toolchain (`lib/`, `Rakefile`, `bin/`), the app itself is a
    static JS PWA. Flip the `in_development` badge at release.
-5. **Kanji-of-the-Day (KOAD) generator** for growth/marketing — independent of
+6. **Kanji-of-the-Day (KOAD) generator** for growth/marketing — independent of
    the app, but wanted at the same time as 1.0.
    - Read `flashcards.db` and generate daily social posts (kanji + reading +
      meaning + example)
    - Level 1: output a batch of ready-to-paste posts (no API keys)
    - Level 2: auto-post to Bluesky via the API on a schedule (app password)
    - Rationale + strategy in `docs/MARKETING.md` (Bluesky community section)
-6. **Single-archive distribution** — ship the app as one zip instead of ~150
+7. **Single-archive distribution** — ship the app as one zip instead of ~150
    files: atomic install, one download, and no partial-update tears where the
    version label and the loaded code disagree.
 
@@ -48,11 +62,12 @@ Reproduce these on a device first, then decide whether they need work.
 
 ## After 1.0
 
-### Notifications (postponed, blocked on the platform)
+### Web push notifications (dropped)
 
 Wanted: a reminder after 1 day (morning, midday, evening), after 2 days, after
-1 week, after 1 month. Postponed from 1.0 because there is no way to schedule
-these from the app alone, and we do not want to take on a paid service to do it.
+1 week, after 1 month. Dropped in favour of the calendar reminders in 1.0,
+because nothing schedules them from the app alone and we do not want to take on
+a paid service.
 
 - A timer does not survive: the service worker is stopped as soon as it goes
   idle, and a page-side `setTimeout` only runs while the app is open.
@@ -62,10 +77,9 @@ these from the app alone, and we do not want to take on a paid service to do it.
   needs a server holding VAPID keys and subscriptions.
 - Periodic Background Sync could approximate a daily reminder, but it is
   Chromium and installed-PWA only, best-effort on timing, and absent on iOS.
-- The cheapest useful subset, if we want something before the rest is solved:
-  set `navigator.setAppBadge()` with the due count whenever the app runs. No
-  server, works on installed PWAs including iOS, but it goes stale instead of
-  nagging.
+- Still cheap and worth doing on its own: set `navigator.setAppBadge()` with the
+  due count whenever the app runs. No server, works on installed PWAs including
+  iOS, but it goes stale instead of nagging.
 
 ### Study, search and explore
 
