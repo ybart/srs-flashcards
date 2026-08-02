@@ -43,6 +43,17 @@ and within each section the order is the intended order of work.
        that hour forever, where a central tendency cannot be moved by one moment.
      - Times floor to the quarter hour so the reminder lands at most 14 minutes
        before the usual start and never after it.
+   - Read those numbers as a floor, not an estimate. They compare consecutive
+     reviews of one card, which are always a day or more apart, so a user with a
+     stable morning slot and a stable evening slot scores as a twelve-hour
+     drift — and the dataset cannot separate the two cases, since a card is
+     never reviewed twice in a day at that spacing. The sampled users also run a
+     median of 119 reviews per study day across three years, because the dataset
+     only keeps collections with 5000+ reviews: people whose habit is already
+     established, and so the population least in need of a reminder. The user
+     this feature is for has almost no history, hits the null branch, and gets
+     the current time of day floored to the quarter — that path matters more
+     than the vote does.
    - Still open: the fixed ladder (1 day — morning, midday, evening — 2 days,
      1 week, 1 month), which would be several events or one `RRULE`. The
      next-due event is more accurate, so the ladder only makes sense as a
