@@ -439,6 +439,9 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
 }
 .progress-item.expanded .progress-caret { transform: rotate(90deg); }
 .progress-item { cursor: pointer; }
+/* Nothing studied, nothing to open. */
+.progress-item.empty { cursor: default; }
+.progress-item.empty .progress-svg { opacity: 0.55; }
 /* Zoom widens the canvas inside this, so the history is panned rather than
    windowed. */
 .progress-scroll { overflow-x: auto; overflow-y: hidden; }

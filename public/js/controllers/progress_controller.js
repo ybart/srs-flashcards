@@ -12,10 +12,17 @@ export default class extends Controller {
   // Zooming in is a range, not a change of scale along the axis: an axis whose
   // units change as it goes cannot be read as a shape.
   static RANGES = [
-    { label: 'All', months: null },
-    { label: '1 year', months: 12 },
-    { label: '3 months', months: 3 },
-    { label: '1 month', months: 1 }
+    { label: 'All', size: null },
+    { label: '1 year', size: 12 },
+    { label: '3 months', size: 3 },
+    { label: '1 month', size: 1 }
+  ]
+  // The day axis counts days studied, so its windows do too.
+  static DAY_RANGES = [
+    { label: 'All', size: null },
+    { label: '90 days', size: 90 },
+    { label: '30 days', size: 30 },
+    { label: '7 days', size: 7 }
   ]
   static METRICS = [
     { key: 'cards', label: 'Cards', value: (event) => event.cards },
@@ -61,10 +68,18 @@ export default class extends Controller {
   }
 
   append(category) {
-    // A single snapshot is a point, not a trajectory; nothing to draw yet.
-    const series = this.series.get(category.id)
-    if (!series || series.length < 2) { return }
+    // A category with nothing behind it still gets a row and a flat, wholly
+    // unstudied chart: the deck it has not started is part of the picture, and
+    // an empty chart says that better than an absence does. One snapshot is a
+    // point rather than a trajectory, so it is drawn the same way.
+    const history = this.series.get(category.id)
+    const studied = history && history.length >= 2
+    if (!studied) {
+      const dist = history ? history[0].dist : [category.cards_count, 0, 0, 0, 0, 0]
+      this.series.set(category.id, [{ time: 0, dist: dist }, { time: 1, dist: dist }])
+    }
 
+    const series = this.series.get(category.id)
     const item = document.querySelector('#progress-item').cloneNode(true)
     item.removeAttribute('style')
     item.id = `progress-${category.id}`
@@ -75,12 +90,19 @@ export default class extends Controller {
       `${completion(series.at(-1).dist).toFixed(0)} %`
 
     // Totals on the collapsed row: the list should be worth reading without
-    // opening anything, and expanding is for the shape over time.
+    // opening anything, and expanding is for the shape over time. There is no
+    // shape without a history, so those rows do not open at all.
     const events = this.effort.get(category.id) || []
     const cards = events.reduce((sum, event) => sum + event.cards, 0)
     const seconds = events.reduce((sum, event) => sum + event.seconds, 0)
-    item.querySelector('[data-role=summary]').innerText =
-      `${this.formatTotal('cards', cards)} · ${this.formatTotal('time', seconds)}`
+    item.querySelector('[data-role=summary]').innerText = studied
+      ? `${this.formatTotal('cards', cards)} · ${this.formatTotal('time', seconds)}`
+      : `${this.formatTotal('cards', category.cards_count)}, not started`
+
+    if (!studied) {
+      item.classList.add('empty')
+      item.querySelector('.progress-caret').remove()
+    }
 
     this.listTarget.appendChild(item)
     this.draw(item)
@@ -129,13 +151,16 @@ export default class extends Controller {
     const compressed = byDay ? this.studyDays(all, allEvents) : null
     const series = compressed ? compressed.series : all
     const events = compressed ? compressed.events : allEvents
-    const months = compressed ? null : (Number(item.dataset.months) || null)
 
     const from = series[0].time
     const to = series.at(-1).time
     const span = Math.max(to - from, 1)
-    const zoom = expanded && months
-      ? Math.max(1, span / (months * this.constructor.MONTH)) : 1
+
+    // The window is counted in the axis's own unit: months of calendar, or days
+    // studied. Either way it says how much of the history fits on screen.
+    const window = Number(item.dataset.window) || null
+    const total = compressed ? compressed.dates.length : span / this.constructor.MONTH
+    const zoom = expanded && window ? Math.max(1, total / window) : 1
     const columns = Math.min(this.constructor.MAX_COLUMNS, Math.round(
       (expanded ? this.constructor.DETAIL_COLUMNS : this.constructor.PREVIEW_COLUMNS) * zoom
     ))
@@ -153,35 +178,32 @@ export default class extends Controller {
     effort.appendChild(bars(events, {
       from: from, to: to, columns: columns, value: metric.value
     }))
-    this.appendAxis(axis, zoom, (position) => {
-      // On the day axis the positions are indices, so the date comes from the
-      // day they stand for rather than from the position itself.
-      const dates = compressed && compressed.dates
-      return dates
-        ? dates[Math.min(dates.length - 1, Math.round(position * (dates.length - 1)))]
-        : from + span * position
-    }, compressed ? compressed.last - compressed.first : span)
+    // Positions on the day axis are indices into the days studied, so they are
+    // labelled by which day it was rather than by the date it fell on.
+    this.appendAxis(axis, zoom, compressed
+      ? (position) => `day ${Math.round(position * (compressed.dates.length - 1)) + 1}`
+      : (position) => this.tickLabel(from + span * position, span))
 
-    const total = allEvents.reduce((sum, event) => sum + metric.value(event), 0)
-    item.querySelector('[data-role=total]').innerText = this.formatTotal(metric.key, total)
+    const worked = allEvents.reduce((sum, event) => sum + metric.value(event), 0)
+    item.querySelector('[data-role=total]').innerText = this.formatTotal(metric.key, worked)
 
-    // On the day axis the zoom levels mean nothing — every day is one column —
-    // so the row becomes the pair of axes and shows the way back.
-    const zooms = compressed
-      ? [{ label: 'Calendar', selected: false, action: 'click->progress#selectAxis',
-           data: { axis: 'calendar' } }]
-      : this.constructor.RANGES.filter((range) => {
-        // A window wider than the history would draw the same chart as All.
-        return !range.months || range.months * this.constructor.MONTH < span
-      }).map((range) => ({
-        label: range.label, selected: (range.months || null) === months,
-        action: 'click->progress#selectRange', data: { months: range.months || '' }
+    const ranges = compressed ? this.constructor.DAY_RANGES : this.constructor.RANGES
+    const zooms = ranges
+      // A window wider than the history would draw the same chart as All.
+      .filter((range) => !range.size || range.size < total)
+      .map((range) => ({
+        label: range.label, selected: (range.size || null) === window,
+        action: 'click->progress#selectRange', data: { window: range.size || '' }
       }))
 
-    this.appendChoices(item, 'ranges', zooms.concat({
-      label: 'Study days', selected: !!compressed,
-      action: 'click->progress#selectAxis', data: { axis: 'days' }
+    const axes = [
+      { label: 'Calendar', axis: 'calendar' }, { label: 'Study days', axis: 'days' }
+    ].map((option) => ({
+      label: option.label, selected: (option.axis === 'days') === !!compressed,
+      action: 'click->progress#selectAxis', data: { axis: option.axis }
     }))
+
+    this.appendChoices(item, 'ranges', zooms.concat(axes))
 
     this.appendChoices(item, 'metrics', this.constructor.METRICS.map((option) => ({
       label: option.label, selected: option.key === metric.key,
@@ -193,13 +215,13 @@ export default class extends Controller {
 
   // Labels ride inside the scrolling canvas, roughly two per screenful, so
   // panning never leaves you without a date in view.
-  appendAxis(axis, zoom, timeAt, span) {
+  appendAxis(axis, zoom, labelAt) {
     const count = Math.max(2, Math.round(zoom * 2))
 
     for (let i = 0; i < count; i++) {
       const position = i / (count - 1)
       const label = document.createElement('span')
-      label.innerText = this.tickLabel(timeAt(position), span)
+      label.innerText = labelAt(position)
       label.style.left = `${(position * 100).toFixed(3)}%`
       // The outermost labels would hang off the ends of the canvas.
       if (position < 0.02) { label.style.transform = 'none' }
@@ -256,6 +278,8 @@ export default class extends Controller {
     event.preventDefault()
 
     const item = event.currentTarget.closest('.progress-item')
+    if (item.classList.contains('empty')) { return }
+
     const opening = !item.classList.contains('expanded')
 
     // Only one open at a time, so the list stays scannable.
@@ -277,7 +301,7 @@ export default class extends Controller {
   collapse(item) {
     item.classList.remove('expanded')
     item.querySelector('[data-role=detail]').style.display = 'none'
-    delete item.dataset.months
+    delete item.dataset.window
     delete item.dataset.axis
   }
 
@@ -286,7 +310,7 @@ export default class extends Controller {
     event.stopPropagation()
 
     const item = event.currentTarget.closest('.progress-item')
-    item.dataset.months = event.currentTarget.dataset.months
+    item.dataset.window = event.currentTarget.dataset.window
     this.draw(item)
   }
 
@@ -296,7 +320,7 @@ export default class extends Controller {
 
     const item = event.currentTarget.closest('.progress-item')
     item.dataset.axis = event.currentTarget.dataset.axis
-    delete item.dataset.months
+    delete item.dataset.window
     this.draw(item)
   }
 
