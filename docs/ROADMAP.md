@@ -24,10 +24,25 @@ and within each section the order is the intended order of work.
      where the user adjusts it, so the heuristic only has to be plausible. It
      votes on the hour of the recent sessions of at least ten cards and needs
      two separate study days, which is what stops one evening's three sessions
-     from pinning a daily reminder to that evening. Measured against a real
-     history it is over two hours out about half the time — that history has two
-     genuine study times, morning and late night, and no estimator can split
-     them. Do not add a time picker to the app for this.
+     from pinning a daily reminder to that evening. Do not add a time picker to
+     the app for this.
+   - Measured on 130 real Anki collections (4.5M reviews, from the gated
+     `open-spaced-repetition/anki-revlogs-10k` dataset, whose per-user parquet
+     partitions survive the anonymisation even though absolute timestamps do
+     not — `elapsed_seconds - 86400 * elapsed_days` recovers the drift in time
+     of day between two reviews of one card):
+     - A study hour is real but weak. The median user repeats within an hour of
+       the same clock time on 16 % of days, against 8 % by chance, and drifts a
+       median of 4 hours from one day to the next. Not one of the 130 manages
+       half their repeats within an hour.
+     - Over 1.27M predictions, the modal hour is no better than simply reusing
+       the last session's time (2.32h vs 2.26h median error, 27 % vs 28 % within
+       an hour); both beat a uniform guess at 6h by a wide margin.
+     - The vote is kept anyway, for robustness rather than accuracy: "now" is a
+       single draw, so setting a recurring reminder at an odd hour would repeat
+       that hour forever, where a central tendency cannot be moved by one moment.
+     - Times floor to the quarter hour so the reminder lands at most 14 minutes
+       before the usual start and never after it.
    - Still open: the fixed ladder (1 day — morning, midday, evening — 2 days,
      1 week, 1 month), which would be several events or one `RRULE`. The
      next-due event is more accurate, so the ladder only makes sense as a

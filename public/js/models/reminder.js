@@ -52,13 +52,14 @@ export default class Reminder {
   static QUARTER = 15 * 60 * 1000
 
   // A reminder landing at 14:02:47 reads like a bug. Round up when the time has
-  // to stay after something (a card coming back up), nearest otherwise.
+  // to stay after something (a card coming back up), down when it has to stay
+  // before something (the start of a usual session).
   static ceilToQuarter(date) {
     return new Date(Math.ceil(date.getTime() / this.QUARTER) * this.QUARTER)
   }
 
-  static roundToQuarter(date) {
-    return new Date(Math.round(date.getTime() / this.QUARTER) * this.QUARTER)
+  static floorToQuarter(date) {
+    return new Date(Math.floor(date.getTime() / this.QUARTER) * this.QUARTER)
   }
 
   // A short memory, so a change of habit is picked up within a couple of weeks.
@@ -108,14 +109,27 @@ export default class Reminder {
     if (pool.length < this.MINIMUM_SESSIONS || spread.size < this.MINIMUM_DAYS) { return null }
 
     const cards = new Array(24).fill(0)
-    for (const session of pool) { cards[session.at.getHours()] += session.cards }
+    const minutes = Array.from({ length: 24 }, () => [])
 
-    return { hour: cards.indexOf(Math.max(...cards)), minute: 0 }
+    for (const session of pool) {
+      cards[session.at.getHours()] += session.cards
+      minutes[session.at.getHours()].push(session.at.getMinutes())
+    }
+
+    // The hour carries the signal; the minute only decides how far before the
+    // usual start the reminder lands, once the caller floors it to a quarter.
+    const hour = cards.indexOf(Math.max(...cards))
+    const sorted = minutes[hour].sort((a, b) => a - b)
+
+    return { hour: hour, minute: sorted[Math.floor(sorted.length / 2)] || 0 }
   }
 
-  // First occurrence of a recurring reminder: one period out, at the hour the
-  // user studies at — or failing that, the time of day it is now. Firing the
-  // first one immediately would just be noise.
+  // First occurrence of a recurring reminder: one period out, at the time the
+  // user studies at — or failing that, the time of day it is now. Flooring to
+  // the quarter puts it at most 14 minutes before the usual start and never
+  // after it: a reminder that arrives once the session would already be under
+  // way has missed its job, and "now" is itself a time the user is mid-study.
+  // Firing the first one immediately would just be noise.
   static nextOccurrence(repeat, habitual = null) {
     const date = new Date()
 
@@ -125,7 +139,7 @@ export default class Reminder {
 
     if (habitual) { date.setHours(habitual.hour, habitual.minute, 0, 0) }
 
-    return this.roundToQuarter(date)
+    return this.floorToQuarter(date)
   }
 
   static calendar({ at, summary, description, url, repeat }) {
