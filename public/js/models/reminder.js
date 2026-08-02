@@ -64,11 +64,19 @@ export default class Reminder {
     const blob = new Blob(
       [this.calendar(attributes)], { type: 'text/calendar;charset=utf-8' }
     )
+    const url = URL.createObjectURL(blob)
 
     const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
+    link.href = url
     link.download = 'srs-flashcards-reminder.ics'
+    // The anchor has to be in the document when it is clicked, and the object
+    // URL has to outlive the click: a detached anchor or a URL revoked in the
+    // same tick both end with nothing being downloaded.
+    link.style.display = 'none'
+    document.body.appendChild(link)
     link.click()
-    URL.revokeObjectURL(link.href)
+    link.remove()
+
+    setTimeout(() => URL.revokeObjectURL(url), 10000)
   }
 }
