@@ -317,6 +317,13 @@ dialog > article { width: 100%; max-width: 24rem; margin: 0 auto; }
   width: 100%;
   margin: 0;
 }
+/* The app fills any a[role=button] with the primary blue on hover, which would
+   pull the secondary choices back up to the filled one's level. */
+.reminder-choices a[role=button].outline:hover {
+  background-color: transparent;
+  color: var(--pico-secondary-hover);
+  border-color: var(--pico-secondary-hover);
+}
 
 /* Browser (not installed) mode: corner ribbon warning that progress is not kept,
    linking to the install instructions. The band runs across the top-left corner
