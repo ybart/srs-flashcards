@@ -16,21 +16,19 @@ header > nav li.title { text-align: center; }
    plus that padding do not fit a third of a phone's width, so the spacing is
    the icons' own tap padding. */
 header > nav ul:last-child { justify-content: flex-end; }
-/* flex-shrink defaults to 1, so in a tight row these are squeezed narrower than
-   the icons inside them and the glyphs overlap each other. width: max-content
-   does not stop that on its own — the shrink has to be locked off. */
 header > nav ul:last-child li {
   flex: 0 0 auto;
   width: max-content;
   padding-left: 0;
   padding-right: 0;
 }
-/* With the actions holding their width, the two columns before them split what
-   is left, which keeps the title within a few pixels of the page centre. */
-header > nav:has(.header-icon) ul:last-child { flex: 0 0 auto; }
 header > nav li.title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+/* Pico gives nav links padding and cancels it again with an equal negative
+   margin, so they sit flush. Overriding one without the other leaves each icon
+   sticking 8px out of its own box on both sides, overlapping its neighbours. */
 .header-icon {
   display: block;
+  margin: 0;
   padding: 4px 5px;
   line-height: 0;
   color: var(--pico-muted-color);
@@ -352,6 +350,11 @@ dialog > article { width: 100%; max-width: 24rem; margin: 0 auto; }
    linking to the install instructions. The band runs across the top-left corner
    and is clipped by the box; only the band takes the tap, so the rest of the
    corner stays usable. */
+/* The ribbon sits over the top-left of the header, which is where the centred
+   title starts: in demo mode the ribbon is the more useful of the two, and
+   hiding rather than removing the title keeps the icons where they are. */
+main.demo header li.title { visibility: hidden; }
+
 .demo-ribbon { display: none; }
 main.demo .demo-ribbon {
   display: block;
