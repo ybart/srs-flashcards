@@ -7,11 +7,19 @@
 // stood 50px taller than its own window, which put the bottom of every list out
 // of reach and let the header be dragged up by that much.
 //
-// window.innerHeight is right in every case measured, so it is measured.
+// The layout viewport is what to fill: documentElement.clientHeight. Sizing to
+// innerHeight was measurably wrong — the app then filled 762px of an 812px window
+// and iOS panned the difference, which read as a header that could be dragged.
 
 export function trackViewportHeight() {
   const apply = () => {
-    document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`)
+    // documentElement.clientHeight is the *layout* viewport — the box the document
+    // has to fill for there to be nothing to pan. innerHeight is the visual one,
+    // and in a standalone web app the two differ by the status bar: filling 762 of
+    // an 812 window left 50px for iOS to drag the whole app across.
+    const height = document.documentElement.clientHeight || window.innerHeight
+
+    document.documentElement.style.setProperty('--app-height', `${height}px`)
   }
 
   apply()

@@ -25,7 +25,14 @@ html, body { height: 100%; }
   html, body { height: 100dvh; }
 }
 html, body { height: var(--app-height, 100dvh); }
-body { overflow: hidden; }
+body {
+  overflow: hidden;
+  /* The view is the whole screen (viewport-fit=cover), so the status bar would
+     otherwise sit over the header. env() only reports a figure at all because of
+     that meta: without it these read 0, which is what made the earlier attempts
+     look like they had nothing to compensate for. */
+  padding-top: env(safe-area-inset-top, 0px);
+}
 
 header > nav { min-height: 60px; }
 header > nav ul { flex: 1 0 0; }
