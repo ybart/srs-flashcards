@@ -69,8 +69,11 @@ section[role=content] {
   background-color: var(--pico-background-color);
   flex: 1; overflow-y: scroll; text-align: center;
   margin-bottom: 0;
-  /* Room to scroll past the home indicator on a phone that has one. */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /* Room at the end of the list. The home indicator's inset covers itself and
+     nothing more, which left the last row sitting right against the bottom edge
+     and partly under the indicator: 36px is twice the height of a category card's
+     progress bar, which is about the breathing room the end of a list wants. */
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 36px);
   /* Stops the gesture chaining to the document when this reaches its end. The
      document is locked by html/body above, but on iOS reaching the bottom of a
      nested scroller still hands the swipe upwards, which drags the whole layout
