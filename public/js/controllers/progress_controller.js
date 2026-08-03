@@ -571,6 +571,7 @@ export default class extends Controller {
     const seconds = parseFloat(getComputedStyle(item).getPropertyValue('--unfold')) || 0
 
     item.dataset.unfolding = ''
+    delete item.dataset.settled
     setTimeout(() => {
       delete item.dataset.unfolding
       this.settle(item)
@@ -583,6 +584,10 @@ export default class extends Controller {
 
     this.appendScale(item, item.dataset.metric, drawn)
     this.showTypical(item)
+    // Fades the gutter in; see the stylesheet. A redraw that is not a toggle
+    // leaves this set, so changing metric or range replaces the labels outright
+    // rather than fading them in again.
+    item.dataset.settled = ''
   }
 
   toggle(event) {

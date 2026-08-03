@@ -527,6 +527,11 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   width: 30px;
   pointer-events: none;
 }
+/* Placed only once the row has stopped moving, since they are measured off the
+   drawings, so they arrive after everything else has settled. They fade in
+   rather than appearing out of nowhere. */
+.progress-scale { opacity: 0; transition: opacity var(--unfold) ease; }
+.progress-item[data-settled] .progress-scale { opacity: 1; }
 .progress-scale span {
   position: absolute;
   right: 0;
@@ -562,7 +567,9 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
 .progress-folded { min-height: 0; overflow: hidden; }
 /* Not everyone wants the motion, and the layout does not depend on it. */
 @media (prefers-reduced-motion: reduce) {
-  .progress-caret, .progress-svg, .progress-plot, .progress-fold { transition: none; }
+  .progress-caret, .progress-svg, .progress-plot, .progress-fold, .progress-scale {
+    transition: none;
+  }
 }
 .progress-axis span {
   position: absolute;
