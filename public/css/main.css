@@ -63,7 +63,11 @@ header > nav li.title { min-width: 0; overflow: hidden; text-overflow: ellipsis;
   color: var(--pico-muted-color);
 }
 .header-icon:hover { color: var(--pico-primary); }
-main { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
+/* 100% of the body, not of the viewport. Sized in viewport units it ignored the
+   body's safe-area padding: on a phone the whole column stayed a full screen tall
+   inside a body 50px shorter, so the study screen's footer — its answer buttons —
+   hung off the bottom of the display. */
+main { height: 100%; display: flex; flex-direction: column; }
 body > main { padding: 0; }
 section[role=content] {
   background-color: var(--pico-background-color);
