@@ -107,12 +107,23 @@ in front of nginx — serves whichever language it saw first to everybody. As in
 `mjs.conf`, the COOP/COEP headers are re-declared because a `location` with its
 own `add_header` stops inheriting the server-level ones.
 
-**No `map`, deliberately.** Reading `Accept-Language` into a variable with `map`
-is the usual way and cannot be done here: the domain's `.d/*.conf` is included at
-line 51 of `/etc/nginx/conf.d/<domain>.conf`, *inside* the `server` block, and
-`map` is only valid at `http` level — `nginx -t` rejects it. The choice is made
-with `set` and `if` inside the location, which stays within the rewrite-module
-directives, the part of `if` that behaves. Only the browser's *first* language tag
+**No `map`, and no `try_files`.** Both were tried and neither works here:
+
+- `map` reads `Accept-Language` into a variable, and is only valid at `http`
+  level. The domain's `.d/*.conf` is included at line 51 of
+  `/etc/nginx/conf.d/<domain>.conf`, *inside* the `server` block, so `nginx -t`
+  rejects it there.
+- `set` inside `if`, then `try_files $variable /install.html`, parses and reloads
+  cleanly and then does nothing at all: every language gets the English page. Once
+  a request has passed through a matched `if`, nginx serves it from an implicit
+  nested location that does not inherit `try_files`, so the original URI is served
+  and the switch is silently skipped. This one cost a deploy to find, because it
+  looks like it is working — the `Vary` header comes back, the config is live, and
+  the page is simply the wrong one.
+
+What works is `rewrite ^ /install.fr.html break` inside the `if`. `break` keeps
+the rewritten URI in this location, so the headers above still apply; `last` would
+re-enter location matching and lose them. Only the browser's *first* language tag
 is honoured: nginx cannot weigh q-values without contortions, and matching `fr`
 anywhere in the header would serve French to a browser asking for
 `en-GB,fr;q=0.8`, which prefers English.
