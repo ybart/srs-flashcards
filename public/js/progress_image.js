@@ -22,7 +22,9 @@ const CHART_H = 225
 // together than the type they are labelled with.
 const EFFORT_TOP = 405
 const EFFORT_H = 125
-const AXIS_Y = 558
+const TICK_TOP = 534
+const TICK_H = 9
+const AXIS_Y = 560
 const BACKGROUND = '#12151c'
 const INK = '#f2f4f7'
 const MUTED = '#8a93a3'
@@ -98,10 +100,16 @@ export function compose(options) {
       options.formatTick(tick), { size: 22, anchor: 'end' }))
   }
 
-  // Same count either way, so a wide export is not left with two dates.
+  // Same count either way, so a wide export is not left with two dates. Each
+  // gets a tick: the outer labels are pulled inside the frame to stay on the
+  // picture, so on their own they would only point roughly.
   for (let i = 0; i < 5; i++) {
     const position = i / 4
-    svg.appendChild(label(CHART_X + CHART_W * position, AXIS_Y, options.labelAt(position), {
+    const x = CHART_X + CHART_W * position
+    svg.appendChild(element('line', {
+      x1: x, x2: x, y1: TICK_TOP, y2: TICK_TOP + TICK_H, stroke: MUTED, 'stroke-width': 2
+    }))
+    svg.appendChild(label(x, AXIS_Y, options.labelAt(position), {
       size: 22, anchor: i === 0 ? 'start' : (i === 4 ? 'end' : 'middle')
     }))
   }
