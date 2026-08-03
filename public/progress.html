@@ -67,7 +67,8 @@
         <!-- Outside the scroller: a scale that panned with the bars would be
              no scale at all. -->
         <div data-role="scale" class="progress-scale"></div>
-        <div data-role="scroll" class="progress-scroll">
+        <div data-role="scroll" class="progress-scroll"
+             data-action="scroll->progress#panned">
           <div data-role="canvas" class="progress-canvas">
             <div data-role="chart" class="progress-chart"></div>
             <div data-role="effort" class="progress-chart"></div>

@@ -210,13 +210,6 @@ export default class extends Controller {
       ? (position) => `day ${Math.round(position * (compressed.dates.length - 1)) + 1}`
       : (position) => this.tickLabel(from + span * position, span))
 
-    // Totals belong to the subtitle, which already carries all three; repeating
-    // one here would say nothing. The median day is on neither chart and is the
-    // figure worth having beside them — median rather than mean because study
-    // comes in bursts, and one marathon should not describe an ordinary day.
-    const typical = this.medianDay(allEvents, metric.value)
-    item.querySelector('[data-role=total]').innerText =
-      `median ${this.formatTotal(metric.key, typical)} a day`
 
     const ranges = compressed ? this.constructor.DAY_RANGES : this.constructor.RANGES
     const zooms = ranges
@@ -238,6 +231,47 @@ export default class extends Controller {
     })))
 
     this.scrollToLatest(item)
+    this.showTypical(item)
+  }
+
+  // Totals belong to the subtitle, which already carries all three; repeating
+  // one here would say nothing. What a usual day amounts to is on neither
+  // chart, and it describes the stretch actually on screen rather than the
+  // whole history.
+  showTypical(item) {
+    const drawn = this.drawn.get(Number(item.dataset.category))
+    if (!drawn || !item.classList.contains('expanded')) { return }
+
+    const metric = this.constructor.METRICS.find((m) => m.key === item.dataset.metric)
+    const scroll = item.querySelector('[data-role=scroll]')
+    const scrollable = scroll.clientWidth > 0 && scroll.scrollWidth > scroll.clientWidth
+    const start = scrollable ? scroll.scrollLeft / scroll.scrollWidth : 0
+    const end = scrollable
+      ? Math.min(1, (scroll.scrollLeft + scroll.clientWidth) / scroll.scrollWidth) : 1
+
+    const reach = drawn.to - drawn.from
+    const from = drawn.from + reach * start
+    const to = drawn.from + reach * end
+    const visible = drawn.events.filter((event) => event.time >= from && event.time <= to)
+
+    // The middle day rather than the average: study comes in bursts, and one
+    // marathon should not describe an ordinary day.
+    const days = this.dailyTotals(visible, metric.value, !!drawn.dates)
+    const usual = days.length ? days.sort((a, b) => a - b)[Math.floor(days.length / 2)] : 0
+    item.querySelector('[data-role=total]').innerText =
+      `usually ${this.formatTotal(metric.key, usual)} a day`
+  }
+
+  // Panning changes what is on screen without redrawing anything, so the figure
+  // has to be refreshed on its own. Once a frame is often enough.
+  panned(event) {
+    const item = event.currentTarget.closest('.progress-item')
+    if (this.repaint) { return }
+
+    this.repaint = requestAnimationFrame(() => {
+      this.repaint = null
+      this.showTypical(item)
+    })
   }
 
   // The picture is of what the row is showing: the same axis, the same metric,
@@ -424,17 +458,18 @@ export default class extends Controller {
     }
   }
 
-  // What a day of study usually amounts to, over the days there was any.
-  medianDay(events, value) {
+  // On the day axis each point is already one day; on the calendar axis several
+  // sessions can share one.
+  dailyTotals(events, value, daily) {
+    if (daily) { return events.map(value) }
+
     const days = new Map()
     for (const event of events) {
       const day = new Date(event.time).toDateString()
       days.set(day, (days.get(day) || 0) + value(event))
     }
 
-    const totals = [...days.values()].sort((a, b) => a - b)
-
-    return totals.length ? totals[Math.floor(totals.length / 2)] : 0
+    return [...days.values()]
   }
 
   formatTotal(metric, total) {
