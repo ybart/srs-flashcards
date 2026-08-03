@@ -188,7 +188,10 @@ export default class extends Controller {
     let clockText = null
     if (!hasStudied && !hasUnstudied && avail?.next_available) {
       const next = RelativeDate.dateFromSqliteTimestamp(avail.next_available)
-      clockText = t('next %{when}', { when: new RelativeDate(next).format() })
+      // Just the moment, with no "next" in front of it: the line is a narrow
+      // column and the relative date already reads as the future — "in 3 days",
+      // "après-demain" — where "next après-demain" was both long and wrong.
+      clockText = new RelativeDate(next).format()
     } else if (category.started_at) {
       const startedAt = RelativeDate.dateFromSqliteTimestamp(category.started_at)
       clockText = new RelativeDate(startedAt).format()

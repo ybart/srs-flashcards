@@ -1,0 +1,221 @@
+/* The install page's own styles, shared by install.html and its
+   translations. Kept out of the pages themselves so a change to the look
+   does not have to be made once per language. */
+/* Base Styles */
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  line-height: 1.6;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+  color: #2d3748;
+  background-color: #f8fafc;
+}
+
+h1 {
+  color: #1e3a8a;
+  text-align: center;
+  font-size: 2.2rem;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+/* Section Styling */
+.device-section {
+  background: white;
+  border-radius: 12px;
+  padding: 1.75rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.device-section h2 {
+  color: #1e40af;
+  font-size: 1.5rem;
+  margin-top: 0;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* Step Styling */
+.step {
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: flex-start;
+}
+
+.step-number {
+  background: #2563eb;
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 1rem;
+  flex-shrink: 0;
+  font-size: 0.9rem;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  line-height: 28px;
+  position: relative;
+  top: 1em;
+}
+
+/* Note Box */
+.note {
+  background: #fffbeb;
+  padding: 1rem;
+  border-left: 4px solid #f59e0b;
+  margin: 1.5rem 0;
+  border-radius: 0 4px 4px 0;
+}
+
+.note strong {
+  color: #b45309;
+}
+
+/* Buttons */
+.direct-access-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: #10b981;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+  margin: 1rem 0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.direct-access-button:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* Back to Top */
+.back-to-top {
+  display: block;
+  text-align: right;
+  margin-top: 1.5rem;
+}
+
+.back-to-top a {
+  color: #4b5563;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.back-to-top a:hover {
+  color: #1e40af;
+}
+
+/* Links */
+a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Lists */
+ul {
+  padding-left: 1.25rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+}
+
+/* Illustration */
+.illustration {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  border: 1px solid #e2e8f0;
+  background: white;
+  display: block;
+  margin: 1rem 0;
+  padding: 1rem;
+  text-align: center;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+/* App Store Buttons */
+.app-store-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  margin: 2rem 0;
+  flex-wrap: wrap;
+}
+
+.app-button {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.app-button img {
+  width: 24px;
+  height: 24px;
+  margin-right: 8px;
+}
+
+.android-button {
+  background: white;
+  color: black;
+  border: 1px solid #e0e0e0;
+}
+
+.ios-button {
+  background: black;
+  color: white;
+}
+
+.android-button:hover {
+  background: #f5f5f5;
+  transform: translateY(-1px);
+}
+
+.ios-button:hover {
+  background: #333;
+  transform: translateY(-1px);
+}
+
+.preview-warning {
+  background-color: #fff3cd;
+  color: #856404;
+  border-left: 4px solid #ffeeba;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 0 4px 4px 0;
+  font-size: 0.9em;
+}
+
+.preview-warning strong {
+  font-weight: 600;
+}
+
+@media (prefers-color-scheme: dark) {
+  .preview-warning {
+    background-color: #332701;
+    color: #ffd351;
+    border-left-color: #856404;
+  }
+}

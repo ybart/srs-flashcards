@@ -104,7 +104,7 @@ and within each section the order is the intended order of work.
      without it.
    - Open at phone width: whether 6 colour bands stay legible at ~350px across
      and 60px tall in the previews. Needs a device, not a mockup.
-5. [~] **French translation** — the UI was localised to English early on; put the
+5. [x] **French translation** — the UI was localised to English early on; put the
    strings behind a catalogue and ship French alongside. Pick the language from
    `navigator.language` with an override in `localStorage`, since the settings
    page itself is after 1.0. Covers the app, the install page and the manifest.
@@ -118,9 +118,12 @@ and within each section the order is the intended order of work.
      import the catalogue, and making it a module would defer the service worker
      registration and the redirect behind parsing — so the strings are repeated
      there instead, and a new language has to be added in both places.
-   - Still to do: `install.html` (78 strings, its own page-scoped script), and the
-     manifest name and description, which a static host cannot vary by language —
-     a second manifest swapped by locale is the option there.
+   - `install.html` is prose outside the app, so it is translated by having a
+     second file, `install.fr.html`, with nginx choosing between them on
+     `Accept-Language` (see `docs/DEPLOYMENT.md`). No script threaded through a
+     static page, and the styles are shared so only the words are duplicated.
+   - The manifest needs nothing: it carries a name, which is a proper noun, and no
+     description. The same nginx rule is there if that changes.
 6. [ ] **Public-facing sweep** — the README badge pins Ruby 3.1.0 while
    `.ruby-version` is 3.4.5, and it reads as if Ruby were the runtime: it is the
    import/build toolchain (`lib/`, `Rakefile`, `bin/`), the app itself is a

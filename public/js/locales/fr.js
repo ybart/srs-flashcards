@@ -36,7 +36,6 @@ export const FR = {
   'Never studied': 'Jamais étudiée',
   'Reminder': 'Rappel',
   'Remind me to study': 'Me rappeler de réviser',
-  'next %{when}': 'prochaine %{when}',
 
   // Reminders
   'Remind me': 'Me le rappeler',

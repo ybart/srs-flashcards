@@ -77,6 +77,49 @@ location ~ \.mjs$ {
 }
 ```
 
+### c) The install page in the reader's language
+
+`install.html` is prose outside the app — no Stimulus, no catalogue — so it is
+translated by having a whole second file, `install.fr.html`. Both link the same
+`/css/install.css`, so only the words are duplicated. Which one a visitor gets is
+nginx's decision, taken from the `Accept-Language` header the browser sends.
+
+`/etc/nginx/conf.d/srs-flashcards.ilyba.fr.d/language.conf`:
+
+```
+map $http_accept_language $install_page {
+    default        /install.html;
+    ~*^fr          /install.fr.html;
+    ~*,\s*fr       /install.fr.html;
+}
+
+location = /install.html {
+    root /var/www/my_webapp/www;
+    try_files $install_page /install.html;
+    add_header Vary "Accept-Language" always;
+    add_header Cross-Origin-Embedder-Policy "require-corp" always;
+    add_header Cross-Origin-Opener-Policy   "same-origin" always;
+    add_header Cross-Origin-Resource-Policy "same-origin" always;
+}
+```
+
+`Vary: Accept-Language` matters: without it a cache — the browser's, or anything
+in front of nginx — serves whichever language it saw first to everybody. As in
+`mjs.conf`, the COOP/COEP headers are re-declared because a `location` with its
+own `add_header` stops inheriting the server-level ones.
+
+`/install.fr.html` stays reachable directly, which is what makes it testable:
+
+```
+curl -s -H 'Accept-Language: fr-FR,fr;q=0.9' https://srs-flashcards.ilyba.fr/install.html | grep -o '<html lang="[a-z]*"'
+curl -s -H 'Accept-Language: en-GB,en;q=0.9' https://srs-flashcards.ilyba.fr/install.html | grep -o '<html lang="[a-z]*"'
+```
+
+The same pattern would serve a translated `manifest.json`, and is the only way
+the app's name is right before the app has ever run — but the manifest carries
+nothing translatable today (a name, and no description), so there is nothing to
+negotiate yet.
+
 Apply:
 
 ```

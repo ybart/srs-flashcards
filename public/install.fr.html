@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<!-- The French install page. A whole file rather than a page translated by
+     script: it is prose, it is outside the app, and nginx can pick between the
+     two on Accept-Language — see docs/DEPLOYMENT.md. The styles are shared, so
+     only the words are duplicated. -->
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"></meta>
+    <link rel="apple-touch-icon" href="/icons/ios/1024.png" />
+    <script src="https://cdn.jsdelivr.net/npm/ios-pwa-splash@1.0.0/cdn.min.js"></script>
+    <script>iosPWASplash('/icons/ios/1024.png', '#000000');</script>
+
+    <link rel="icon" href="/favicon.ico" sizes="any">
+    <link rel="icon" href="/icons/ios/32.png" type="image/png" sizes="32x32">
+    <link rel="icon" href="/icons/ios/192.png" type="image/png" sizes="192x192">
+
+    <link rel="manifest" href="manifest.json" />
+
+    <title>Installer SRS Flashcards</title>
+    <link rel="stylesheet" href="/css/install.css" />
+</head>
+<body id="top">
+    <h1>Installer SRS Flashcards sur votre écran d’accueil</h1>
+
+    <img src="/icons/ios/256.png" alt="Icône de l’application SRS Flashcards" style="width: 100px; height: 100px; border-radius: 20%; display: block; margin: 0 auto 1rem;">
+
+    <p style="text-align: center;">Retrouvez l’expérience d’une application, avec l’accès hors ligne et le lancement depuis l’écran d’accueil.</p>
+
+    <div class="preview-warning">
+        <strong>⚠️ Version préliminaire :</strong> cette application est encore en préversion. La mise à jour ne fonctionne pas
+        correctement pour l’instant : pour mettre à jour, il faut <strong>supprimer puis réinstaller complètement</strong> l’application.
+        La restauration des données n’étant pas terminée, cela veut dire que <strong>votre progression sera perdue</strong> à chaque mise à jour.
+        <br><br>
+        <strong>Remarque :</strong> vous pouvez télécharger vos données de progression pour les sauvegarder, mais leur restauration n’est pas encore possible.
+    </div>
+
+    <div class="app-store-buttons">
+        <a href="#android" class="app-button android-button">
+            <span>Télécharger pour Android</span>
+        </a>
+        <a href="#ios" class="app-button ios-button">
+            <span>Télécharger pour iPhone, iPad, Mac</span>
+        </a>
+    </div>
+
+    <div class="device-section" id="toc">
+        <h2>Sommaire</h2>
+        <ul>
+            <li><a href="#android">Instructions Android</a></li>
+            <li><a href="#ios">Instructions iPhone, iOS et macOS</a></li>
+            <li><a href="#direct-access">Accès direct par le web</a></li>
+            <li><a href="#after-install">Après l’installation</a></li>
+            <li><a href="#uninstall">Désinstaller</a></li>
+            <li><a href="#learn-more">En savoir plus sur les PWA (applications web installables)</a></li>
+        </ul>
+    </div>
+
+    <div class="device-section" id="android">
+        <h2>Instructions Android</h2>
+
+        <div class="step">
+            <div class="step-number">1</div>
+            <div>
+                <p>Touchez le <strong>menu à trois points</strong> en haut à droite</p>
+                <div class="illustration">
+                    <img src="/images/screenshots/android-step1.png" alt="Le site SRS Flashcards ouvert dans Chrome sur Android" style="max-width: 100%; border: none;">
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <div>
+                <p>Touchez <strong>Ajouter à l’écran d’accueil</strong></p>
+                <div class="illustration">
+                    <img src="/images/screenshots/android-step2.png" alt="Le menu de Chrome avec l’option « Ajouter à l’écran d’accueil »" style="max-width: 100%; border: none;">
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">3</div>
+            <div>
+                <p>Choisissez <strong>« Installer l’application »</strong> puis <strong>« Ajouter à l’écran d’accueil »</strong></p>
+                <div class="illustration">
+                    <img src="/images/screenshots/android-step3.png" alt="La fenêtre d’installation sur Android" style="max-width: 100%; border: none;">
+                    <img src="/images/screenshots/android-step4.png" alt="La fenêtre d’ajout à l’écran d’accueil sur Android" style="max-width: 100%; border: none;">
+                </div>
+            </div>
+        </div>
+
+        <div class="note">
+            <strong>Remarque :</strong> si l’option d’installation n’apparaît pas, essayez avec Chrome et vérifiez que vous êtes bien sur la bonne page.
+        </div>
+
+        <div class="back-to-top">
+            <a href="#top">↑ Retour en haut</a>
+        </div>
+    </div>
+
+    <div class="device-section" id="ios">
+        <h2>Instructions iPhone, iOS et macOS</h2>
+
+        <div class="step">
+            <div class="step-number">1</div>
+            <div>
+                <p>Touchez l’<strong>icône de partage</strong> (le carré avec une flèche) en bas de l’écran (il faut parfois faire défiler un peu vers le haut pour la voir)</p>
+                <p>Sur macOS, vous pouvez aussi utiliser le bouton <strong>carré avec une flèche</strong> en haut à droite de Safari. Dans Chrome, un bouton d’installation se trouve à droite de la barre d’adresse.</p>
+                <div class="illustration">
+                    <img src="/images/screenshots/ios-step1.jpg" alt="La barre d’adresse de Safari sur le site SRS Flashcards, avec l’icône de partage" style="max-width: 100%; border: none;">
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">2</div>
+            <div>
+                <p>Choisissez <strong>« Sur l’écran d’accueil » (ou « Ajouter au Dock » sur macOS)</strong></p>
+                <div class="illustration">
+                    <img src="/images/screenshots/ios-step2.png" alt="Le menu de partage de Safari avec l’option « Sur l’écran d’accueil »" style="max-width: 100%; border: none;">
+                </div>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-number">3</div>
+            <div>
+                <p>Confirmez en touchant <strong>« Ajouter »</strong> en haut à droite</p>
+                <div class="illustration">
+                    <img src="/images/screenshots/ios-step3.png" alt="L’écran de confirmation d’ajout à l’écran d’accueil dans Safari" style="max-width: 100%; border: none;">
+                </div>
+            </div>
+        </div>
+
+        <div class="note">
+            <strong>Remarque :</strong> iOS 16.4 ou plus récent est recommandé pour profiter de toutes les fonctions des PWA.
+        </div>
+
+        <div class="back-to-top">
+            <a href="#top">↑ Retour en haut</a>
+        </div>
+    </div>
+
+    <div class="device-section" id="direct-access">
+        <h2>Accès direct par le web</h2>
+
+        <div class="note">
+            <strong>À propos de la version web :</strong>
+            <p>Ceci est la version web de l’application. Elle en fait moins que la version installée.
+                C’est un bon moyen de l’essayer sans rien installer, mais nous vous conseillons de
+                l’installer pour en profiter pleinement.
+            </p>
+            <ul>
+                <li>Votre progression sera perdue quand le navigateur videra le cache du site</li>
+                <li>Aucune notification pour vous rappeler de réviser vos cartes</li>
+                <li>Aucun accès hors ligne : une connexion internet est nécessaire</li>
+                <li>Certaines fonctions peuvent ne pas se comporter comme prévu</li>
+            </ul>
+        </div>
+
+        <p>Continuer avec la version web, sans installer :</p>
+        <!-- data-turbo="false": if this page was reached through a Turbo visit,
+             its own styles are still in the head and would follow us back. -->
+        <a href="/categories.html" class="direct-access-button" data-turbo="false">Ouvrir la version web</a>
+
+        <div class="back-to-top">
+            <a href="#top">↑ Retour en haut</a>
+        </div>
+    </div>
+
+    <div class="device-section" id="after-install">
+        <h2>Après l’installation</h2>
+        <p>Une fois installée, vous pouvez :</p>
+        <ul>
+            <li>La lancer comme n’importe quelle application</li>
+            <li>L’utiliser hors ligne, dans les transports ou en voyage</li>
+            <li>Recevoir les mises à jour automatiquement</li>
+        </ul>
+
+        <div class="back-to-top">
+            <a href="#top">↑ Retour en haut</a>
+        </div>
+    </div>
+
+    <div class="device-section" id="uninstall">
+        <h2>Désinstaller</h2>
+        <ul>
+            <li><strong>Android :</strong>
+                <ul>
+                    <li>Appui long sur l’icône > Infos sur l’appli > Désinstaller</li>
+                    <li>Paramètres > Applications > SRS Flashcards > Désinstaller</li>
+                    <li>Paramètres > Stockage > Applications > Chrome > Effacer le stockage > Stockage des sites > Gérer > SRS Flashcards > Supprimer les données</li>
+                </ul>
+            </li>
+            <li><strong>iOS :</strong> appui long sur l’icône > Supprimer l’app</li>
+        </ul>
+
+        <div class="back-to-top">
+            <a href="#top">↑ Retour en haut</a>
+        </div>
+    </div>
+
+    <div class="device-section" id="learn-more">
+        <h2>En savoir plus sur les PWA (applications web installables)</h2>
+        <p>Les PWA (Progressive Web Apps) sont des sites web qui se comportent comme des applications : on peut les installer, elles fonctionnent hors ligne et elles envoient des notifications.</p>
+        <ul>
+            <li><a href="https://web.dev/progressive-web-apps/" target="_blank">Le guide PWA de Google (web.dev, en anglais)</a></li>
+            <li><a href="https://developer.mozilla.org/fr/docs/Web/Progressive_web_apps" target="_blank">MDN Web Docs : les PWA</a></li>
+            <li><a href="https://support.google.com/chrome/answer/9658361?hl=fr" target="_blank">Centre d’aide de Chrome sur les PWA</a></li>
+        </ul>
+
+        <div class="back-to-top">
+            <a href="#top">↑ Retour en haut</a>
+        </div>
+    </div>
+</body>
+</html>
