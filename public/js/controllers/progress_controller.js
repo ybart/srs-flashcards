@@ -184,18 +184,15 @@ export default class extends Controller {
       from: from, to: to, columns: columns, value: metric.value
     })
     effort.appendChild(drawn)
-    const peak = this.formatTotal(metric.key, Number(drawn.dataset.peak))
+    this.appendScale(item, this.formatScale(metric.key, Number(drawn.dataset.peak)))
     // Positions on the day axis are indices into the days studied, so they are
     // labelled by which day it was rather than by the date it fell on.
     this.appendAxis(axis, zoom, compressed
       ? (position) => `day ${Math.round(position * (compressed.dates.length - 1)) + 1}`
       : (position) => this.tickLabel(from + span * position, span))
 
-    // The bars are scaled to their own busiest bucket, so that value is their
-    // scale and belongs beside the total rather than floating over them.
     const worked = allEvents.reduce((sum, event) => sum + metric.value(event), 0)
-    item.querySelector('[data-role=total]').innerText =
-      `${this.formatTotal(metric.key, worked)} · peak ${peak}`
+    item.querySelector('[data-role=total]').innerText = this.formatTotal(metric.key, worked)
 
     const ranges = compressed ? this.constructor.DAY_RANGES : this.constructor.RANGES
     const zooms = ranges
@@ -242,6 +239,44 @@ export default class extends Controller {
       filename: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'progress',
       series: drawn.series, from: drawn.from, to: drawn.to, columns: drawn.columns
     })
+  }
+
+  // What the heights mean. The bars are scaled to their own busiest bucket, so
+  // without their top value they say only which stretches were busier than
+  // which; the area is a share of the deck, where the halfway rule is the one
+  // worth naming. Measured off the drawings rather than repeating their sizes.
+  appendScale(item, peak) {
+    const scale = item.querySelector('[data-role=scale]')
+    scale.innerHTML = ''
+
+    const area = item.querySelector('[data-role=chart]').firstElementChild
+    const bars = item.querySelector('[data-role=effort]').firstElementChild
+    if (!area || !bars) { return }
+
+    // Measured with rects rather than offsetTop: these are SVG elements, and
+    // offsetTop belongs to HTMLElement, so it reads undefined on them.
+    const origin = item.querySelector('.progress-plot').getBoundingClientRect().top
+    const mark = (top, text) => {
+      const label = document.createElement('span')
+      label.style.top = `${Math.round(top - origin)}px`
+      label.innerText = text
+      scale.appendChild(label)
+    }
+
+    const areaBox = area.getBoundingClientRect()
+    const barsBox = bars.getBoundingClientRect()
+    mark(areaBox.top + areaBox.height / 2, '50%')
+    mark(barsBox.top, peak)
+    mark(barsBox.bottom, '0')
+  }
+
+  // Bare enough to sit on an axis: the unit is already established by the
+  // metric that is selected.
+  formatScale(metric, value) {
+    if (metric !== 'time') { return Math.round(value).toLocaleString() }
+
+    const minutes = Math.round(value / 60)
+    return minutes < 60 ? `${minutes}m` : `${Math.floor(minutes / 60)}h`
   }
 
   // Labels ride inside the scrolling canvas, roughly two per screenful, so

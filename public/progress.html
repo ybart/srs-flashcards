@@ -64,6 +64,9 @@
            window over the data, so the chart can be panned back through the
            history instead of only ever showing the most recent stretch. -->
       <div class="progress-plot">
+        <!-- Outside the scroller: a scale that panned with the bars would be
+             no scale at all. -->
+        <div data-role="scale" class="progress-scale"></div>
         <div data-role="scroll" class="progress-scroll">
           <div data-role="canvas" class="progress-canvas">
             <div data-role="chart" class="progress-chart"></div>

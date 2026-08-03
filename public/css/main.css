@@ -503,6 +503,29 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   margin-top: 6px;
 }
 .progress-total { font-size: 0.72rem; color: var(--pico-muted-color); }
+/* Positioned so the scale can be measured against it, and padded so the gutter
+   does not sit over the drawings. The gutter only exists while a row is open,
+   so previews keep their full width. */
+.progress-plot { position: relative; }
+.progress-item.expanded .progress-plot { padding-left: 34px; }
+.progress-scale { display: none; }
+.progress-item.expanded .progress-scale {
+  display: block;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 30px;
+  pointer-events: none;
+}
+.progress-scale span {
+  position: absolute;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: 0.62rem;
+  color: var(--pico-muted-color);
+  white-space: nowrap;
+}
 .progress-axis { position: relative; height: 1.5rem; margin-top: 4px; }
 /* Says which point a label names, which the label alone cannot at the ends
    where it has been nudged inwards. Drawn in the label's own colour: the border
