@@ -579,6 +579,8 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   color: var(--pico-muted-color);
   white-space: nowrap;
 }
+/* Attribution, so a licence line reads as prose rather than as a UI label. */
+.credits-line { font-size: 0.8rem; color: var(--pico-muted-color); margin-bottom: 0.5rem; }
 .progress-ranges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .progress-range {
   padding: 3px 10px;

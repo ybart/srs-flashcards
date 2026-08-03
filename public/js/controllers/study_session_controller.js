@@ -5,6 +5,7 @@ import Card from '../models/card.js'
 import Category from '../models/category.js'
 import Reminder from '../models/reminder.js'
 import RelativeDate from '../models/relative_date.js'
+import { languageTag, meaning, t } from '../i18n.js'
 
 
 export default class extends Controller {
@@ -85,8 +86,8 @@ export default class extends Controller {
 
     Reminder.download({
       at: Reminder.ceilToQuarter(RelativeDate.dateFromSqliteTimestamp(refill)),
-      summary: `Study ${name}`,
-      description: `A deck is ready to review in ${name}.`,
+      summary: t('Study %{category}', { category: name }),
+      description: t('A deck is ready to review in %{category}.', { category: name }),
       // The app itself rather than the deck: the reminder names the category, and
       // opening on the category list leaves room to study something else.
       url: `${location.origin}/`
@@ -126,7 +127,7 @@ export default class extends Controller {
     if (!card) {
       const message = document.createElement("p")
       message.classList.add("message")
-      message.append("The deck is now empty")
+      message.append(t('The deck is now empty'))
 
       // Say when it refills, so the screen is not a dead end, and offer to put
       // that moment in the calendar. The line is about the first card back; the
@@ -135,13 +136,13 @@ export default class extends Controller {
       if (nextAvailable) {
         const next = RelativeDate.dateFromSqliteTimestamp(nextAvailable)
         message.append(document.createElement("br"))
-        message.append(`Next card ${new RelativeDate(next).format()}`)
+        message.append(t('Next card %{when}', { when: new RelativeDate(next).format() }))
 
         const reminder = document.createElement("a")
         reminder.setAttribute("role", "button")
         reminder.classList.add("reminder")
         reminder.setAttribute("data-action", "click->study-session#addReminder")
-        reminder.append("Remind me")
+        reminder.append(t('Remind me'))
         message.append(document.createElement("br"), reminder)
       }
 
@@ -161,7 +162,9 @@ export default class extends Controller {
 
     this.setPropertyText(cardElement, 'question', properties.name)
     this.setPropertyValue(cardElement, 'label', 'aria-label', labels[card.label] || 'grey')
-    this.setPropertyText(cardElement, 'line-2', properties.meaning)
+    this.setPropertyText(cardElement, 'line-2', meaning(properties))
+    // The template says en-US; the line is only English while the reader is.
+    cardElement.querySelector('[data-role=line-2]').setAttribute('lang', languageTag())
 
     const relatedCards = await card.related();
     relatedCards.map((card) => this.appendRelated(cardElement, card))
@@ -213,7 +216,7 @@ export default class extends Controller {
 
     element.querySelector('[data-role=title]').innerText = properties.name
     element.querySelector('[data-role=type]').innerText = ''
-    element.querySelector('[data-role=description]').innerText = properties.meaning
+    element.querySelector('[data-role=description]').innerText = meaning(properties)
 
     container.appendChild(element)
   }

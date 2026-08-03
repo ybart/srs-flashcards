@@ -19,16 +19,16 @@
     <link rel="stylesheet" href="css/main.css" />
     <script type="module" src="js/app.js"></script>
   </head>
-  <body>
+  <body data-controller='i18n'>
     <main data-controller='categories donate'>
       <header>
         <nav>
-          <ul><li><span class="offline-indicator">Offline</span></li></ul>
+          <ul><li><span class="offline-indicator" data-i18n-target="text">Offline</span></li></ul>
           <ul><li class="title"><strong>SRS Flashcards</strong></li></ul>
           <ul>
-            <li><span class="offline-indicator offline-alt">Offline</span></li>
+            <li><span class="offline-indicator offline-alt" data-i18n-target="text">Offline</span></li>
             <li>
-              <a href="progress.html" class="header-icon" aria-label="Progress">
+              <a href="progress.html" class="header-icon" aria-label="Progress" data-i18n-target="attrs" data-i18n-attrs="aria-label">
                 <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" fill="currentColor">
                   <rect x="2.75" y="12" width="3.5" height="8.4"></rect>
                   <rect x="7.75" y="7" width="3.5" height="13.4"></rect>
@@ -39,7 +39,7 @@
               </a>
             </li>
             <li>
-              <a href="#" class="header-icon" aria-label="Remind me to study"
+              <a href="#" class="header-icon" aria-label="Remind me to study" data-i18n-target="attrs" data-i18n-attrs="aria-label"
                  data-action="click->categories#remindMe">
                 <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"
                      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -52,12 +52,13 @@
               <details class="dropdown">
                 <summary><span class="update-dot"></span></summary>
                 <ul>
-                  <li><a href='#' data-action="click->categories#download">Export Database</a></li>
-                  <li><a href='#' data-action="click->categories#importDatabase">Import Database</a></li>
-                  <li><a href='#' class='danger' data-action="click->categories#reset">Reset Database</a></li>
-                  <li data-no-pwa-only class="hidden" data-online-only><a href='#' data-action="click->categories#checkForUpdates">Check for Updates<span class="update-dot"></span></a></li>
-                  <li data-pwa-only class="hidden"><a href="install.html" target="_blank">Install App</a></li>
-                  <li data-online-only><a href="https://buymeacoffee.com/ybart" target="_blank">☕ Support Us</a></li>
+                  <li><a href='#' data-action="click->categories#download" data-i18n-target="text">Export Database</a></li>
+                  <li><a href='#' data-action="click->categories#importDatabase" data-i18n-target="text">Import Database</a></li>
+                  <li><a href='#' class='danger' data-action="click->categories#reset" data-i18n-target="text">Reset Database</a></li>
+                  <li data-no-pwa-only class="hidden" data-online-only><a href='#' data-action="click->categories#checkForUpdates"><span data-i18n-target="text">Check for Updates</span><span class="update-dot"></span></a></li>
+                  <li data-pwa-only class="hidden"><a href="install.html" target="_blank" data-i18n-target="text">Install App</a></li>
+                  <li><a href='#' data-action="click->categories#showCredits" data-i18n-target="text">Credits</a></li>
+                  <li data-online-only><a href="https://buymeacoffee.com/ybart" target="_blank" data-i18n-target="text">☕ Support Us</a></li>
                   <li class="version-item"><span data-categories-target="version"></span></li>
                 </ul>
               </details>
@@ -86,10 +87,11 @@
            page-scoped styles would leak into the head and stay there. -->
       <a href="install.html" class="demo-ribbon" data-turbo="false"
          title="Demo mode: progress is not saved. Install the app to save it."
-         aria-label="Demo mode: progress is not saved. Install the app to save it.">
+         aria-label="Demo mode: progress is not saved. Install the app to save it."
+         data-i18n-target="attrs" data-i18n-attrs="title,aria-label">
         <span class="demo-band">
-          <span class="demo-title">Demo</span>
-          <span class="demo-sub">Install to save progress</span>
+          <span class="demo-title" data-i18n-target="text">Demo</span>
+          <span class="demo-sub" data-i18n-target="text">Install to save progress</span>
         </span>
       </a>
 
@@ -99,24 +101,45 @@
               data-action="click->categories#dismissReminder close->categories#reminderClosed">
         <article>
           <header>
-            <button aria-label="Close" rel="prev" data-action="categories#chooseRepeat"></button>
+            <button aria-label="Close" rel="prev" data-action="categories#chooseRepeat"
+                    data-i18n-target="attrs" data-i18n-attrs="aria-label"></button>
             <p><strong data-categories-target="reminderTitle">Remind me</strong></p>
           </header>
-          <p>How often should it repeat?</p>
+          <p data-i18n-target="text">How often should it repeat?</p>
           <div class="reminder-choices">
-            <a href="#" role="button" data-action="categories#chooseRepeat" data-repeat="daily">Every day</a>
-            <a href="#" role="button" class="outline secondary" data-action="categories#chooseRepeat" data-repeat="weekly">Every week</a>
-            <a href="#" role="button" class="outline secondary" data-action="categories#chooseRepeat" data-repeat="monthly">Every month</a>
+            <a href="#" role="button" data-action="categories#chooseRepeat" data-repeat="daily" data-i18n-target="text">Every day</a>
+            <a href="#" role="button" class="outline secondary" data-action="categories#chooseRepeat" data-repeat="weekly" data-i18n-target="text">Every week</a>
+            <a href="#" role="button" class="outline secondary" data-action="categories#chooseRepeat" data-repeat="monthly" data-i18n-target="text">Every month</a>
           </div>
         </article>
       </dialog>
 
+      <!-- Where the card meanings come from. The French ones are EDRDG's, under a
+           licence that asks to be named, and the English ones were scraped from
+           StudyKanji; both belong somewhere the reader can find them. -->
+      <dialog data-categories-target="creditsDialog"
+              data-action="click->categories#dismissCredits">
+        <article>
+          <header>
+            <button aria-label="Close" rel="prev" data-action="categories#hideCredits"
+                    data-i18n-target="attrs" data-i18n-attrs="aria-label"></button>
+            <p><strong data-i18n-target="text">Credits</strong></p>
+          </header>
+          <p><strong data-i18n-target="text">Card meanings</strong></p>
+          <p class="credits-line" data-i18n-target="text">English meanings and readings come from StudyKanji.</p>
+          <p class="credits-line" data-i18n-target="text">French meanings come from the Electronic Dictionary Research and Development Group (KANJIDIC2 and JMdict), used under CC BY-SA 4.0. Meanings those files did not cover were translated for this app.</p>
+          <p class="credits-line">
+            <a href="https://www.edrdg.org/edrdg/licence.html" target="_blank" rel="noreferrer">edrdg.org/edrdg/licence.html</a>
+          </p>
+        </article>
+      </dialog>
+
       <div class="donate-toast hidden" data-donate-target="banner">
-        <span>Enjoying SRS Flashcards?
-        ☕ Support development</span>
-        <a href="https://buymeacoffee.com/ybart" target="_blank" class="donate-link">Buy me a coffee</a>
-        <a data-action="donate#alreadyDonated" class="donate-link" data-donate-target="alreadyDonated">I already donated</a>
-        <button class="donate-close" aria-label="Close" data-action="donate#closeBanner">&times;</button>
+        <span><span data-i18n-target="text">Enjoying SRS Flashcards?</span>
+        <span data-i18n-target="text">☕ Support development</span></span>
+        <a href="https://buymeacoffee.com/ybart" target="_blank" class="donate-link" data-i18n-target="text">Buy me a coffee</a>
+        <a data-action="donate#alreadyDonated" class="donate-link" data-donate-target="alreadyDonated" data-i18n-target="text">I already donated</a>
+        <button class="donate-close" aria-label="Close" data-i18n-target="attrs" data-i18n-attrs="aria-label" data-action="donate#closeBanner">&times;</button>
       </div>
     </main>
 
@@ -128,7 +151,7 @@
            never apply at once, so they share the slot. -->
       <div class="category-marker">
         <span data-role="availability-dot" class="availability-dot"></span>
-        <a href="#" data-role="reminder-link" class="category-reminder-icon" aria-label="Reminder"
+        <a href="#" data-role="reminder-link" class="category-reminder-icon" aria-label="Reminder" data-i18n-target="attrs" data-i18n-attrs="aria-label"
            data-action="click->categories#addReminder">
           <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"
                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -141,7 +164,7 @@
            is announced once. -->
       <a href="study.html" class="category-content category-body" tabindex="-1" aria-hidden="true">
         <div data-role="progress" class="progress">50%</div>
-        <p class="count"><img width=16 height=16 src="/icons/stack-32.png"> <span data-role='cards-count'>{Cards Count}</span> cards</p>
+        <p class="count"><img width=16 height=16 src="/icons/stack-32.png"> <span data-role='cards-count'>{Cards Count}</span> <span data-i18n-target="text">cards</span></p>
         <p class="last-studied"><img width=16 height=16 src="/icons/clock-32.png"> <span data-role="last-studied">{Last studied}</span></p>
       </a>
     </article>

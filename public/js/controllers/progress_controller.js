@@ -6,6 +6,7 @@ import RelativeDate from '../models/relative_date.js'
 import { LABELS } from '../migrations.js'
 import { GRID, bars, chart, completion, fraction } from '../progress_chart.js'
 import { download } from '../progress_image.js'
+import { languageTag, t, tn } from '../i18n.js'
 
 export default class extends Controller {
   static targets = ['list']
@@ -111,7 +112,7 @@ export default class extends Controller {
     const deck = this.formatTotal('cards', category.cards_count)
     item.querySelector('[data-role=summary]').innerText = studied
       ? `${deck} · ${this.formatTotal('reviews', reviews)} · ${this.formatTotal('time', seconds)}`
-      : `${deck}, not started`
+      : t('%{deck}, not started', { deck: deck })
 
     if (!studied) {
       item.classList.add('empty')
@@ -228,7 +229,8 @@ export default class extends Controller {
       ? (position) => {
         const index = Math.round(position * (compressed.dates.length - 1))
         return {
-          position: fraction(index, compressed.dates.length), label: `day ${index + 1}`
+          position: fraction(index, compressed.dates.length),
+          label: t('day %{number}', { number: index + 1 })
         }
       }
       : (position) => ({
@@ -290,7 +292,7 @@ export default class extends Controller {
     const days = this.dailyTotals(visible, metric.value, !!drawn.dates)
     const usual = days.length ? days.sort((a, b) => a - b)[Math.floor(days.length / 2)] : 0
     item.querySelector('[data-role=total]').innerText =
-      `usually ${this.formatTotal(metric.key, usual)} a day`
+      t('usually %{amount} a day', { amount: this.formatTotal(metric.key, usual) })
   }
 
   // Panning changes what is on screen without redrawing anything, so the figure
@@ -341,7 +343,7 @@ export default class extends Controller {
       // stretch on the picture rather than the whole history: on the day axis
       // the ticks count days and there is no year to be missing.
       footer: drawn.dates
-        ? `${drawn.dates.length} study days`
+        ? t('%{count} study days', { count: drawn.dates.length })
         : this.period(from, to),
       filename: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'progress',
       series: drawn.series, events: drawn.events, from: from, to: to,
@@ -362,7 +364,8 @@ export default class extends Controller {
         // in the picture and put its tick where nothing is drawn.
         const index = Math.min(Math.floor(to), Math.max(Math.ceil(from), Math.round(value)))
         return {
-          position: (index - from) / ((to - from) || 1), label: `day ${index + 1}`
+          position: (index - from) / ((to - from) || 1),
+          label: t('day %{number}', { number: index + 1 })
         }
       }
     })
@@ -524,7 +527,7 @@ export default class extends Controller {
     for (const choice of choices) {
       const button = document.createElement('a')
       button.href = '#'
-      button.innerText = choice.label
+      button.innerText = t(choice.label)
       button.className = ['progress-range', choice.selected && 'selected', choice.className]
         .filter(Boolean).join(' ')
       button.dataset.action = choice.action
@@ -549,9 +552,14 @@ export default class extends Controller {
 
   formatTotal(metric, total) {
     if (metric !== 'time') {
-      const count = Math.round(total).toLocaleString()
+      const rounded = Math.round(total)
+      // Grouped by the reader's own convention, and singular where it is one:
+      // "1 review", not "1 reviews".
+      const count = rounded.toLocaleString(languageTag())
 
-      return metric === 'cards' ? `${count} cards` : `${count} reviews`
+      return metric === 'cards'
+        ? tn(rounded, '%{count} card', '%{count} cards', { count: count })
+        : tn(rounded, '%{count} review', '%{count} reviews', { count: count })
     }
 
     const minutes = Math.round(total / 60)
@@ -655,7 +663,7 @@ export default class extends Controller {
   renderEmpty() {
     const message = document.createElement('p')
     message.classList.add('message')
-    message.append('No study history yet')
+    message.append(t('No study history yet'))
     this.listTarget.appendChild(message)
   }
 }

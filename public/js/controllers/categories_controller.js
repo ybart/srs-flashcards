@@ -4,11 +4,12 @@ import ApplicationRecord from '../models/application_record.js'
 import Category from '../models/category.js'
 import Card from '../models/card.js'
 import Session from '../models/session.js'
-import RelativeDate from '../models/relative_date.js';
+import RelativeDate from '../models/relative_date.js'
+import { t } from '../i18n.js';
 import Reminder from '../models/reminder.js';
 
 export default class extends Controller {
-  static targets = ['version', 'reminderDialog', 'reminderTitle']
+  static targets = ['version', 'reminderDialog', 'reminderTitle', 'creditsDialog']
   static LABEL_COLORS = ['#ed3b3b', '#f29132', '#f2db5b', '#7fe851', '#0a8f45'] // red..green
 
   async connect() {
@@ -187,12 +188,12 @@ export default class extends Controller {
     let clockText = null
     if (!hasStudied && !hasUnstudied && avail?.next_available) {
       const next = RelativeDate.dateFromSqliteTimestamp(avail.next_available)
-      clockText = `next ${new RelativeDate(next).format()}`
+      clockText = t('next %{when}', { when: new RelativeDate(next).format() })
     } else if (category.started_at) {
       const startedAt = RelativeDate.dateFromSqliteTimestamp(category.started_at)
       clockText = new RelativeDate(startedAt).format()
     } else {
-      clockText = 'never'
+      clockText = t('Never studied')
     }
 
     let counts = [0, 0, 0, 0, 0, 0]
@@ -229,8 +230,8 @@ export default class extends Controller {
     Reminder.download({
       // Rounded up, so the reminder still falls after the cards come back up.
       at: Reminder.ceilToQuarter(RelativeDate.dateFromSqliteTimestamp(refill)),
-      summary: `Study ${categoryName}`,
-      description: `A deck is ready to review in ${categoryName}.`,
+      summary: t('Study %{category}', { category: categoryName }),
+      description: t('A deck is ready to review in %{category}.', { category: categoryName }),
       url: `${location.origin}/`
     })
   }
@@ -244,15 +245,15 @@ export default class extends Controller {
     Reminder.download({
       at: Reminder.nextOccurrence(repeat, Reminder.habitualTime(await Session.studyTimes())),
       repeat: repeat,
-      summary: 'Study your flashcards',
-      description: 'Open SRS Flashcards and review what is due.',
+      summary: t('Study your flashcards'),
+      description: t('Open SRS Flashcards and review what is due.'),
       url: `${location.origin}/`
     })
   }
 
   // Resolves with 'daily' / 'weekly' / 'monthly', or null when dismissed.
   askRepeat() {
-    this.reminderTitleTarget.innerText = 'Remind me to study'
+    this.reminderTitleTarget.innerText = t('Remind me to study')
     this.chosenRepeat = null
     this.reminderDialogTarget.showModal()
 
@@ -270,6 +271,21 @@ export default class extends Controller {
 
   // A click that lands on the dialog itself is on the backdrop — the article
   // covers everything else.
+  // Same modal pattern as the reminder: tapping the backdrop dismisses it.
+  showCredits(event) {
+    event.preventDefault()
+    this.creditsDialogTarget.showModal()
+  }
+
+  hideCredits(event) {
+    event.preventDefault()
+    this.creditsDialogTarget.close()
+  }
+
+  dismissCredits(event) {
+    if (event.target === this.creditsDialogTarget) { this.creditsDialogTarget.close() }
+  }
+
   dismissReminder(event) {
     if (event.target === this.reminderDialogTarget) { this.reminderDialogTarget.close() }
   }
@@ -311,7 +327,7 @@ export default class extends Controller {
 
   async reset() {
     await ApplicationRecord.database.reset();
-    alert('DB supprimée')
+    alert(t('Database deleted'))
   }
 
   async importDatabase() {
@@ -331,14 +347,15 @@ export default class extends Controller {
       const file = input.files && input.files[0];
       input.remove();
       if (!file) return;
-      if (!confirm('Importing will REPLACE your current data with this file. Continue?')) return;
+      if (!confirm(t('Importing will REPLACE your current data with this file. Continue?'))) return;
       try {
         await ApplicationRecord.database.import(file);
         // No blocking "done" alert; just reload — the fresh data is the feedback.
         window.location.reload();
       } catch (error) {
         console.error('Import failed:', error);
-        alert(`Import failed: ${error}\n\nIs this a valid SRS Flashcards database file?`);
+        alert(`${t('Import failed: %{error}', { error: error })}\n\n` +
+              t('Is this a valid SRS Flashcards database file?'));
       }
     }, { once: true });
 
@@ -381,7 +398,7 @@ export default class extends Controller {
     const reg = await this.registration();
 
     if (!reg) {
-      if (isUserRequested) alert('Updates are unavailable here.');
+      if (isUserRequested) alert(t('Updates are unavailable here.'));
       return;
     }
 
@@ -401,15 +418,15 @@ export default class extends Controller {
       this.refreshUpdateBadge();
 
       if (reg.waiting) {
-        if (!isUserRequested || confirm('A new version is available. Install now?')) {
+        if (!isUserRequested || confirm(t('A new version is available. Install now?'))) {
           await this.applyUpdate();
         }
       } else if (isUserRequested) {
-        alert(`You're up to date (v${await this.getCurrentVersion()})`);
+        alert(t("You're up to date (%{version})", { version: `v${await this.getCurrentVersion()}` }));
       }
     } catch (error) {
       console.error('Update check failed:', error);
-      if (isUserRequested) alert('Update check failed. Please try again later.');
+      if (isUserRequested) alert(t('Update check failed. Please try again later.'));
     }
   }
 }

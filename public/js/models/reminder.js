@@ -5,6 +5,8 @@
 // Note that a link tapped from the calendar opens the browser, not the installed
 // PWA — on iOS that is a different storage context, which is why the app shows
 // the demo ribbon there.
+import { t } from '../i18n.js'
+
 import RelativeDate from './relative_date.js'
 
 export default class Reminder {
@@ -148,7 +150,7 @@ export default class Reminder {
     // with nothing to act on.
     const body = this.linksReachTheApp()
       ? description
-      : `${description}\nOpen SRS Flashcards from your home screen.`
+      : `${description}\n${t('Open SRS Flashcards from your home screen.')}`
     const lines = [
       'BEGIN:VCALENDAR',
       'VERSION:2.0',

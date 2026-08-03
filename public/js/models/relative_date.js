@@ -1,3 +1,5 @@
+import { languageTag } from '../i18n.js'
+
 export default class RelativeDate {
   constructor(date) {
     this.date = date
@@ -7,7 +9,9 @@ export default class RelativeDate {
     return new Date(timestamp.replace(' ', 'T') + 'Z')
   }
 
-  static formatter = new Intl.RelativeTimeFormat(undefined, {
+  // The chosen language rather than the browser's, so that overriding the one
+  // also moves "in 3 days" and "yesterday".
+  static formatter = new Intl.RelativeTimeFormat(languageTag(), {
     numeric: "auto",
   })
 
