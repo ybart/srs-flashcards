@@ -695,7 +695,12 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   article.category {
     border-radius: 5px;
     border-bottom: none;
-    min-height: 0;
+    /* No min-height: 0 here. It rode along from the first commit, cancelling
+       nothing — no other rule sets a minimum on these cards, nor does Pico — and
+       it was harmless while the grid was a flex row. As a grid item it removes the
+       automatic minimum size, which let the row size below the card's content: 37px
+       rows around 124px of card, so every card's progress bar was drawn over the
+       title of the one below it. */
   }
 }
 
