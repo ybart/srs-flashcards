@@ -115,7 +115,9 @@ export default class extends Controller {
 
     if (!studied) {
       item.classList.add('empty')
-      item.querySelector('.progress-caret').remove()
+      // Hidden rather than removed: taking it out would slide the export icon
+      // over and break the column the other rows line up in.
+      item.querySelector('.progress-caret').style.visibility = 'hidden'
     }
 
     this.listTarget.appendChild(item)

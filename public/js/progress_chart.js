@@ -22,9 +22,25 @@ export function completion(dist) {
   return 100 * (4 * dist[5] + 3 * dist[4] + 2 * dist[3] + dist[2]) / total
 }
 
-// One bucket per column of the drawing, carrying the last known state forward
-// over the stretches where nothing was studied. Those flat runs are the point:
-// skipping them is what made the old view look busier than the history was.
+// Column i stands for the instant at fraction i / (count - 1) of the span, so
+// the first sits on `from`, the last on `to`, and an axis label at some fraction
+// of the width names the same instant the column under it is drawn from. Data
+// goes to the column it is nearest, not to a range beginning at one: bucketing
+// by range shifts everything half a column off its own label, which shows as
+// soon as the points are few enough to tell apart.
+export function fraction(index, count) {
+  return count > 1 ? index / (count - 1) : 0
+}
+
+function nearest(time, from, to, count) {
+  const span = (to - from) || 1
+
+  return Math.max(0, Math.min(count - 1, Math.round((time - from) / span * (count - 1))))
+}
+
+// Carries the last known state forward over the stretches where nothing was
+// studied. Those flat runs are the point: skipping them is what made the old
+// view look busier than the history was.
 //
 // Bucketing to the drawing rather than to a calendar unit is what keeps three
 // years and three weeks the same size to compute and to look at.
@@ -34,8 +50,9 @@ export function bucketize(series, from, to, count) {
   let index = 0
 
   for (let i = 0; i < count; i++) {
-    const end = from + (to - from) * (i + 1) / count
-    while (index < series.length && series[index].time < end) { carry = series[index++].dist }
+    // Everything up to halfway towards the next column belongs to this one.
+    const edge = from + (to - from) * (fraction(i, count) + fraction(i + 1, count)) / 2
+    while (index < series.length && series[index].time < edge) { carry = series[index++].dist }
     buckets.push(carry)
   }
 
@@ -46,11 +63,10 @@ export function bucketize(series, from, to, count) {
 // the last value forward the way the area chart does would invent work.
 export function bucketSum(events, from, to, count, value) {
   const buckets = new Array(count).fill(0)
-  const step = (to - from) / count || 1
 
   for (const event of events) {
     if (event.time < from || event.time > to) { continue }
-    buckets[Math.min(count - 1, Math.floor((event.time - from) / step))] += value(event)
+    buckets[nearest(event.time, from, to, count)] += value(event)
   }
 
   return buckets
@@ -93,12 +109,17 @@ export function bars(events, { from, to, value, scale, width = 600, height = 60,
     svg.appendChild(rule(0, width, (height - height * tick / peak).toFixed(1), 'currentColor'))
   }
 
+  // Centred on the column, like the area chart's points and the axis ticks,
+  // rather than starting at it — a bar that begins on its own label sits half a
+  // column to the right of the moment it belongs to.
+  const thickness = Math.max(slot * 0.7, 0.5)
   buckets.forEach((total, i) => {
     if (!total) { return }
     const bar = height * total / peak
     svg.appendChild(element('rect', {
-      x: (i * slot).toFixed(2), y: (height - bar).toFixed(2),
-      width: Math.max(slot * 0.7, 0.5).toFixed(2), height: bar.toFixed(2)
+      x: (width * fraction(i, columns) - thickness / 2).toFixed(2),
+      y: (height - bar).toFixed(2),
+      width: thickness.toFixed(2), height: bar.toFixed(2)
     }))
   })
 
@@ -108,7 +129,7 @@ export function bars(events, { from, to, value, scale, width = 600, height = 60,
 // `series` is [{ time, dist }] sorted oldest first.
 export function chart(series, { from, to, width = 600, height = 120, columns = 120 }) {
   const points = bucketize(series, from, to, columns)
-  const x = (i) => (width * i / (columns - 1)).toFixed(1)
+  const x = (i) => (width * fraction(i, columns)).toFixed(1)
   const y = (fraction) => (height - height * fraction).toFixed(1)
 
   const svg = element('svg', {
