@@ -503,19 +503,20 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   margin-top: 6px;
 }
 .progress-total { font-size: 0.72rem; color: var(--pico-muted-color); }
-.progress-axis { position: relative; height: 1.3rem; margin-top: 4px; }
+.progress-axis { position: relative; height: 1.5rem; margin-top: 4px; }
 /* Says which point a label names, which the label alone cannot at the ends
-   where it has been nudged inwards. */
+   where it has been nudged inwards. Drawn in the label's own colour: the border
+   colour was too faint to read as a mark. */
 .progress-tick {
   position: absolute;
   top: 0;
   width: 1px;
-  height: 4px;
-  background: var(--pico-muted-border-color);
+  height: 7px;
+  background: var(--pico-muted-color);
 }
 .progress-axis span {
   position: absolute;
-  top: 6px;
+  top: 10px;
   transform: translateX(-50%);
   font-size: 0.7rem;
   color: var(--pico-muted-color);
