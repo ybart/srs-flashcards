@@ -106,9 +106,12 @@ export default class extends Controller {
     const events = this.effort.get(category.id) || []
     const reviews = events.reduce((sum, event) => sum + event.reviews, 0)
     const seconds = events.reduce((sum, event) => sum + event.seconds, 0)
+    // The deck size leads either way: it is the thing the rest is measured
+    // against, and the only one of the three that is a count of cards.
+    const deck = this.formatTotal('cards', category.cards_count)
     item.querySelector('[data-role=summary]').innerText = studied
-      ? `${this.formatTotal('reviews', reviews)} · ${this.formatTotal('time', seconds)}`
-      : `${this.formatTotal('deck', category.cards_count)}, not started`
+      ? `${deck} · ${this.formatTotal('reviews', reviews)} · ${this.formatTotal('time', seconds)}`
+      : `${deck}, not started`
 
     if (!studied) {
       item.classList.add('empty')
@@ -207,13 +210,13 @@ export default class extends Controller {
       ? (position) => `day ${Math.round(position * (compressed.dates.length - 1)) + 1}`
       : (position) => this.tickLabel(from + span * position, span))
 
-    // Totalling cards over a stretch gives a number past the size of the deck,
-    // and how much of the deck has been met is already there to see in the grey
-    // above. What is not on either chart is the size of a normal day.
-    const worked = allEvents.reduce((sum, event) => sum + metric.value(event), 0)
-    item.querySelector('[data-role=total]').innerText = metric.key === 'cards'
-      ? `${Math.round(worked / this.studiedDays(allEvents)).toLocaleString()} cards a day`
-      : this.formatTotal(metric.key, worked)
+    // Totals belong to the subtitle, which already carries all three; repeating
+    // one here would say nothing. The median day is on neither chart and is the
+    // figure worth having beside them — median rather than mean because study
+    // comes in bursts, and one marathon should not describe an ordinary day.
+    const typical = this.medianDay(allEvents, metric.value)
+    item.querySelector('[data-role=total]').innerText =
+      `median ${this.formatTotal(metric.key, typical)} a day`
 
     const ranges = compressed ? this.constructor.DAY_RANGES : this.constructor.RANGES
     const zooms = ranges
@@ -421,15 +424,24 @@ export default class extends Controller {
     }
   }
 
-  studiedDays(events) {
-    return new Set(events.map((event) => new Date(event.time).toDateString())).size || 1
+  // What a day of study usually amounts to, over the days there was any.
+  medianDay(events, value) {
+    const days = new Map()
+    for (const event of events) {
+      const day = new Date(event.time).toDateString()
+      days.set(day, (days.get(day) || 0) + value(event))
+    }
+
+    const totals = [...days.values()].sort((a, b) => a - b)
+
+    return totals.length ? totals[Math.floor(totals.length / 2)] : 0
   }
 
   formatTotal(metric, total) {
     if (metric !== 'time') {
       const count = Math.round(total).toLocaleString()
 
-      return metric === 'deck' ? `${count} cards` : `${count} reviews`
+      return metric === 'cards' ? `${count} cards` : `${count} reviews`
     }
 
     const minutes = Math.round(total / 60)
