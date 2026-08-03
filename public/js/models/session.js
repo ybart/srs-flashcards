@@ -87,20 +87,6 @@ export default class Session extends ApplicationRecord {
     return ApplicationRecord.execute(this.EFFORT_QUERY)
   }
 
-  // How much of each deck has ever been met. Summing the per-session card
-  // counts cannot answer this — it passes the size of the deck within weeks,
-  // because a card met on two days is met twice — so the distinct count is
-  // asked for separately.
-  static coverage() {
-    return ApplicationRecord.execute(`
-      SELECT sessions.category_id, COUNT(DISTINCT session_cards.card_id) as seen
-      FROM session_cards
-      INNER JOIN sessions ON sessions.id = session_cards.session_id
-      WHERE session_cards.studied_at IS NOT NULL AND session_cards.times_studied > 0
-      GROUP BY sessions.category_id
-    `)
-  }
-
   // When the recent real study sessions started, and how much was covered in
   // each. Sessions under ten cards are noise — opening the app and answering
   // twice says nothing about when someone studies — so they are left out.

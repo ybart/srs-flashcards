@@ -42,12 +42,9 @@ export default class extends Controller {
   static TIME_STEPS = [15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400, 28800]
 
   async connect() {
-    const [categories, snapshots, effort, coverage] = await Promise.all([
-      Category.all(), Session.history(), Session.effort(), Session.coverage()
+    const [categories, snapshots, effort] = await Promise.all([
+      Category.all(), Session.history(), Session.effort()
     ])
-
-    this.decks = new Map(categories.map((category) => [category.id, category.cards_count]))
-    this.seen = new Map(coverage.map((row) => [row.category_id, row.seen]))
 
     this.series = this.group(snapshots, (row) => {
       const progress = JSON.parse(row.progress)
@@ -210,13 +207,12 @@ export default class extends Controller {
       ? (position) => `day ${Math.round(position * (compressed.dates.length - 1)) + 1}`
       : (position) => this.tickLabel(from + span * position, span))
 
-    // For cards the sum over a stretch is unreadable — it passes the size of
-    // the deck — so the figure worth giving is how much of the deck has been
-    // met at all. It is the one total that is not the sum of the bars above it.
+    // Totalling cards over a stretch gives a number past the size of the deck,
+    // and how much of the deck has been met is already there to see in the grey
+    // above. What is not on either chart is the size of a normal day.
     const worked = allEvents.reduce((sum, event) => sum + metric.value(event), 0)
     item.querySelector('[data-role=total]').innerText = metric.key === 'cards'
-      ? `${(this.seen.get(category) || 0).toLocaleString()} of ` +
-        `${(this.decks.get(category) || 0).toLocaleString()} cards seen`
+      ? `${Math.round(worked / this.studiedDays(allEvents)).toLocaleString()} cards a day`
       : this.formatTotal(metric.key, worked)
 
     const ranges = compressed ? this.constructor.DAY_RANGES : this.constructor.RANGES
@@ -423,6 +419,10 @@ export default class extends Controller {
       for (const [key, value] of Object.entries(choice.data)) { button.dataset[key] = value }
       container.appendChild(button)
     }
+  }
+
+  studiedDays(events) {
+    return new Set(events.map((event) => new Date(event.time).toDateString())).size || 1
   }
 
   formatTotal(metric, total) {
