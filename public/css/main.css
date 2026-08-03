@@ -493,8 +493,10 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   height: 44px;
   margin-top: 10px;
   fill: var(--pico-color);
-  opacity: 0.45;
 }
+/* The fade belongs to the bars, not the whole drawing: dimming the element
+   would take the rules behind them down with it. */
+.progress-bars rect { fill-opacity: 0.45; }
 .progress-footer {
   display: flex;
   align-items: center;

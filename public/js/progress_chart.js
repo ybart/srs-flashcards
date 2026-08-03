@@ -8,6 +8,10 @@ const NS = 'http://www.w3.org/2000/svg'
 // green. Stacked green first so mastery fills upward.
 export const COLORS = ['#778787', '#ed3b3b', '#f29132', '#c2bb3b', '#7fe851', '#0a8f45']
 const STACK = [5, 4, 3, 2, 1, 0]
+// Where the area chart rules its share of the deck. Exported so the labels
+// beside it are placed from the same numbers that draw it.
+export const GRID = [0.25, 0.5, 0.75]
+const RULE = 'rgba(255, 255, 255, 0.16)'
 
 // Weighted completion, the same figure the category cards show: a card counts
 // for its label, out of a deck where every card is green.
@@ -52,6 +56,13 @@ export function bucketSum(events, from, to, count, value) {
   return buckets
 }
 
+function rule(x1, x2, y) {
+  return element('line', {
+    x1: x1, x2: x2, y1: y, y2: y,
+    stroke: RULE, 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke'
+  })
+}
+
 function element(name, attributes) {
   const node = document.createElementNS(NS, name)
   for (const [key, value] of Object.entries(attributes)) { node.setAttribute(key, value) }
@@ -62,7 +73,7 @@ function element(name, attributes) {
 // Effort over the same span as the area above it, scaled to its own busiest
 // bucket: the question is which stretches were worked, not how many cards that
 // was against some absolute.
-export function bars(events, { from, to, value, width = 600, height = 60, columns = 160 }) {
+export function bars(events, { from, to, value, scale, width = 600, height = 60, columns = 160 }) {
   const buckets = bucketSum(events, from, to, columns, value)
   const peak = Math.max(...buckets) || 1
   const slot = width / columns
@@ -72,7 +83,14 @@ export function bars(events, { from, to, value, width = 600, height = 60, column
     class: 'progress-bars', 'aria-hidden': 'true'
   })
 
+  const ticks = scale ? scale(peak) : []
   svg.dataset.peak = peak
+  svg.dataset.ticks = ticks.join(',')
+  // Behind the bars, so a bar reads against them rather than through them.
+  for (const tick of ticks) {
+    svg.appendChild(rule(0, width, (height - height * tick / peak).toFixed(1)))
+  }
+
   buckets.forEach((total, i) => {
     if (!total) { return }
     const bar = height * total / peak
@@ -115,12 +133,8 @@ export function chart(series, { from, to, width = 600, height = 120, columns = 1
     }))
   }
 
-  for (const fraction of [0.25, 0.5, 0.75]) {
-    svg.appendChild(element('line', {
-      x1: 0, x2: width, y1: y(fraction), y2: y(fraction),
-      stroke: 'rgba(255, 255, 255, 0.16)', 'stroke-width': 1,
-      'vector-effect': 'non-scaling-stroke'
-    }))
+  for (const fraction of GRID) {
+    svg.appendChild(rule(0, width, y(fraction)))
   }
 
   // The box is stretched to whatever height it is given, so the stroke has to

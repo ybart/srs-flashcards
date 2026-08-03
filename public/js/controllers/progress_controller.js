@@ -4,7 +4,7 @@ import Category from '../models/category.js'
 import Session from '../models/session.js'
 import RelativeDate from '../models/relative_date.js'
 import { LABELS } from '../migrations.js'
-import { bars, chart, completion } from '../progress_chart.js'
+import { GRID, bars, chart, completion } from '../progress_chart.js'
 import { download } from '../progress_image.js'
 
 export default class extends Controller {
@@ -34,6 +34,9 @@ export default class extends Controller {
   static DETAIL_COLUMNS = 160
   // Zooming multiplies the column count, so it needs a ceiling.
   static MAX_COLUMNS = 1200
+  static MAX_RULES = 5
+  // Round in the way the unit is read, which for time is not round in base ten.
+  static TIME_STEPS = [15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400, 28800]
 
   async connect() {
     const [categories, snapshots, effort] = await Promise.all([
@@ -181,10 +184,11 @@ export default class extends Controller {
 
     const metric = this.constructor.METRICS.find((m) => m.key === item.dataset.metric)
     const drawn = bars(events, {
-      from: from, to: to, columns: columns, value: metric.value
+      from: from, to: to, columns: columns, value: metric.value,
+      scale: (peak) => this.rules(metric.key, peak)
     })
     effort.appendChild(drawn)
-    this.appendScale(item, this.formatScale(metric.key, Number(drawn.dataset.peak)))
+    this.appendScale(item, metric.key, drawn)
     // Positions on the day axis are indices into the days studied, so they are
     // labelled by which day it was rather than by the date it fell on.
     this.appendAxis(axis, zoom, compressed
@@ -245,13 +249,12 @@ export default class extends Controller {
   // without their top value they say only which stretches were busier than
   // which; the area is a share of the deck, where the halfway rule is the one
   // worth naming. Measured off the drawings rather than repeating their sizes.
-  appendScale(item, peak) {
+  appendScale(item, metric, drawn) {
     const scale = item.querySelector('[data-role=scale]')
     scale.innerHTML = ''
 
     const area = item.querySelector('[data-role=chart]').firstElementChild
-    const bars = item.querySelector('[data-role=effort]').firstElementChild
-    if (!area || !bars) { return }
+    if (!area) { return }
 
     // Measured with rects rather than offsetTop: these are SVG elements, and
     // offsetTop belongs to HTMLElement, so it reads undefined on them.
@@ -264,19 +267,55 @@ export default class extends Controller {
     }
 
     const areaBox = area.getBoundingClientRect()
-    const barsBox = bars.getBoundingClientRect()
-    mark(areaBox.top + areaBox.height / 2, '50%')
-    mark(barsBox.top, peak)
-    mark(barsBox.bottom, '0')
+    for (const fraction of GRID) {
+      mark(areaBox.bottom - areaBox.height * fraction, `${Math.round(fraction * 100)}%`)
+    }
+
+    const barsBox = drawn.getBoundingClientRect()
+    const peak = Number(drawn.dataset.peak)
+    for (const tick of (drawn.dataset.ticks || '').split(',').filter(Boolean)) {
+      mark(barsBox.bottom - barsBox.height * Number(tick) / peak, this.formatScale(metric, tick))
+    }
+  }
+
+  // Values worth ruling: a round step in the unit being shown, few enough that
+  // the chart stays a chart.
+  rules(metric, peak) {
+    if (!peak) { return [] }
+
+    const step = metric === 'time'
+      ? this.constructor.TIME_STEPS.find((s) => peak / s <= this.constructor.MAX_RULES)
+        || this.constructor.TIME_STEPS.at(-1)
+      : this.countStep(peak)
+
+    const values = []
+    for (let value = step; value < peak; value += step) { values.push(value) }
+
+    return values
+  }
+
+  countStep(peak) {
+    const magnitude = 10 ** Math.floor(Math.log10(peak / this.constructor.MAX_RULES))
+    // No 2.5: these are counted things, and half a card is not a gridline.
+    for (const multiple of [1, 2, 5, 10]) {
+      const step = multiple * magnitude
+      if (peak / step <= this.constructor.MAX_RULES) { return Math.max(1, step) }
+    }
+
+    return Math.max(1, 10 * magnitude)
   }
 
   // Bare enough to sit on an axis: the unit is already established by the
   // metric that is selected.
   formatScale(metric, value) {
     if (metric !== 'time') { return Math.round(value).toLocaleString() }
+    if (value < 60) { return `${Math.round(value)}s` }
 
     const minutes = Math.round(value / 60)
-    return minutes < 60 ? `${minutes}m` : `${Math.floor(minutes / 60)}h`
+    if (minutes < 60) { return `${minutes}m` }
+
+    const hours = Math.floor(minutes / 60)
+    return minutes % 60 ? `${hours}h${minutes % 60}` : `${hours}h`
   }
 
   // Labels ride inside the scrolling canvas, roughly two per screenful, so
