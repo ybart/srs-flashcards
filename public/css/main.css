@@ -452,14 +452,13 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
 /* Export sits with the figure it exports. Only an open row has a chart worth
    saving, so it appears with the rest of the detail. */
 .progress-export {
-  display: none;
+  display: block;
   flex: 0 0 auto;
   padding: 4px;
   line-height: 0;
   color: var(--pico-muted-color);
   cursor: pointer;
 }
-.progress-item.expanded .progress-export { display: block; }
 .progress-export:hover { color: var(--pico-primary); }
 /* The only thing saying a row opens. */
 .progress-caret {
@@ -490,9 +489,12 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
 .progress-bars {
   display: block;
   width: 100%;
-  height: 44px;
+  /* Tall enough for five ruled values to be told apart. */
+  height: 96px;
   margin-top: 10px;
   fill: var(--pico-color);
+  /* The rules are drawn in currentColor so they follow the theme. */
+  color: var(--pico-muted-border-color);
 }
 /* The fade belongs to the bars, not the whole drawing: dimming the element
    would take the rules behind them down with it. */

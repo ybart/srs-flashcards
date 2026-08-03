@@ -56,10 +56,10 @@ export function bucketSum(events, from, to, count, value) {
   return buckets
 }
 
-function rule(x1, x2, y) {
+function rule(x1, x2, y, stroke) {
   return element('line', {
     x1: x1, x2: x2, y1: y, y2: y,
-    stroke: RULE, 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke'
+    stroke: stroke, 'stroke-width': 1, 'vector-effect': 'non-scaling-stroke'
   })
 }
 
@@ -87,8 +87,10 @@ export function bars(events, { from, to, value, scale, width = 600, height = 60,
   svg.dataset.peak = peak
   svg.dataset.ticks = ticks.join(',')
   // Behind the bars, so a bar reads against them rather than through them.
+  // Drawn in the current colour, not white: these rules cross the page rather
+  // than the coloured area above, and white is invisible on a light background.
   for (const tick of ticks) {
-    svg.appendChild(rule(0, width, (height - height * tick / peak).toFixed(1)))
+    svg.appendChild(rule(0, width, (height - height * tick / peak).toFixed(1), 'currentColor'))
   }
 
   buckets.forEach((total, i) => {
@@ -134,7 +136,7 @@ export function chart(series, { from, to, width = 600, height = 120, columns = 1
   }
 
   for (const fraction of GRID) {
-    svg.appendChild(rule(0, width, y(fraction)))
+    svg.appendChild(rule(0, width, y(fraction), RULE))
   }
 
   // The box is stretched to whatever height it is given, so the stroke has to

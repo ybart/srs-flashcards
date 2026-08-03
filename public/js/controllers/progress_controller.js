@@ -35,6 +35,8 @@ export default class extends Controller {
   // Zooming multiplies the column count, so it needs a ceiling.
   static MAX_COLUMNS = 1200
   static MAX_RULES = 5
+  // The exported chart is 1010px across, so this is roughly five pixels a step.
+  static EXPORT_COLUMNS = 200
   // Round in the way the unit is read, which for time is not round in base ten.
   static TIME_STEPS = [15, 30, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400, 28800]
 
@@ -176,6 +178,14 @@ export default class extends Controller {
     item.querySelector('[data-role=canvas]').style.width = `${(zoom * 100).toFixed(2)}%`
     this.replace(item, 'chart', chart(series, { from: from, to: to, columns: columns }))
 
+    // Everything the export needs, recorded before the collapsed rows leave:
+    // a shut row still exports, it just exports the whole history.
+    this.drawn.set(category, {
+      series: series, events: events, from: from, to: to,
+      metric: item.dataset.metric, dates: compressed ? compressed.dates : null,
+      first: all[0].time, last: all.at(-1).time
+    })
+
     const effort = item.querySelector('[data-role=effort]')
     const axis = item.querySelector('[data-role=axis]')
     effort.innerHTML = ''
@@ -217,13 +227,11 @@ export default class extends Controller {
       action: 'click->progress#selectMetric', data: { metric: option.key }
     })))
 
-    this.drawn.set(category, {
-      series: series, from: from, to: to, columns: columns,
-      first: all[0].time, last: all.at(-1).time
-    })
     this.scrollToLatest(item)
   }
 
+  // The picture is of what the row is showing: the same axis, the same metric,
+  // and the same stretch of history that is on screen after any panning.
   async exportImage(event) {
     event.preventDefault()
     event.stopPropagation()
@@ -232,6 +240,21 @@ export default class extends Controller {
     const drawn = this.drawn.get(Number(item.dataset.category))
     if (!drawn) { return }
 
+    // The window on screen, when there is one to speak of. A row that does not
+    // scroll — or one measured before it has been laid out — exports whole
+    // rather than exporting a sliver.
+    const scroll = item.querySelector('[data-role=scroll]')
+    const scrollable = scroll.clientWidth > 0 && scroll.scrollWidth > scroll.clientWidth
+    const start = scrollable ? scroll.scrollLeft / scroll.scrollWidth : 0
+    const end = scrollable
+      ? Math.min(1, (scroll.scrollLeft + scroll.clientWidth) / scroll.scrollWidth) : 1
+
+    const reach = drawn.to - drawn.from
+    const from = drawn.from + reach * start
+    const to = drawn.from + reach * end
+
+    const metric = this.constructor.METRICS.find((m) => m.key === drawn.metric) ||
+      this.constructor.METRICS[0]
     const name = item.querySelector('[data-role=name]').innerText
     const span = drawn.last - drawn.first
 
@@ -239,9 +262,19 @@ export default class extends Controller {
       name: name,
       percent: item.querySelector('[data-role=percent]').innerText,
       subtitle: item.querySelector('[data-role=summary]').innerText,
-      footer: `${this.tickLabel(drawn.first, span)} – ${this.tickLabel(drawn.last, span)}`,
+      footer: drawn.dates
+        ? `${drawn.dates.length} study days`
+        : `${this.tickLabel(drawn.first, span)} – ${this.tickLabel(drawn.last, span)}`,
       filename: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'progress',
-      series: drawn.series, from: drawn.from, to: drawn.to, columns: drawn.columns
+      series: drawn.series, events: drawn.events, from: from, to: to,
+      columns: this.constructor.EXPORT_COLUMNS,
+      value: metric.value,
+      scale: (peak) => this.rules(metric.key, peak),
+      formatTick: (value) => this.formatScale(metric.key, value),
+      labelAt: (position) => {
+        const value = from + (to - from) * position
+        return drawn.dates ? `day ${Math.round(value) + 1}` : this.tickLabel(value, span)
+      }
     })
   }
 
