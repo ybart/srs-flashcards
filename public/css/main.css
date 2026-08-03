@@ -5,8 +5,17 @@
 html { overscroll-behavior: none; }
 /* Lock the document to the viewport so only section[role=content] scrolls
    (iOS Safari treats 100vh as larger than the visible area, which otherwise
-   lets the whole header/footer chrome scroll in study mode). */
+   lets the whole header/footer chrome scroll in study mode).
+
+   100% is the layout viewport, which on iOS stays tall while the toolbar is
+   shown — so the body extended roughly a toolbar's height behind it, and that
+   band was unreachable: the last row of a list was cut off by ~60px whatever its
+   own height, and dragging over the header scrolled the document that should not
+   have been scrollable. 100dvh tracks the area actually visible. */
 html, body { height: 100%; }
+@supports (height: 100dvh) {
+  html, body { height: 100dvh; }
+}
 body { overflow: hidden; }
 
 header > nav { min-height: 60px; }
@@ -44,6 +53,8 @@ section[role=content] {
   background-color: var(--pico-background-color);
   flex: 1; overflow-y: scroll; text-align: center;
   margin-bottom: 0;
+  /* Room to scroll past the home indicator on a phone that has one. */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   /* Stops the gesture chaining to the document when this reaches its end. The
      document is locked by html/body above, but on iOS reaching the bottom of a
      nested scroller still hands the swipe upwards, which drags the whole layout
