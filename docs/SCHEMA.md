@@ -67,6 +67,11 @@ ever reaching new installs.
 with; the shipped file carries the same key with the version it *is*. When they
 match, which is the normal case, nothing runs.
 
+This assumes every card came from the shipped file, which is true today and will
+stop being true the moment the app can import a deck or create a card: the
+updater would see those as cards the content no longer carries. See "Cards the
+user owns" in `docs/ROADMAP.md` before adding either.
+
 A word that belongs to two decks is two cards, and stays two cards: everything
 here is keyed on `(category, reference)`, so the 863 words shared between levels
 are never folded together. Only a word duplicated *within* one deck is a fault,

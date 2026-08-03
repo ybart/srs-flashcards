@@ -236,6 +236,33 @@ are no harder after the release than before it.
 - Support cards to be assigned to many categories.
 - Separate DB for progress and custom cards.
 
+### Cards the user owns
+
+Anki import and an in-app card editor both mean cards that did not come from the
+shipped database, and the content updater has no notion of those yet. Worth
+settling before either ships, because two of the consequences are silent:
+
+- **`content.js` would delete them.** It treats the shipped file as the authority
+  for the whole `cards` table: anything it cannot match is "extra", and an extra
+  card nobody has answered is removed. An imported deck would survive exactly as
+  long as it went unstudied. Cards need a provenance — a column, or a reserved id
+  range — and the updater needs to reconcile only what it owns. A one-line stopgap
+  is available in the meantime: refuse to delete a card whose category the shipped
+  content does not know about, which makes a whole imported deck safe and leaves
+  only user cards added *inside* a shipped deck exposed.
+- **Ids would collide.** `cards.id` is the updater's match key and is
+  AUTOINCREMENT on the shipping side, so ids are only unique per database: a card
+  created locally takes the next local id, which a later release will hand to a
+  different word. Separate the two id spaces (a floor for user cards, or the
+  separate database above).
+- **Translations have nowhere to live.** `data/translations/fr.json` is authoring
+  data for cards we ship; a card the user wrote can only carry its own
+  translations, which means the editor edits `meaning`/`meaning_fr` in the
+  database and the catalogue stops being the only source of French.
+
+- Anki deck import, limited feature set: notes and their fields, not scheduling.
+- Card editor in the app: create, edit and delete cards and decks.
+
 ### Content
 
 - Import School Grades sets from Wikipedia
