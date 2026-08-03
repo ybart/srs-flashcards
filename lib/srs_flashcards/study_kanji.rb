@@ -39,7 +39,10 @@ module SrsFlashcards
             kun_yomi: kanji_doc.css('#kun-yomi').text.split(', '),
             examples: kanji_doc.css('#examples tr').map do |tr|
               kanji, rest = tr.css('td:first').text.split(' ')
-              kana = rest.split('&#160;').first[1..]
+              # The cell reads "漢字 (かんじ)": take what the brackets hold, rather
+              # than dropping the first character and leaving the closing one
+              # behind, which is what put a ")" on 1511 of the readings.
+              kana = rest[/\((.+)\)/, 1] || rest
 
               { kanji:, kana:, meaning: tr.css('td:last').text }
             end
