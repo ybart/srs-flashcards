@@ -17,8 +17,13 @@ module SrsFlashcards
             name varchar(64) UNIQUE
           );
 
+          -- AUTOINCREMENT rather than a bare rowid: the id is what a client's
+          -- database is matched on when content is updated (see
+          -- public/js/content.js), so an id retired by a deleted card must never
+          -- be handed to a different one. Without it SQLite reuses the largest
+          -- free rowid and the next word added would inherit a deleted word's id.
           CREATE TABLE cards (
-            id integer primary key,
+            id integer primary key autoincrement,
             category_id integer NOT NULL,
             reference varchar(64),
             label integer,

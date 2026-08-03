@@ -1,6 +1,7 @@
 // import sqlite3InitModule from "@sqlite.org/sqlite-wasm"
 import sqlite3InitModule from "./sqlite3/sqlite3.mjs"
 import { migrate } from "./migrations.js"
+import { update } from "./content.js"
 
 export default class ApplicationWorker {
   constructor() {
@@ -28,6 +29,9 @@ export default class ApplicationWorker {
   async openPersistentDb(port, db_url) {
     if (this.db) { return; }
 
+    // Kept for the content update, which reads the shipped database, and for an
+    // upload, which can hand us a file older than anything we ship.
+    this.dbUrl = db_url;
     const sqlite3 = await sqlite3InitModule();
     this.db = new sqlite3.oo1.OpfsDb('flashcards.db', 'c');
     const db = this.db;
@@ -49,8 +53,20 @@ export default class ApplicationWorker {
     }
 
     migrate(this.db);
+    await this.updateContent(sqlite3);
 
     port.postMessage({ result: 'success' })
+  }
+
+  // Corrections and translations to the cards themselves, which only ever
+  // reached fresh installs before. See content.js: it is idempotent, gated on a
+  // version, and reports rather than throws, so an offline launch just tries
+  // again next time.
+  async updateContent(sqlite3) {
+    if (!this.dbUrl) { return; }
+
+    const report = await update(sqlite3, this.db, this.dbUrl);
+    console.log('worker.js: content', report);
   }
 
   // Replace the persistent OPFS database with the bytes of an uploaded file.
@@ -73,8 +89,10 @@ export default class ApplicationWorker {
       await sqlite3.oo1.OpfsDb.importDb('flashcards.db', bytes);
       this.db = new sqlite3.oo1.OpfsDb('flashcards.db', 'c');
 
-      // An imported file can come from any older version of the app.
+      // An imported file can come from any older version of the app, in its
+      // schema and in its content both.
       migrate(this.db);
+      await this.updateContent(sqlite3);
 
       port.postMessage({ result: 'success' });
     } catch (error) {

@@ -17,9 +17,10 @@ and within each section the order is the intended order of work.
    instead of chasing web push: the OS fires the alert, so there is no server,
    no permission prompt and no platform gap. Offer it when a deck runs dry, at
    the moment we already know when the next card is due.
-   - Shipped: a "Remind me" button on the empty-deck screen hands over one
-     `VEVENT` at the moment the next card comes back up, with a `VALARM` on the
-     start and a `URL` deep-linking to that category.
+   - Shipped: a calendar icon on the empty-deck screen hands over one `VEVENT`
+     at the moment a full deck of ten cards is available again — not the single
+     next card, which would send you back to a two-card session — with a
+     `VALARM` on the start and a `URL` deep-linking to that category.
    - The time is a proposal, not a prediction: the calendar's own edit UI is
      where the user adjusts it, so the heuristic only has to be plausible. It
      votes on the hour of the recent sessions of at least ten cards and needs
@@ -54,10 +55,13 @@ and within each section the order is the intended order of work.
      this feature is for has almost no history, hits the null branch, and gets
      the current time of day floored to the quarter — that path matters more
      than the vote does.
-   - Still open: the fixed ladder (1 day — morning, midday, evening — 2 days,
-     1 week, 1 month), which would be several events or one `RRULE`. The
-     next-due event is more accurate, so the ladder only makes sense as a
-     "come back regularly" nudge.
+   - Shipped too, as the "come back regularly" nudge the ladder was really
+     asking for: one `RRULE` event repeating every day, week or month, offered
+     from the header rather than from a category, since that reminder is the
+     same whatever category you are looking at — where the next-due event
+     belongs to the deck that ran dry. The morning/midday/evening variants of
+     the one-day step were dropped: the time comes from the same habitual-hour
+     vote, which answers the question better than three fixed slots.
    - Known caveat: a link tapped in Calendar opens the browser, not the
      installed PWA, and on iOS the browser is a different storage context — the
      user lands on the demo build with none of their progress. A home-screen web
@@ -133,6 +137,21 @@ Reproduce these on a device first, then decide whether they need work.
   inline in `install.html`'s own `<style>`, nothing in `main.css`.
 - **Chrome PWA cache** — refreshing with Cmd-R appears to bust the cache instead
   of serving from it.
+
+## Known bugs
+
+- **The Cards metric double-counts within a day.** `Session.EFFORT_QUERY` counts
+  one row per card per session, and the progress view sums the sessions in a
+  bucket, so a card studied in two sessions on the same day is counted twice: an
+  N5 day reads 150 cards against a deck of 103. The comment in `session.js` calls
+  this "very slightly generous", which it plainly is not. It needs to count
+  distinct cards over the bucket, which means the query can no longer pre-group
+  by session for that column.
+- **Five duplicate word cards.** The scraper's bracket bug inserted 勘定, 密か,
+  挨拶, 提出 and 聞こえる twice, once under each spelling. The shipped database has
+  been merged down to one of each; a database where the duplicate was studied
+  keeps it, since the content updater will not delete a card somebody answered.
+  Those installs show the word twice in its deck.
 
 ## After 1.0
 
