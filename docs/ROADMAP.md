@@ -212,6 +212,17 @@ a paid service.
 - Settings page with download DB, upload DB, set Japanese voice. The use case is
   already covered by the categories dropdown, so this is cleanup and waits for
   the study features above.
+- **Ask for persistent storage, and say what is true.** `navigator.storage.persist()`
+  is never called today, in either mode. The service worker is not what protects a
+  database: OPFS lives in the origin's storage bucket whether a worker is
+  registered or not, and under Safari's rule a worker's own registration and caches
+  are script-writable storage subject to the same eviction. What protects data is
+  install state — Safari exempts home-screen web apps from the seven-day eviction,
+  Chrome grants persistence to installed apps — plus `persist()` and export/import.
+  So registering the worker for browser visitors would not raise the risk of loss;
+  it is a product question about whether an offline-capable browser app undercuts
+  installing, which is the thing that actually helps. Meanwhile `persisted()` would
+  let the demo ribbon report what is true instead of inferring it from PWA-ness.
 - At init, check if persistent storage is available and if not explain why
   (check for COOP/COEP headers, `isSecureContext` and if the protocol includes
   https or wss). To check COOP/COEP headers, we can use
