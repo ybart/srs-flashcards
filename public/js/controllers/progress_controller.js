@@ -258,6 +258,9 @@ export default class extends Controller {
       const tick = document.createElement('i')
       tick.className = 'progress-tick'
       tick.style.left = left
+      // Its single pixel would start at the right edge and push the canvas one
+      // pixel wider, which is enough to leave "All" horizontally scrollable.
+      if (position > 0.98) { tick.style.transform = 'translateX(-100%)' }
       axis.appendChild(tick)
 
       const label = document.createElement('span')
