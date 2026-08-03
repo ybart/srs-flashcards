@@ -16,11 +16,13 @@ const PAD = 56
 const GUTTER = 78
 const CHART_X = PAD + GUTTER
 const CHART_W = WIDTH - PAD - CHART_X
-const CHART_TOP = 180
-const CHART_H = 250
-const EFFORT_TOP = 452
-const EFFORT_H = 74
-const AXIS_Y = 560
+const CHART_TOP = 160
+const CHART_H = 225
+// Deep enough that five ruled values do not crowd: at 74 they sat closer
+// together than the type they are labelled with.
+const EFFORT_TOP = 405
+const EFFORT_H = 125
+const AXIS_Y = 558
 const BACKGROUND = '#12151c'
 const INK = '#f2f4f7'
 const MUTED = '#8a93a3'
@@ -104,8 +106,8 @@ export function compose(options) {
     }))
   }
 
-  svg.appendChild(label(PAD, HEIGHT - 40, options.footer, { size: 24 }))
-  svg.appendChild(label(WIDTH - PAD, HEIGHT - 40, 'SRS Flashcards', { size: 24, anchor: 'end' }))
+  svg.appendChild(label(PAD, HEIGHT - 30, options.footer, { size: 24 }))
+  svg.appendChild(label(WIDTH - PAD, HEIGHT - 30, 'SRS Flashcards', { size: 24, anchor: 'end' }))
 
   return svg
 }
