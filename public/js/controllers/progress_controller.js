@@ -26,7 +26,7 @@ export default class extends Controller {
     { label: '7 days', size: 7 }
   ]
   static METRICS = [
-    { key: 'cards', label: 'Cards', value: (event) => event.cards },
+    { key: 'reviews', label: 'Reviews', value: (event) => event.reviews },
     { key: 'time', label: 'Time', value: (event) => event.seconds }
   ]
   static MONTH = 30 * 24 * 60 * 60 * 1000
@@ -55,7 +55,7 @@ export default class extends Controller {
     })
     this.effort = this.group(effort, (row) => ({
       time: RelativeDate.dateFromSqliteTimestamp(row.started_at).getTime(),
-      cards: row.cards, seconds: row.seconds || 0
+      reviews: row.reviews || 0, seconds: row.seconds || 0
     }))
 
     // What each expanded chart is currently showing, so the export can be the
@@ -103,10 +103,10 @@ export default class extends Controller {
     // opening anything, and expanding is for the shape over time. There is no
     // shape without a history, so those rows do not open at all.
     const events = this.effort.get(category.id) || []
-    const cards = events.reduce((sum, event) => sum + event.cards, 0)
+    const reviews = events.reduce((sum, event) => sum + event.reviews, 0)
     const seconds = events.reduce((sum, event) => sum + event.seconds, 0)
     item.querySelector('[data-role=summary]').innerText = studied
-      ? `${this.formatTotal('cards', cards)} · ${this.formatTotal('time', seconds)}`
+      ? `${this.formatTotal('reviews', reviews)} · ${this.formatTotal('time', seconds)}`
       : `${this.formatTotal('cards', category.cards_count)}, not started`
 
     if (!studied) {
@@ -129,8 +129,8 @@ export default class extends Controller {
 
     const worked = new Map()
     for (const event of events) {
-      const current = worked.get(dayOf(event.time)) || { cards: 0, seconds: 0 }
-      current.cards += event.cards
+      const current = worked.get(dayOf(event.time)) || { reviews: 0, seconds: 0 }
+      current.reviews += event.reviews
       current.seconds += event.seconds
       worked.set(dayOf(event.time), current)
     }
@@ -140,7 +140,7 @@ export default class extends Controller {
     return {
       series: days.map((day, index) => ({ time: index, dist: snapshots.get(day).dist })),
       events: days.map((day, index) => ({
-        time: index, ...(worked.get(day) || { cards: 0, seconds: 0 })
+        time: index, ...(worked.get(day) || { reviews: 0, seconds: 0 })
       })),
       dates: days.map((day) => snapshots.get(day).time),
       first: snapshots.get(days[0]).time,
@@ -329,7 +329,7 @@ export default class extends Controller {
 
   countStep(peak) {
     const magnitude = 10 ** Math.floor(Math.log10(peak / this.constructor.MAX_RULES))
-    // No 2.5: these are counted things, and half a card is not a gridline.
+    // No 2.5: these are counted things, and half a review is not a gridline.
     for (const multiple of [1, 2, 5, 10]) {
       const step = multiple * magnitude
       if (peak / step <= this.constructor.MAX_RULES) { return Math.max(1, step) }
@@ -414,8 +414,13 @@ export default class extends Controller {
     }
   }
 
+  // "cards" is what a deck holds; "reviews" is how many times one was answered,
+  // and the two are nowhere near each other — the word has to say which.
   formatTotal(metric, total) {
-    if (metric !== 'time') { return `${Math.round(total).toLocaleString()} cards` }
+    if (metric !== 'time') {
+      const count = Math.round(total).toLocaleString()
+      return metric === 'cards' ? `${count} cards` : `${count} reviews`
+    }
 
     const minutes = Math.round(total / 60)
     if (minutes < 60) { return `${minutes}m` }
