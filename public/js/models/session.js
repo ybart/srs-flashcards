@@ -50,9 +50,11 @@ export default class Session extends ApplicationRecord {
   // way — and cuts a 2.5 hour span down to the 10 minutes spent inside it.
   static ACTIVE_GAP_SECONDS = 60
 
-  // Reviews and active time per session, for the effort chart. A review is one
-  // answer: a card missed and asked again counts each time, which is what makes
-  // it a measure of work rather than of ground covered.
+  // Reviews, cards and active time per session, for the effort chart. A review
+  // is one answer, so a card missed and asked again counts each time — work
+  // done. A card counts once per session however often it came round — ground
+  // covered. Two sessions in one day can see the same card twice, so over a
+  // bucket the card count is very slightly generous.
   static EFFORT_QUERY = `
     WITH answers AS (
       SELECT
@@ -74,6 +76,7 @@ export default class Session extends ApplicationRecord {
       category_id,
       MIN(studied_at) as started_at,
       SUM(times_studied) as reviews,
+      COUNT(*) as cards,
       SUM(MIN(MAX(gap, 0), ${this.ACTIVE_GAP_SECONDS})) as seconds
     FROM answers
     GROUP BY session_id

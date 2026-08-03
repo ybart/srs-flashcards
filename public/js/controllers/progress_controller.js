@@ -27,6 +27,7 @@ export default class extends Controller {
   ]
   static METRICS = [
     { key: 'reviews', label: 'Reviews', value: (event) => event.reviews },
+    { key: 'cards', label: 'Cards', value: (event) => event.cards },
     { key: 'time', label: 'Time', value: (event) => event.seconds }
   ]
   static MONTH = 30 * 24 * 60 * 60 * 1000
@@ -55,7 +56,7 @@ export default class extends Controller {
     })
     this.effort = this.group(effort, (row) => ({
       time: RelativeDate.dateFromSqliteTimestamp(row.started_at).getTime(),
-      reviews: row.reviews || 0, seconds: row.seconds || 0
+      reviews: row.reviews || 0, cards: row.cards || 0, seconds: row.seconds || 0
     }))
 
     // What each expanded chart is currently showing, so the export can be the
@@ -107,7 +108,7 @@ export default class extends Controller {
     const seconds = events.reduce((sum, event) => sum + event.seconds, 0)
     item.querySelector('[data-role=summary]').innerText = studied
       ? `${this.formatTotal('reviews', reviews)} · ${this.formatTotal('time', seconds)}`
-      : `${this.formatTotal('cards', category.cards_count)}, not started`
+      : `${this.formatTotal('deck', category.cards_count)}, not started`
 
     if (!studied) {
       item.classList.add('empty')
@@ -129,8 +130,9 @@ export default class extends Controller {
 
     const worked = new Map()
     for (const event of events) {
-      const current = worked.get(dayOf(event.time)) || { reviews: 0, seconds: 0 }
+      const current = worked.get(dayOf(event.time)) || { reviews: 0, cards: 0, seconds: 0 }
       current.reviews += event.reviews
+      current.cards += event.cards
       current.seconds += event.seconds
       worked.set(dayOf(event.time), current)
     }
@@ -140,7 +142,7 @@ export default class extends Controller {
     return {
       series: days.map((day, index) => ({ time: index, dist: snapshots.get(day).dist })),
       events: days.map((day, index) => ({
-        time: index, ...(worked.get(day) || { reviews: 0, seconds: 0 })
+        time: index, ...(worked.get(day) || { reviews: 0, cards: 0, seconds: 0 })
       })),
       dates: days.map((day) => snapshots.get(day).time),
       first: snapshots.get(days[0]).time,
@@ -414,12 +416,15 @@ export default class extends Controller {
     }
   }
 
-  // "cards" is what a deck holds; "reviews" is how many times one was answered,
-  // and the two are nowhere near each other — the word has to say which.
+  // Three different things get counted here, and only one of them is the deck.
+  // "cards seen" is deliberately not "cards": summed over a stretch it passes
+  // the size of the deck, because a card seen on two days is seen twice.
   formatTotal(metric, total) {
     if (metric !== 'time') {
       const count = Math.round(total).toLocaleString()
-      return metric === 'cards' ? `${count} cards` : `${count} reviews`
+      if (metric === 'deck') { return `${count} cards` }
+
+      return metric === 'cards' ? `${count} cards seen` : `${count} reviews`
     }
 
     const minutes = Math.round(total / 60)
