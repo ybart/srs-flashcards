@@ -5,8 +5,12 @@
 // are two separate keys, chosen by tn().
 
 export const FR = {
-  // Loading and chrome
+  // Loading and chrome. The three words on the splash screen are also written
+  // into index.html, whose script cannot import this file; a new language has to
+  // be added in both places.
   'Preparing…': 'Préparation…',
+  'Installing…': 'Installation…',
+  'Updating…': 'Mise à jour…',
   'Offline': 'Hors ligne',
   '« Categories': '« Catégories',
   'Progress': 'Progression',

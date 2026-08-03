@@ -48,9 +48,39 @@
     const progressBar = document.getElementById('cache-progress');
     const statusEl = document.getElementById('cache-status');
 
+    // The three words this page ever says, translated here rather than out of
+    // js/locales/fr.js: this script is a classic one and cannot import, and
+    // making it a module would defer the service worker registration and the
+    // redirect below behind parsing. Kept in step with the catalogue by hand —
+    // adding a language means adding it here too.
+    const STATUS = {
+      fr: {
+        'Preparing…': 'Préparation…',
+        'Installing…': 'Installation…',
+        'Updating…': 'Mise à jour…'
+      }
+    };
+
+    const language = (function () {
+      let override = null;
+      try { override = localStorage.getItem('locale'); } catch (e) { /* denied */ }
+      const wanted = [override].concat(navigator.languages || [navigator.language]);
+      for (const tag of wanted) {
+        const base = String(tag || '').toLowerCase().split('-')[0];
+        if (base === 'en' || STATUS[base]) { return base; }
+      }
+      return 'en';
+    })();
+
+    document.documentElement.lang = language;
+    const say = (text) => {
+      statusEl.textContent = (STATUS[language] && STATUS[language][text]) || text;
+    };
+    say('Preparing…');
+
     function updateProgress(current, total) {
       if (!total) return;
-      statusEl.textContent = 'Installing…'; // real progress -> determinate
+      say('Installing…'); // real progress -> determinate
       progressBar.value = Math.round((current / total) * 100);
     }
 
@@ -134,7 +164,7 @@
       if (!reg.waiting) { redirectBasedOnPWAStatus(); return; }
 
       loader.classList.remove('hidden');
-      statusEl.textContent = 'Updating…';
+      say('Updating…');
 
       let done = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {

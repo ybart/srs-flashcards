@@ -113,11 +113,11 @@ and within each section the order is the intended order of work.
      is given as targets, so a cloned card or a row built later is translated on
      the way in without anyone calling anything. Strings are keyed by their
      English text, so an untranslated one shows in English rather than a name.
-   - Left in English on purpose: `index.html`, whose three words ("Preparing…",
-     "Installing…", "Updating…") are set by a classic script that cannot import
-     the catalogue. Making it a module would work — nothing in that file relies on
-     a global — but it is the bootstrap page, and deferring its service worker
-     registration and redirect for three transient words is a poor trade.
+   - `index.html` carries its own three words ("Preparing…", "Installing…",
+     "Updating…") written into the page. Its script is a classic one and cannot
+     import the catalogue, and making it a module would defer the service worker
+     registration and the redirect behind parsing — so the strings are repeated
+     there instead, and a new language has to be added in both places.
    - Still to do: `install.html` (78 strings, its own page-scoped script), and the
      manifest name and description, which a static host cannot vary by language —
      a second manifest swapped by locale is the option there.
