@@ -7,15 +7,24 @@ html { overscroll-behavior: none; }
    (iOS Safari treats 100vh as larger than the visible area, which otherwise
    lets the whole header/footer chrome scroll in study mode).
 
-   100% is the layout viewport, which on iOS stays tall while the toolbar is
-   shown — so the body extended roughly a toolbar's height behind it, and that
-   band was unreachable: the last row of a list was cut off by ~60px whatever its
-   own height, and dragging over the header scrolled the document that should not
-   have been scrollable. 100dvh tracks the area actually visible. */
+   Neither 100% nor 100dvh can do it in the installed app. With
+   apple-mobile-web-app-status-bar-style: black-translucent the web view is the
+   whole screen — 812px on a 375x812 phone — while only 762px sits below the
+   status bar, and both units resolve to 812. env(safe-area-inset-top) cannot
+   compensate either: it reads 0, since the viewport meta does not say
+   viewport-fit=cover. Measured on the device: html and body computed 812px
+   against an innerHeight of 762, so the app stood 50px taller than its window —
+   the band that cut off the last row of a list, and exactly how far the header
+   could be dragged (scrollY 50, header top -50).
+ 
+   window.innerHeight is the one value that is right, so it is measured and
+   published as --app-height (see js/viewport.js). The units remain as fallbacks
+   for the moment before that script runs. */
 html, body { height: 100%; }
 @supports (height: 100dvh) {
   html, body { height: 100dvh; }
 }
+html, body { height: var(--app-height, 100dvh); }
 body { overflow: hidden; }
 
 header > nav { min-height: 60px; }

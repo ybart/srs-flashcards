@@ -50,6 +50,7 @@ const PRECACHE_ASSETS = [
   '/js/migrations.js',
   '/js/content.js',
   '/js/i18n.js',
+  '/js/viewport.js',
   '/js/locales/fr.js',
   '/js/progress_chart.js',
   '/js/progress_image.js',
