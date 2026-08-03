@@ -140,7 +140,9 @@ export default class extends Controller {
 
     card.removeAttribute('style')
     card.id = `category-${category.id}`
-    card.querySelector('[data-role=name]').innerText = category.name
+    // A deck's name is data, not markup, so it is translated where it is put on
+    // screen. "N5" has no entry and falls through to itself.
+    card.querySelector('[data-role=name]').innerText = t(category.name)
     card.querySelector('[data-role=cards-count]').innerText = category.cards_count
 
     // Availability: colour the dot by the reddest available studied card, gray
@@ -178,7 +180,7 @@ export default class extends Controller {
     const reminderLink = card.querySelector('[data-role=reminder-link]')
     if (!available && avail?.next_available) {
       reminderLink.dataset.categoryId = category.id
-      reminderLink.dataset.categoryName = category.name
+      reminderLink.dataset.categoryName = t(category.name)
     } else {
       reminderLink.remove()
     }

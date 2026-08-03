@@ -84,23 +84,22 @@ translated by having a whole second file, `install.fr.html`. Both link the same
 `/css/install.css`, so only the words are duplicated. Which one a visitor gets is
 nginx's decision, taken from the `Accept-Language` header the browser sends.
 
-`/etc/nginx/conf.d/srs-flashcards.ilyba.fr.d/language.conf`:
+The file is kept in the repo at `deploy/nginx/language.conf`, so what is on the
+server can be compared with what is in git. To install it:
 
 ```
-map $http_accept_language $install_page {
-    default        /install.html;
-    ~*^fr          /install.fr.html;
-    ~*,\s*fr       /install.fr.html;
-}
+scp deploy/nginx/language.conf ybart@cloud.ilyba.fr:/tmp/language.conf
+ssh -t ybart@cloud.ilyba.fr 'sudo install -o root -g root -m 644 /tmp/language.conf \
+  /etc/nginx/conf.d/srs-flashcards.ilyba.fr.d/language.conf && sudo nginx -t \
+  && sudo systemctl reload nginx && rm /tmp/language.conf'
+```
 
-location = /install.html {
-    root /var/www/my_webapp/www;
-    try_files $install_page /install.html;
-    add_header Vary "Accept-Language" always;
-    add_header Cross-Origin-Embedder-Policy "require-corp" always;
-    add_header Cross-Origin-Opener-Policy   "same-origin" always;
-    add_header Cross-Origin-Resource-Policy "same-origin" always;
-}
+`nginx -t` runs before the reload, so a config that does not parse never reaches a
+running server. To undo it, delete the file and reload:
+
+```
+ssh -t ybart@cloud.ilyba.fr 'sudo rm /etc/nginx/conf.d/srs-flashcards.ilyba.fr.d/language.conf \
+  && sudo nginx -t && sudo systemctl reload nginx'
 ```
 
 `Vary: Accept-Language` matters: without it a cache — the browser's, or anything

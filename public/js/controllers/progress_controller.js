@@ -97,7 +97,7 @@ export default class extends Controller {
     item.id = `progress-${category.id}`
     item.dataset.category = category.id
     item.dataset.metric = this.constructor.METRICS[0].key
-    item.querySelector('[data-role=name]').innerText = category.name
+    item.querySelector('[data-role=name]').innerText = t(category.name)
     item.querySelector('[data-role=percent]').innerText =
       `${completion(series.at(-1).dist).toFixed(0)} %`
 

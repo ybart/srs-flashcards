@@ -31,6 +31,14 @@ export const FR = {
   'Demo mode: progress is not saved. Install the app to save it.':
     'Mode démo : la progression n’est pas enregistrée. Installez l’application pour la conserver.',
 
+  // Deck names. The levels are their own names in any language; only the word
+  // beside them is ours to translate.
+  'N5 Vocabulary': 'Vocabulaire N5',
+  'N4 Vocabulary': 'Vocabulaire N4',
+  'N3 Vocabulary': 'Vocabulaire N3',
+  'N2 Vocabulary': 'Vocabulaire N2',
+  'N1 Vocabulary': 'Vocabulaire N1',
+
   // Category list
   'cards': 'cartes',
   'Never studied': 'Jamais étudiée',

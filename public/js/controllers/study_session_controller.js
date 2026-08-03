@@ -82,7 +82,7 @@ export default class extends Controller {
     if (!refill) { return }
 
     const category = await Category.find(this.session.category)
-    const name = category ? category.name : 'SRS Flashcards'
+    const name = category ? t(category.name) : 'SRS Flashcards'
 
     Reminder.download({
       at: Reminder.ceilToQuarter(RelativeDate.dateFromSqliteTimestamp(refill)),
