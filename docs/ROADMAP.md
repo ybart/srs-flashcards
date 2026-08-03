@@ -68,7 +68,7 @@ and within each section the order is the intended order of work.
      desktop; needs confirming on a device.
    - The events are static once added: changing the schedule means issuing a new
      file, and there is no way to withdraw one we already handed out.
-4. [ ] **Progress view redesign** — the data layer is done (snapshots, the
+4. [x] **Progress view redesign** — the data layer is done (snapshots, the
    replay migration); this replaces how it is drawn. The current labelled rows
    read as a table, one row at a time, when the thing worth seeing is a
    trajectory.
@@ -93,9 +93,11 @@ and within each section the order is the intended order of work.
      gap capped (60s or so) — the span from first to last answer counts a tab
      left open, which is why `sessions.finished_at` was never worth writing.
      Both are reconstructable from existing `session_cards` history.
-   - Shareable: render to canvas, then `navigator.share` with a file, falling
-     back to a download on desktop. Someone's own five-month curve is the growth
-     material the KOAD item is after, at a fraction of the cost.
+   - Shipped as a PNG export rather than a share sheet: same picture, none of
+     the platform gymnastics or the transient-activation problem that calling
+     `navigator.share` after an await runs into. Composed separately from the
+     on-screen chart, which is painted partly by main.css and would rasterise
+     without it.
    - Open at phone width: whether 6 colour bands stay legible at ~350px across
      and 60px tall in the previews. Needs a device, not a mockup.
 5. [ ] **French translation** — the UI was localised to English early on; put the
