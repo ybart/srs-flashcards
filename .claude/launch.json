@@ -4,8 +4,23 @@
     {
       "name": "static",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8137", "--directory", "public"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8137",
+        "--directory",
+        "public"
+      ],
       "port": 8137
+    },
+    {
+      "name": "isolated",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "/private/tmp/claude-501/-Users-ybart-Documents-dev-srs-flashcards/f23f22a7-a63c-403e-9aa8-7f6a3340ecbd/scratchpad/serve_isolated.py",
+        "8139"
+      ],
+      "port": 8139
     }
   ]
 }

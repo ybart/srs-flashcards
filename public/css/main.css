@@ -44,6 +44,12 @@ section[role=content] {
   background-color: var(--pico-background-color);
   flex: 1; overflow-y: scroll; text-align: center;
   margin-bottom: 0;
+  /* Stops the gesture chaining to the document when this reaches its end. The
+     document is locked by html/body above, but on iOS reaching the bottom of a
+     nested scroller still hands the swipe upwards, which drags the whole layout
+     — the header included — and reads as a second scrollbar. Declaring it here
+     rather than only on html is what confines it to this box. */
+  overscroll-behavior: contain;
 }
 section p.message {
   flex: 0 0 100%;
@@ -59,7 +65,12 @@ section p.message a.reminder {
   font-size: 0.8rem;
 }
 
-details[open] summary:before {
+/* The click-catcher that closes an open menu when you tap away from it. It used
+   to live on summary:before, which is the pseudo-element the cog itself is drawn
+   with further down — so opening the menu replaced the cog with a full-viewport
+   box: the icon vanished and, its 24px gone, the other two header icons slid
+   right. It belongs on the details element, which is not drawing anything. */
+details[open]:before {
   content: "";
   width: 100vw;
   height: 100vh;

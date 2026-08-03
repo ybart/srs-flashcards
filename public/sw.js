@@ -83,6 +83,7 @@ const PRECACHE_ASSETS = [
   '/js/models/relative_date.js',
   '/js/models/reminder.js',
   '/js/models/session.js',
+  '/js/models/preference.js',
 
 
   // SQLite resources

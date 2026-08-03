@@ -23,6 +23,7 @@ export const FR = {
   'Check for Updates': 'Rechercher des mises à jour',
   'Install App': 'Installer l’application',
   'Credits': 'Crédits',
+  'content %{version}': 'contenu %{version}',
   '☕ Support Us': '☕ Nous soutenir',
 
   // Demo ribbon

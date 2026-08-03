@@ -4,6 +4,7 @@ import ApplicationRecord from '../models/application_record.js'
 import Category from '../models/category.js'
 import Card from '../models/card.js'
 import Session from '../models/session.js'
+import Preference from '../models/preference.js'
 import RelativeDate from '../models/relative_date.js'
 import { t } from '../i18n.js';
 import Reminder from '../models/reminder.js';
@@ -98,7 +99,12 @@ export default class extends Controller {
   }
 
   async versionTargetConnected(element) {
-    element.textContent = `v${await this.getCurrentVersion()}`;
+    // The content version alongside the app version: the cards keep being
+    // corrected, and this is the only thing that says whether a correction has
+    // reached this database. It was a line in the worker's log and nowhere else.
+    const content = await Preference.contentVersion();
+    const app = `v${await this.getCurrentVersion()}`;
+    element.textContent = content ? `${app} · ${t('content %{version}', { version: content })}` : app;
   }
 
   async refresh() {

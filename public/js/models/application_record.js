@@ -2,21 +2,35 @@ import ApplicationDatabase from '../db.js'
 
 export default class ApplicationRecord {
   static database;
+  static connecting;
 
   constructor(attributes) {
     return Object.assign(this, attributes)
   }
 
-  static async connect() {
-    if (!ApplicationRecord.database) {
-      ApplicationRecord.database = new ApplicationDatabase()
-      await ApplicationRecord.database.loadDatabase();
+  // One connection, awaited by everybody. The database is only published once it
+  // is open: assigning it first and *then* awaiting the load let a second caller
+  // see a truthy database and query a worker whose own handle was still null —
+  // "Cannot read properties of null (reading 'exec')", thrown inside the worker,
+  // rejecting whichever caller lost the race. On a warm launch the load is quick
+  // enough that nobody notices; on a first launch, which imports 1.5 MB and then
+  // migrates and updates the content, the category list simply never appeared.
+  static connect() {
+    if (!ApplicationRecord.connecting) {
+      const database = new ApplicationDatabase()
+      ApplicationRecord.connecting = database.loadDatabase().then(() => {
+        ApplicationRecord.database = database
+        return database
+      })
     }
+
+    return ApplicationRecord.connecting
   }
 
   static async execute(sql, bind) {
-    if (!ApplicationRecord.database) { await ApplicationRecord.connect() }
-    return await ApplicationRecord.database.execute(sql, bind);
+    const database = ApplicationRecord.database || await ApplicationRecord.connect()
+
+    return await database.execute(sql, bind);
   }
 
   static sql_escape(string) {
