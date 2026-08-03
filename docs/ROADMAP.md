@@ -245,11 +245,13 @@ settling before either ships, because two of the consequences are silent:
 - **`content.js` would delete them.** It treats the shipped file as the authority
   for the whole `cards` table: anything it cannot match is "extra", and an extra
   card nobody has answered is removed. An imported deck would survive exactly as
-  long as it went unstudied. Cards need a provenance — a column, or a reserved id
-  range — and the updater needs to reconcile only what it owns. A one-line stopgap
-  is available in the meantime: refuse to delete a card whose category the shipped
-  content does not know about, which makes a whole imported deck safe and leaves
-  only user cards added *inside* a shipped deck exposed.
+  long as it went unstudied.
+
+  Provenance has to be explicit, not inferred. "Keep any card whose category the
+  shipped content does not know about" looks like a cheap guard and is not one: a
+  release that retires a level makes that category unknown too, so the guard would
+  block a removal we meant, permanently, and the two cases are indistinguishable
+  from the content file alone.
 - **Ids would collide.** `cards.id` is the updater's match key and is
   AUTOINCREMENT on the shipping side, so ids are only unique per database: a card
   created locally takes the next local id, which a later release will hand to a
@@ -259,6 +261,20 @@ settling before either ships, because two of the consequences are silent:
   data for cards we ship; a card the user wrote can only carry its own
   translations, which means the editor edits `meaning`/`meaning_fr` in the
   database and the catalogue stops being the only source of French.
+
+The answer to all three is the split already listed above — a shipped, read-only
+content database and a database the user owns — because it makes provenance
+structural rather than something to be worked out: what is in the user's file is
+the user's. It also collapses the content update from a reconciliation into a file
+swap, since nothing of the user's lives in the file being replaced. `ATTACH` keeps
+the joins working across the two.
+
+What stands in the way is that `cards.label` — the deck a card sits in, which is
+the entire progress record — is a column on the content table. It has to move to
+the user's side first, and 22 references across `session.js` and `card.js` read or
+write it, including the availability windows and the picking order. Card ids stay
+the hinge either way: the user's rows point at content cards by id, so ids must go
+on being stable and never reused.
 
 - Anki deck import, limited feature set: notes and their fields, not scheduling.
 - Card editor in the app: create, edit and delete cards and decks.
