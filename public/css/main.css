@@ -1,3 +1,7 @@
+/* How long a progress row takes to open or shut. Short enough to feel like the
+   row answering the tap rather than an animation being played at you. */
+:root { --unfold: 0.18s; }
+
 html { overscroll-behavior: none; }
 /* Lock the document to the viewport so only section[role=content] scrolls
    (iOS Safari treats 100vh as larger than the visible area, which otherwise
@@ -464,7 +468,7 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
 .progress-caret {
   flex: 0 0 auto;
   color: var(--pico-muted-color);
-  transition: transform 0.15s ease;
+  transition: transform var(--unfold) ease;
 }
 .progress-item.expanded .progress-caret { transform: rotate(90deg); }
 .progress-item { cursor: pointer; }
@@ -481,6 +485,7 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   width: 100%;
   height: 54px;
   border-radius: 3px;
+  transition: height var(--unfold) ease;
 }
 .progress-item.expanded .progress-svg { height: 170px; }
 .progress-line { stroke: #fff; stroke-width: 2; stroke-linejoin: round; }
@@ -510,7 +515,7 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
 /* Positioned so the scale can be measured against it, and padded so the gutter
    does not sit over the drawings. The gutter only exists while a row is open,
    so previews keep their full width. */
-.progress-plot { position: relative; }
+.progress-plot { position: relative; transition: padding-left var(--unfold) ease; }
 .progress-item.expanded .progress-plot { padding-left: 34px; }
 .progress-scale { display: none; }
 .progress-item.expanded .progress-scale {
@@ -530,7 +535,10 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   color: var(--pico-muted-color);
   white-space: nowrap;
 }
-.progress-axis { position: relative; height: 1.5rem; margin-top: 4px; }
+/* Tall enough to hold the label that hangs below the ticks: the labels are
+   positioned rather than laid out, so the row has to be told how much room
+   they take, and the fold clips whatever leaves it. */
+.progress-axis { position: relative; height: calc(1.5rem + 4px); margin-top: 4px; }
 /* Says which point a label names, which the label alone cannot at the ends
    where it has been nudged inwards. Drawn in the label's own colour: the border
    colour was too faint to read as a mark. */
@@ -540,6 +548,21 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   width: 1px;
   height: 7px;
   background: var(--pico-muted-color);
+}
+/* Opening a row is one movement: the trajectory grows, and everything that
+   only exists while it is open unfolds from nothing. 0fr to 1fr is the way to
+   animate to a height that was never measured, which is what these are — the
+   axis and the ranges are built when the row opens. */
+.progress-fold {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--unfold) ease;
+}
+.progress-item.expanded .progress-fold { grid-template-rows: 1fr; }
+.progress-folded { min-height: 0; overflow: hidden; }
+/* Not everyone wants the motion, and the layout does not depend on it. */
+@media (prefers-reduced-motion: reduce) {
+  .progress-caret, .progress-svg, .progress-plot, .progress-fold { transition: none; }
 }
 .progress-axis span {
   position: absolute;
@@ -558,6 +581,9 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   color: var(--pico-muted-color);
   text-decoration: none;
 }
+/* How many windows come before it depends on how long the history is, so it is
+   held against the right edge rather than left wherever the list ends. */
+.progress-range.progress-trailing { margin-left: auto; }
 .progress-range.selected {
   border-color: var(--pico-primary);
   color: var(--pico-primary);

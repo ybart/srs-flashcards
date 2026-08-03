@@ -104,12 +104,14 @@ export function compose(options) {
   // gets a tick: the outer labels are pulled inside the frame to stay on the
   // picture, so on their own they would only point roughly.
   for (let i = 0; i < 5; i++) {
-    const position = i / 4
+    // The axis decides where its own tick belongs: evenly spaced to begin with,
+    // then moved onto whatever its label names.
+    const { position, label: text } = options.pointAt(i / 4)
     const x = CHART_X + CHART_W * position
     svg.appendChild(element('line', {
       x1: x, x2: x, y1: TICK_TOP, y2: TICK_TOP + TICK_H, stroke: MUTED, 'stroke-width': 2
     }))
-    svg.appendChild(label(x, AXIS_Y, options.labelAt(position), {
+    svg.appendChild(label(x, AXIS_Y, text, {
       size: 22, anchor: i === 0 ? 'start' : (i === 4 ? 'end' : 'middle')
     }))
   }

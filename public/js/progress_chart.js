@@ -72,6 +72,21 @@ export function bucketSum(events, from, to, count, value) {
   return buckets
 }
 
+// The closest two bars come to each other, counted in columns. One means the
+// chart is full; a hundred means there is room to be seen.
+function pitch(buckets) {
+  let closest = buckets.length
+  let previous = null
+
+  buckets.forEach((total, index) => {
+    if (!total) { return }
+    if (previous !== null) { closest = Math.min(closest, index - previous) }
+    previous = index
+  })
+
+  return Math.max(1, closest)
+}
+
 function rule(x1, x2, y, stroke) {
   return element('line', {
     x1: x1, x2: x2, y1: y, y2: y,
@@ -112,7 +127,13 @@ export function bars(events, { from, to, value, scale, width = 600, height = 60,
   // Centred on the column, like the area chart's points and the axis ticks,
   // rather than starting at it — a bar that begins on its own label sits half a
   // column to the right of the moment it belongs to.
-  const thickness = Math.max(slot * 0.7, 0.5)
+  //
+  // As wide as it can be without touching a neighbour: seven tenths of the gap
+  // to the nearest other bar. On a crowded chart that gap is the column itself
+  // and nothing changes; where the bars are spread out it is several columns,
+  // which is what stops a zoomed week being drawn as a row of hairlines. Capped
+  // so a history of two sessions is not drawn as two slabs.
+  const thickness = Math.max(0.5, Math.min(width * 0.04, slot * pitch(buckets) * 0.7))
   buckets.forEach((total, i) => {
     if (!total) { return }
     const bar = height * total / peak

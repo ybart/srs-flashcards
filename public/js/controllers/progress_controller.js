@@ -4,7 +4,7 @@ import Category from '../models/category.js'
 import Session from '../models/session.js'
 import RelativeDate from '../models/relative_date.js'
 import { LABELS } from '../migrations.js'
-import { GRID, bars, chart, completion } from '../progress_chart.js'
+import { GRID, bars, chart, completion, fraction } from '../progress_chart.js'
 import { download } from '../progress_image.js'
 
 export default class extends Controller {
@@ -178,9 +178,17 @@ export default class extends Controller {
     const window = Number(item.dataset.window) || null
     const total = compressed ? compressed.dates.length : span / this.constructor.MONTH
     const zoom = expanded && window ? Math.max(1, total / window) : 1
-    const columns = Math.min(this.constructor.MAX_COLUMNS, Math.round(
+    let columns = Math.min(this.constructor.MAX_COLUMNS, Math.round(
       (expanded ? this.constructor.DETAIL_COLUMNS : this.constructor.PREVIEW_COLUMNS) * zoom
     ))
+    // On the day axis a day is the point, so it gets a column of its own: more
+    // than one would redraw the same value over and over and put every day
+    // half a column off its own label, and it is what leaves the bars wide
+    // enough to read. Fewer, on a history longer than the cap, means several
+    // days to a column and nothing to line up with.
+    if (compressed) {
+      columns = Math.max(2, Math.min(this.constructor.MAX_COLUMNS, compressed.dates.length))
+    }
 
     item.querySelector('[data-role=canvas]').style.width = `${(zoom * 100).toFixed(2)}%`
     this.replace(item, 'chart', chart(series, { from: from, to: to, columns: columns }))
@@ -193,11 +201,15 @@ export default class extends Controller {
       first: all[0].time, last: all.at(-1).time
     })
 
+    // Left in place when the row shuts: the fold animates them away, and it has
+    // nothing to animate if they are torn out first. They are replaced on the
+    // way back open.
+    if (!expanded) { return this.scrollToLatest(item) }
+
     const effort = item.querySelector('[data-role=effort]')
     const axis = item.querySelector('[data-role=axis]')
     effort.innerHTML = ''
     axis.innerHTML = ''
-    if (!expanded) { return this.scrollToLatest(item) }
 
     const metric = this.constructor.METRICS.find((m) => m.key === item.dataset.metric)
     const drawn = bars(events, {
@@ -209,8 +221,17 @@ export default class extends Controller {
     // Positions on the day axis are indices into the days studied, so they are
     // labelled by which day it was rather than by the date it fell on.
     this.appendAxis(axis, zoom, compressed
-      ? (position) => `day ${Math.round(position * (compressed.dates.length - 1)) + 1}`
-      : (position) => this.tickLabel(from + span * position, span))
+      // A tick names a whole day, so it is moved onto that day rather than left
+      // where the even spacing put it: the rounding is worth half a day, which
+      // on a canvas zoomed to a week is half the width of a screen divided by
+      // seven — tens of pixels, and plainly beside the bar it belongs to.
+      ? (position) => {
+        const index = Math.round(position * (compressed.dates.length - 1))
+        return {
+          position: fraction(index, compressed.dates.length), label: `day ${index + 1}`
+        }
+      }
+      : (position) => ({ position: position, label: this.tickLabel(from + span * position, span) }))
 
 
     const ranges = compressed ? this.constructor.DAY_RANGES : this.constructor.RANGES
@@ -222,8 +243,11 @@ export default class extends Controller {
         action: 'click->progress#selectRange', data: { window: range.size || '' }
       }))
 
+    // Last in the row but pinned to its right edge: how many windows precede it
+    // depends on how long the history is, and a control that moves between
+    // categories is one you have to look for every time.
     this.appendChoices(item, 'ranges', zooms.concat({
-      label: 'Study days', selected: !!compressed,
+      label: 'Study days', selected: !!compressed, className: 'progress-trailing',
       action: 'click->progress#selectAxis', data: {}
     }))
 
@@ -308,18 +332,34 @@ export default class extends Controller {
       name: name,
       percent: item.querySelector('[data-role=percent]').innerText,
       subtitle: item.querySelector('[data-role=summary]').innerText,
+      // The ticks name a day and a month, and a picture that outlives the day it
+      // was taken needs the year somewhere. It goes here, once, and it is the
+      // stretch on the picture rather than the whole history: on the day axis
+      // the ticks count days and there is no year to be missing.
       footer: drawn.dates
         ? `${drawn.dates.length} study days`
-        : `${this.tickLabel(drawn.first, span)} – ${this.tickLabel(drawn.last, span)}`,
+        : this.period(from, to),
       filename: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'progress',
       series: drawn.series, events: drawn.events, from: from, to: to,
       columns: this.constructor.EXPORT_COLUMNS,
       value: metric.value,
       scale: (peak) => this.rules(metric.key, peak),
       formatTick: (value) => this.formatScale(metric.key, value),
-      labelAt: (position) => {
+      // Same contract as the axis on screen: a tick that names a whole day is
+      // moved onto that day rather than left where the even spacing put it.
+      pointAt: (position) => {
         const value = from + (to - from) * position
-        return drawn.dates ? `day ${Math.round(value) + 1}` : this.tickLabel(value, span)
+        if (!drawn.dates) {
+          return { position: position, label: this.tickLabel(value, span) }
+        }
+
+        // Held to the days the picture actually covers: the window can start
+        // between two days, and rounding outwards would name one that is not
+        // in the picture and put its tick where nothing is drawn.
+        const index = Math.min(Math.floor(to), Math.max(Math.ceil(from), Math.round(value)))
+        return {
+          position: (index - from) / ((to - from) || 1), label: `day ${index + 1}`
+        }
       }
     })
   }
@@ -331,6 +371,9 @@ export default class extends Controller {
   appendScale(item, metric, drawn) {
     const scale = item.querySelector('[data-role=scale]')
     scale.innerHTML = ''
+    // Nothing worth measuring against until the row has stopped moving; unfold()
+    // comes back for this.
+    if ('unfolding' in item.dataset) { return }
 
     const area = item.querySelector('[data-role=chart]').firstElementChild
     if (!area) { return }
@@ -399,11 +442,13 @@ export default class extends Controller {
 
   // Labels ride inside the scrolling canvas, roughly two per screenful, so
   // panning never leaves you without a date in view.
-  appendAxis(axis, zoom, labelAt) {
+  appendAxis(axis, zoom, pointAt) {
     const count = Math.max(2, Math.round(zoom * 2))
 
     for (let i = 0; i < count; i++) {
-      const position = i / (count - 1)
+      // Evenly spaced to start with, but the axis has the last word on where a
+      // tick ends up: it knows what its label says.
+      const { position, label: text } = pointAt(i / (count - 1))
       const left = `${(position * 100).toFixed(3)}%`
 
       // The label is nudged inwards at the ends so it does not hang off the
@@ -417,12 +462,25 @@ export default class extends Controller {
       axis.appendChild(tick)
 
       const label = document.createElement('span')
-      label.innerText = labelAt(position)
+      label.innerText = text
       label.style.left = left
       if (position < 0.02) { label.style.transform = 'none' }
       if (position > 0.98) { label.style.transform = 'translateX(-100%)' }
       axis.appendChild(label)
     }
+  }
+
+  // Both ends in full where the stretch crosses a new year, and the year named
+  // once at the end where it does not.
+  period(first, last) {
+    const full = { day: 'numeric', month: 'short', year: 'numeric' }
+    const start = new Date(first)
+    const end = new Date(last)
+    const opening = start.getFullYear() === end.getFullYear()
+      ? { day: 'numeric', month: 'short' } : full
+
+    return `${start.toLocaleDateString(undefined, opening)} – ` +
+      `${end.toLocaleDateString(undefined, full)}`
   }
 
   tickLabel(time, span) {
@@ -453,7 +511,8 @@ export default class extends Controller {
       const button = document.createElement('a')
       button.href = '#'
       button.innerText = choice.label
-      button.className = choice.selected ? 'progress-range selected' : 'progress-range'
+      button.className = ['progress-range', choice.selected && 'selected', choice.className]
+        .filter(Boolean).join(' ')
       button.dataset.action = choice.action
       for (const [key, value] of Object.entries(choice.data)) { button.dataset[key] = value }
       container.appendChild(button)
@@ -487,6 +546,31 @@ export default class extends Controller {
     return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`
   }
 
+  // A row takes a fifth of a second to open, and the scale is measured off the
+  // drawings, so a scale placed while the row is still moving is measured
+  // against the height it is leaving. The gutter is left empty for as long as
+  // the row is folding and filled once it has stopped, which also spares the
+  // labels a slide into place. Waiting on the clock rather than on transitionend
+  // so it works the same where the fold is not animated at all — and it is the
+  // stylesheet's own duration, read rather than repeated.
+  unfold(item) {
+    const seconds = parseFloat(getComputedStyle(item).getPropertyValue('--unfold')) || 0
+
+    item.dataset.unfolding = ''
+    setTimeout(() => {
+      delete item.dataset.unfolding
+      this.settle(item)
+    }, seconds * 1000 + 20)
+  }
+
+  settle(item) {
+    const drawn = item.querySelector('[data-role=effort]').firstElementChild
+    if (!drawn || !item.classList.contains('expanded')) { return }
+
+    this.appendScale(item, item.dataset.metric, drawn)
+    this.showTypical(item)
+  }
+
   toggle(event) {
     event.preventDefault()
 
@@ -504,16 +588,15 @@ export default class extends Controller {
 
     if (opening) {
       item.classList.add('expanded')
-      item.querySelector('[data-role=detail]').style.display = ''
     } else {
       this.collapse(item)
     }
+    this.unfold(item)
     this.draw(item)
   }
 
   collapse(item) {
     item.classList.remove('expanded')
-    item.querySelector('[data-role=detail]').style.display = 'none'
     delete item.dataset.window
     delete item.dataset.axis
   }
