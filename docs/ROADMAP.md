@@ -212,6 +212,22 @@ a paid service.
 - Settings page with download DB, upload DB, set Japanese voice. The use case is
   already covered by the categories dropdown, so this is cleanup and waits for
   the study features above.
+- **Make the demo stop accumulating progress.** The web version exists to try the
+  interface before installing, and installing is what protects a database — so an
+  offline-capable browser app works against its own purpose, which is why the
+  service worker is deliberately not registered outside an installed app.
+  Progress still accumulates there today and the browser can evict it whole, so
+  the ribbon's "Install to save progress" is not yet true.
+
+  Two shapes, and the second is cheaper: wipe the storage daily, or never write it.
+  `worker.js` already has `openTransientDatabase()` with a TODO for exactly this
+  and nothing calls it; using it outside an installed app makes the ribbon
+  literally true, and there is then nothing to destroy on a timer. Its cost is
+  that a hard refresh loses the session, where today it would not. A daily wipe
+  keeps a session across reloads, and has to handle two things the transient path
+  does not: Import Database works in the browser, so a scheduled wipe could
+  destroy a file somebody deliberately imported, and a destructive action taken
+  while nobody is watching has to be unmistakable in the UI or it reads as a bug.
 - **Ask for persistent storage, and say what is true.** `navigator.storage.persist()`
   is never called today, in either mode. The service worker is not what protects a
   database: OPFS lives in the origin's storage bucket whether a worker is
