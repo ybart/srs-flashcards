@@ -3,14 +3,10 @@
   <head>
     <title></title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="initial-scale=1, viewport-fit=cover, width=device-width"></meta>
+    <!-- <meta name="viewport" content="initial-scale=1, viewport-fit=cover, width=device-width"></meta> -->
+    <meta name="viewport" content="initial-scale=1, width=device-width"></meta>
     <meta name="mobile-web-app-capable" content="yes"></meta>
-    <!-- Not black-translucent: that makes the web view the whole screen while
-         innerHeight reports only the part below the status bar, so the app has
-         50px of window it cannot fill and iOS lets the whole thing be dragged
-         up by exactly that much. "default" starts the view below the status
-         bar, so the layout viewport and the visible area are the same size. -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="default"></meta>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"></meta>
     <link rel="apple-touch-icon" href="/icons/srs-ai-logo-192.png" />
     <script src="https://cdn.jsdelivr.net/npm/ios-pwa-splash@1.0.0/cdn.min.js"></script>
     <script>iosPWASplash('/icons/ios/1024.png', '#000000');</script>

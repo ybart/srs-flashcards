@@ -6,10 +6,6 @@ import StudySessionController from './controllers/study_session_controller.js'
 import DonateController from './controllers/donate_controller.js'
 import ProgressController from './controllers/progress_controller.js'
 import I18nController from './controllers/i18n_controller.js'
-import { trackViewportHeight } from './viewport.js'
-
-// Before anything renders: the app is sized from a measurement, not a unit.
-trackViewportHeight()
 
 window.Stimulus = Application.start()
 

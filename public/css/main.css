@@ -7,32 +7,15 @@ html { overscroll-behavior: none; }
    (iOS Safari treats 100vh as larger than the visible area, which otherwise
    lets the whole header/footer chrome scroll in study mode).
 
-   Neither 100% nor 100dvh can do it in the installed app. With
-   apple-mobile-web-app-status-bar-style: black-translucent the web view is the
-   whole screen — 812px on a 375x812 phone — while only 762px sits below the
-   status bar, and both units resolve to 812. env(safe-area-inset-top) cannot
-   compensate either: it reads 0, since the viewport meta does not say
-   viewport-fit=cover. Measured on the device: html and body computed 812px
-   against an innerHeight of 762, so the app stood 50px taller than its window —
-   the band that cut off the last row of a list, and exactly how far the header
-   could be dragged (scrollY 50, header top -50).
- 
-   window.innerHeight is the one value that is right, so it is measured and
-   published as --app-height (see js/viewport.js). The units remain as fallbacks
-   for the moment before that script runs. */
+   Reverted to this, deliberately: sizing to --app-height and padding the body for
+   the safe area put the study screen's answer buttons off the bottom of the phone,
+   which is worse than a header that can be dragged 50px. What that attempt showed
+   still holds and is worth keeping in mind — in the installed app the layout
+   viewport is the whole screen (812 on a 375x812 phone) while innerHeight reports
+   the 762 below the status bar, so neither 100% nor 100dvh can size the app to what
+   is visible, and env(safe-area-inset-*) reads 0 without viewport-fit=cover. */
 html, body { height: 100%; }
-@supports (height: 100dvh) {
-  html, body { height: 100dvh; }
-}
-html, body { height: var(--app-height, 100dvh); }
-body {
-  overflow: hidden;
-  /* The view is the whole screen (viewport-fit=cover), so the status bar would
-     otherwise sit over the header. env() only reports a figure at all because of
-     that meta: without it these read 0, which is what made the earlier attempts
-     look like they had nothing to compensate for. */
-  padding-top: env(safe-area-inset-top, 0px);
-}
+body { overflow: hidden; }
 
 header > nav { min-height: 60px; }
 header > nav ul { flex: 1 0 0; }
@@ -63,20 +46,14 @@ header > nav li.title { min-width: 0; overflow: hidden; text-overflow: ellipsis;
   color: var(--pico-muted-color);
 }
 .header-icon:hover { color: var(--pico-primary); }
-/* 100% of the body, not of the viewport. Sized in viewport units it ignored the
-   body's safe-area padding: on a phone the whole column stayed a full screen tall
-   inside a body 50px shorter, so the study screen's footer — its answer buttons —
-   hung off the bottom of the display. */
-main { height: 100%; display: flex; flex-direction: column; }
+main { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
 body > main { padding: 0; }
 section[role=content] {
   background-color: var(--pico-background-color);
   flex: 1; overflow-y: scroll; text-align: center;
   margin-bottom: 0;
-  /* Room at the end of the list. The home indicator's inset covers itself and
-     nothing more, which left the last row sitting right against the bottom edge
-     and partly under the indicator: 36px is twice the height of a category card's
-     progress bar, which is about the breathing room the end of a list wants. */
+  /* Room at the end of the list: twice the height of a category card's progress
+     bar. env() adds the home indicator's own inset where a phone reports one. */
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 36px);
   /* Stops the gesture chaining to the document when this reaches its end. The
      document is locked by html/body above, but on iOS reaching the bottom of a
