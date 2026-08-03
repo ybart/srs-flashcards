@@ -667,10 +667,18 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
 
 @media only screen and (min-width: 641px) {
   section[role=content] {
-    background-color: lightgrey;
-    display: flex;
-    flex-wrap: wrap;
-    /* justify-content: space-between; */
+    /* Was lightgrey, which is a slab of daylight behind dark cards. The cards
+       carry their own background and corners, so the board itself can just be
+       the page. */
+    background-color: var(--pico-background-color);
+    /* A column appears when there is room for one, rather than at widths picked
+       by hand. The minimum is in rem, which is the point: Pico's type is fluid,
+       so a wider viewport has a bigger root font — 16px on a phone held upright,
+       18 on its side, 20 on a desktop — and a column counted in px got narrower
+       exactly as its text got bigger. In rem the two move together. */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr));
+    gap: 1rem;
     padding: 12px 20px;
     align-content: start;
   }
@@ -686,18 +694,8 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   }
   article.category {
     border-radius: 5px;
-    flex: 0 1 32%;
-    margin: 1rem .25em;
-    max-width: calc(33.33% - 1em);
     border-bottom: none;
     min-height: 0;
-  }
-}
-
-@media only screen and (min-width: 971px) {
-  article.category {
-    flex: 0 1 24%;
-    max-width: calc(25% - 1em);
   }
 }
 
