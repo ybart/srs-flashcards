@@ -72,6 +72,7 @@ export function bars(events, { from, to, value, width = 600, height = 60, column
     class: 'progress-bars', 'aria-hidden': 'true'
   })
 
+  svg.dataset.peak = peak
   buckets.forEach((total, i) => {
     if (!total) { return }
     const bar = height * total / peak
@@ -111,6 +112,14 @@ export function chart(series, { from, to, width = 600, height = 120, columns = 1
     const edge = layer.edge.map((value, i) => `${x(i)},${y(value)}`).join(' ')
     svg.appendChild(element('polygon', {
       points: `${edge} ${width},${height} 0,${height}`, fill: COLORS[layer.band]
+    }))
+  }
+
+  for (const fraction of [0.25, 0.5, 0.75]) {
+    svg.appendChild(element('line', {
+      x1: 0, x2: width, y1: y(fraction), y2: y(fraction),
+      stroke: 'rgba(255, 255, 255, 0.16)', 'stroke-width': 1,
+      'vector-effect': 'non-scaling-stroke'
     }))
   }
 

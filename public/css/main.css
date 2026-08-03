@@ -415,8 +415,26 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
+}
+/* Both are real buttons so they take focus and the keyboard, which means Pico's
+   button styling has to come off. */
+.progress-toggle, .progress-export {
+  width: auto;
+  margin: 0;
+  border: 0;
+  background: none;
   color: inherit;
-  text-decoration: none;
+  font: inherit;
+  text-align: left;
+}
+.progress-toggle {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 0;
+  cursor: pointer;
 }
 .progress-labels {
   display: flex;
@@ -431,6 +449,18 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
 }
 .progress-summary { font-size: 0.72rem; color: var(--pico-muted-color); }
 .progress-percent { flex: 0 0 auto; font-size: 0.85em; color: var(--pico-muted-color); }
+/* Export sits with the figure it exports. Only an open row has a chart worth
+   saving, so it appears with the rest of the detail. */
+.progress-export {
+  display: none;
+  flex: 0 0 auto;
+  padding: 4px;
+  line-height: 0;
+  color: var(--pico-muted-color);
+  cursor: pointer;
+}
+.progress-item.expanded .progress-export { display: block; }
+.progress-export:hover { color: var(--pico-primary); }
 /* The only thing saying a row opens. */
 .progress-caret {
   flex: 0 0 auto;
@@ -473,9 +503,19 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   margin-top: 6px;
 }
 .progress-total { font-size: 0.72rem; color: var(--pico-muted-color); }
-.progress-axis { position: relative; height: 1.1rem; margin-top: 4px; }
+.progress-axis { position: relative; height: 1.3rem; margin-top: 4px; }
+/* Says which point a label names, which the label alone cannot at the ends
+   where it has been nudged inwards. */
+.progress-tick {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 4px;
+  background: var(--pico-muted-border-color);
+}
 .progress-axis span {
   position: absolute;
+  top: 6px;
   transform: translateX(-50%);
   font-size: 0.7rem;
   color: var(--pico-muted-color);
@@ -490,7 +530,6 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   color: var(--pico-muted-color);
   text-decoration: none;
 }
-.progress-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
 .progress-range.selected {
   border-color: var(--pico-primary);
   color: var(--pico-primary);

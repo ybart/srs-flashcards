@@ -38,26 +38,39 @@
          range and metric buttons stop the click before it gets here. -->
     <div id="progress-item" class="progress-item" style="display: none;"
          data-action="click->progress#toggle">
-      <a href="#" class="progress-head">
-        <span class="progress-labels">
-          <span data-role="name">{Category}</span>
-          <span data-role="summary" class="progress-summary">{totals}</span>
-        </span>
-        <span data-role="percent" class="progress-percent">{0 %}</span>
+      <div class="progress-head">
+        <button type="button" class="progress-toggle">
+          <span class="progress-labels">
+            <span data-role="name">{Category}</span>
+            <span data-role="summary" class="progress-summary">{totals}</span>
+          </span>
+          <span data-role="percent" class="progress-percent">{0 %}</span>
+        </button>
+        <button type="button" class="progress-export" aria-label="Save image"
+                data-action="click->progress#exportImage">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"
+               fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M12 3v11M8 11l4 4 4-4M4 19h16"></path>
+          </svg>
+        </button>
+        <!-- Outside the button so the export can sit beside the percentage and
+             the disclosure still ends the row. -->
         <svg class="progress-caret" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"
              fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
           <path d="M8 5l7 7-7 7"></path>
         </svg>
-      </a>
+      </div>
       <!-- Zooming widens the canvas inside this scroller rather than moving a
            window over the data, so the chart can be panned back through the
            history instead of only ever showing the most recent stretch. -->
-      <div data-role="scroll" class="progress-scroll">
-        <div data-role="canvas" class="progress-canvas">
-          <div data-role="chart" class="progress-chart"></div>
-          <div data-role="effort" class="progress-chart"></div>
-          <!-- Inside the canvas so the dates pan with the charts. -->
-          <div data-role="axis" class="progress-axis"></div>
+      <div class="progress-plot">
+        <div data-role="scroll" class="progress-scroll">
+          <div data-role="canvas" class="progress-canvas">
+            <div data-role="chart" class="progress-chart"></div>
+            <div data-role="effort" class="progress-chart"></div>
+            <!-- Inside the canvas so the dates pan with the charts. -->
+            <div data-role="axis" class="progress-axis"></div>
+          </div>
         </div>
       </div>
       <div data-role="detail" class="progress-detail" style="display: none;">
@@ -66,9 +79,6 @@
           <div data-role="metrics" class="progress-ranges"></div>
         </div>
         <div data-role="ranges" class="progress-ranges"></div>
-        <div class="progress-actions">
-          <a href="#" class="progress-range" data-action="click->progress#exportImage">Save image</a>
-        </div>
       </div>
     </div>
   </body>

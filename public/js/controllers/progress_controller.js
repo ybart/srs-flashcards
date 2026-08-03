@@ -180,17 +180,22 @@ export default class extends Controller {
     if (!expanded) { return this.scrollToLatest(item) }
 
     const metric = this.constructor.METRICS.find((m) => m.key === item.dataset.metric)
-    effort.appendChild(bars(events, {
+    const drawn = bars(events, {
       from: from, to: to, columns: columns, value: metric.value
-    }))
+    })
+    effort.appendChild(drawn)
+    const peak = this.formatTotal(metric.key, Number(drawn.dataset.peak))
     // Positions on the day axis are indices into the days studied, so they are
     // labelled by which day it was rather than by the date it fell on.
     this.appendAxis(axis, zoom, compressed
       ? (position) => `day ${Math.round(position * (compressed.dates.length - 1)) + 1}`
       : (position) => this.tickLabel(from + span * position, span))
 
+    // The bars are scaled to their own busiest bucket, so that value is their
+    // scale and belongs beside the total rather than floating over them.
     const worked = allEvents.reduce((sum, event) => sum + metric.value(event), 0)
-    item.querySelector('[data-role=total]').innerText = this.formatTotal(metric.key, worked)
+    item.querySelector('[data-role=total]').innerText =
+      `${this.formatTotal(metric.key, worked)} · peak ${peak}`
 
     const ranges = compressed ? this.constructor.DAY_RANGES : this.constructor.RANGES
     const zooms = ranges
@@ -201,14 +206,10 @@ export default class extends Controller {
         action: 'click->progress#selectRange', data: { window: range.size || '' }
       }))
 
-    const axes = [
-      { label: 'Calendar', axis: 'calendar' }, { label: 'Study days', axis: 'days' }
-    ].map((option) => ({
-      label: option.label, selected: (option.axis === 'days') === !!compressed,
-      action: 'click->progress#selectAxis', data: { axis: option.axis }
+    this.appendChoices(item, 'ranges', zooms.concat({
+      label: 'Study days', selected: !!compressed,
+      action: 'click->progress#selectAxis', data: {}
     }))
-
-    this.appendChoices(item, 'ranges', zooms.concat(axes))
 
     this.appendChoices(item, 'metrics', this.constructor.METRICS.map((option) => ({
       label: option.label, selected: option.key === metric.key,
@@ -250,10 +251,18 @@ export default class extends Controller {
 
     for (let i = 0; i < count; i++) {
       const position = i / (count - 1)
+      const left = `${(position * 100).toFixed(3)}%`
+
+      // The label is nudged inwards at the ends so it does not hang off the
+      // canvas; the tick stays exactly on the point it is naming.
+      const tick = document.createElement('i')
+      tick.className = 'progress-tick'
+      tick.style.left = left
+      axis.appendChild(tick)
+
       const label = document.createElement('span')
       label.innerText = labelAt(position)
-      label.style.left = `${(position * 100).toFixed(3)}%`
-      // The outermost labels would hang off the ends of the canvas.
+      label.style.left = left
       if (position < 0.02) { label.style.transform = 'none' }
       if (position > 0.98) { label.style.transform = 'translateX(-100%)' }
       axis.appendChild(label)
@@ -349,7 +358,11 @@ export default class extends Controller {
     event.stopPropagation()
 
     const item = event.currentTarget.closest('.progress-item')
-    item.dataset.axis = event.currentTarget.dataset.axis
+    // Off is the calendar, so the toggle only has to flip.
+    if (item.dataset.axis === 'days') { delete item.dataset.axis }
+    else { item.dataset.axis = 'days' }
+
+    // The windows are counted in the axis's own unit, so they do not carry over.
     delete item.dataset.window
     this.draw(item)
   }
