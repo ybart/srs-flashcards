@@ -231,7 +231,12 @@ export default class extends Controller {
           position: fraction(index, compressed.dates.length), label: `day ${index + 1}`
         }
       }
-      : (position) => ({ position: position, label: this.tickLabel(from + span * position, span) }))
+      : (position) => ({
+        position: position,
+        label: this.tickLabel(from + span * position, span / zoom, {
+          year: new Date(from).getFullYear() !== new Date(to).getFullYear()
+        })
+      }))
 
 
     const ranges = compressed ? this.constructor.DAY_RANGES : this.constructor.RANGES
@@ -326,7 +331,6 @@ export default class extends Controller {
     const metric = this.constructor.METRICS.find((m) => m.key === drawn.metric) ||
       this.constructor.METRICS[0]
     const name = item.querySelector('[data-role=name]').innerText
-    const span = drawn.last - drawn.first
 
     await download({
       name: name,
@@ -350,7 +354,7 @@ export default class extends Controller {
       pointAt: (position) => {
         const value = from + (to - from) * position
         if (!drawn.dates) {
-          return { position: position, label: this.tickLabel(value, span) }
+          return { position: position, label: this.tickLabel(value, to - from, { year: false }) }
         }
 
         // Held to the days the picture actually covers: the window can start
@@ -483,9 +487,19 @@ export default class extends Controller {
       `${end.toLocaleDateString(undefined, full)}`
   }
 
-  tickLabel(time, span) {
-    const options = span > 400 * 24 * 60 * 60 * 1000
-      ? { month: 'short', year: 'numeric' } : { day: 'numeric', month: 'short' }
+  // Two questions, and they are answered from different things. Whether a tick
+  // can name a day is set by how much of the history is on screen at once, not
+  // by how much of it there is: at a month to a screen two ticks fall inside the
+  // same month, and a month named twice says nothing about where you are.
+  // Whether it also names the year is set by whether the history crosses one —
+  // "20 mai" is only ambiguous when there are two of them. A picture never needs
+  // it, having named the year in its period.
+  tickLabel(time, reach, { year = true } = {}) {
+    const options = reach > 400 * 24 * 60 * 60 * 1000
+      ? { month: 'short', year: 'numeric' }
+      : year
+        ? { day: 'numeric', month: 'short', year: 'numeric' }
+        : { day: 'numeric', month: 'short' }
 
     return new Date(time).toLocaleDateString(undefined, options)
   }
