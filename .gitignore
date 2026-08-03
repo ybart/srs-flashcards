@@ -5,3 +5,8 @@ tmp/
 /db/*.db
 /public/db/*.db
 !/public/db/flashcards.db
+
+# Generated review page: kept on disk to work through, and regenerable, so it is
+# not worth versioning. Ignored rather than untracked so bin/deploy does not read
+# it as an uncommitted change.
+/FR_REVIEW.html
