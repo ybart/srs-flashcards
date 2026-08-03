@@ -107,6 +107,19 @@ in front of nginx — serves whichever language it saw first to everybody. As in
 `mjs.conf`, the COOP/COEP headers are re-declared because a `location` with its
 own `add_header` stops inheriting the server-level ones.
 
+**No `map`, deliberately.** Reading `Accept-Language` into a variable with `map`
+is the usual way and cannot be done here: the domain's `.d/*.conf` is included at
+line 51 of `/etc/nginx/conf.d/<domain>.conf`, *inside* the `server` block, and
+`map` is only valid at `http` level — `nginx -t` rejects it. The choice is made
+with `set` and `if` inside the location, which stays within the rewrite-module
+directives, the part of `if` that behaves. Only the browser's *first* language tag
+is honoured: nginx cannot weigh q-values without contortions, and matching `fr`
+anywhere in the header would serve French to a browser asking for
+`en-GB,fr;q=0.8`, which prefers English.
+
+The two curl checks below are the proof it works, and they are worth running: the
+config is the one thing here that could not be tested before it shipped.
+
 `/install.fr.html` stays reachable directly, which is what makes it testable:
 
 ```
