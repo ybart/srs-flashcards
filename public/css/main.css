@@ -490,6 +490,7 @@ main.demo .demo-sub { font-size: 0.5rem; font-weight: 600; letter-spacing: 0.05e
   color: var(--pico-muted-color);
   text-decoration: none;
 }
+.progress-actions { display: flex; justify-content: flex-end; margin-top: 10px; }
 .progress-range.selected {
   border-color: var(--pico-primary);
   color: var(--pico-primary);

@@ -5,6 +5,7 @@ import Session from '../models/session.js'
 import RelativeDate from '../models/relative_date.js'
 import { LABELS } from '../migrations.js'
 import { bars, chart, completion } from '../progress_chart.js'
+import { download } from '../progress_image.js'
 
 export default class extends Controller {
   static targets = ['list']
@@ -51,6 +52,10 @@ export default class extends Controller {
       time: RelativeDate.dateFromSqliteTimestamp(row.started_at).getTime(),
       cards: row.cards, seconds: row.seconds || 0
     }))
+
+    // What each expanded chart is currently showing, so the export can be the
+    // picture on screen rather than a second guess at it.
+    this.drawn = new Map()
 
     this.listTarget.innerHTML = ''
     for (const category of categories) { this.append(category) }
@@ -210,7 +215,32 @@ export default class extends Controller {
       action: 'click->progress#selectMetric', data: { metric: option.key }
     })))
 
+    this.drawn.set(category, {
+      series: series, from: from, to: to, columns: columns,
+      first: all[0].time, last: all.at(-1).time
+    })
     this.scrollToLatest(item)
+  }
+
+  async exportImage(event) {
+    event.preventDefault()
+    event.stopPropagation()
+
+    const item = event.currentTarget.closest('.progress-item')
+    const drawn = this.drawn.get(Number(item.dataset.category))
+    if (!drawn) { return }
+
+    const name = item.querySelector('[data-role=name]').innerText
+    const span = drawn.last - drawn.first
+
+    await download({
+      name: name,
+      percent: item.querySelector('[data-role=percent]').innerText,
+      subtitle: item.querySelector('[data-role=summary]').innerText,
+      footer: `${this.tickLabel(drawn.first, span)} – ${this.tickLabel(drawn.last, span)}`,
+      filename: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'progress',
+      series: drawn.series, from: drawn.from, to: drawn.to, columns: drawn.columns
+    })
   }
 
   // Labels ride inside the scrolling canvas, roughly two per screenful, so
